@@ -70,8 +70,8 @@ function fillTemplate(template: string, difficulty: DifficultyLevel): string {
   const topicWords = TOPIC_WORDS[difficulty]
   
   return template.replace(/\[(\w+)\]/g, (match, category) => {
-    const categoryWords = topicWords[category as keyof typeof topicWords]
-    if (!categoryWords) return match // Return original if category not found
+    const categoryWords = topicWords[category as keyof typeof topicWords] as string[]
+    if (!categoryWords || categoryWords.length === 0) return match // Return original if category not found
     
     const randomWord = categoryWords[Math.floor(Math.random() * categoryWords.length)]
     return randomWord
@@ -91,7 +91,7 @@ function applyFormatting(text: string, difficulty: DifficultyLevel): string {
     formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1)
     
     // Capitalize after periods (sentence beginnings)
-    formatted = formatted.replace(/\.\s+([a-z])/g, (match, letter) => {
+    formatted = formatted.replace(/\.\s+([a-z])/g, (_, letter) => {
       return '. ' + letter.toUpperCase()
     })
     
@@ -156,10 +156,6 @@ function generateText(difficulty: DifficultyLevel, targetWordCount: number): str
   return sentences.join(' ')
 }
 
-// Helper function to capitalize first letter
-function capitalize(word: string): string {
-  return word.charAt(0).toUpperCase() + word.slice(1)
-}
 
 export function getRandomText(difficulty: DifficultyLevel, timer: TimerOption): string {
   const wordCount = timer === 1 ? 60 : timer === 2 ? 120 : 300

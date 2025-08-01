@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,15 +12,13 @@ import {
   DialogTitle 
 } from '@/components/ui/dialog'
 import { 
-  Clock, 
   Type, 
   Target, 
   RotateCcw, 
   Home, 
   Activity,
   Timer,
-  CheckCircle2,
-  XCircle 
+  CheckCircle2
 } from 'lucide-react'
 import { TimerOption, DifficultyLevel, TypingStats, CharacterState, TestResult } from '@/types'
 import { getRandomText } from '@/data/texts'
@@ -181,25 +179,6 @@ const TypingTestScreen = () => {
     })
   }, [userInput, testText, timeRemaining, startTime])
 
-  // Handle input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    
-    // Start test on first keystroke
-    if (!isTestActive && !isTestComplete) {
-      setIsTestActive(true)
-      setStartTime(Date.now())
-    }
-    
-    // Allow typing up to the text length, but don't end test early
-    if (value.length <= testText.length) {
-      setUserInput(value)
-      setCurrentIndex(value.length)
-      
-      // Note: We no longer complete the test when reaching text end
-      // The timer will handle test completion
-    }
-  }
 
   // Focus text container on mount and when test starts
   useEffect(() => {
