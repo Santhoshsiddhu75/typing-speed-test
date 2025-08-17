@@ -6,8 +6,8 @@ test.describe('Setup Screen', () => {
   })
 
   test('should display the main title and description', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Typing Speed Test')
-    await expect(page.locator('text=Test your typing speed and accuracy')).toBeVisible()
+    await expect(page.locator('h1')).toContainText('Setup Your Test')
+    await expect(page.locator('text=Choose your preferred time limit to get started.')).toBeVisible()
   })
 
   test('should have timer selection options', async ({ page }) => {
@@ -73,7 +73,7 @@ test.describe('Setup Screen', () => {
     // Check ARIA labels and roles
     await expect(page.getByTestId('timer-option-1')).toHaveAttribute('aria-label', 'Select 1 Minute timer')
     await expect(page.getByTestId('difficulty-option-easy')).toHaveAttribute('aria-label', 'Select Easy difficulty')
-    await expect(page.getByTestId('start-test-button')).toHaveAttribute('aria-label', 'Start typing test')
+    await expect(page.getByTestId('start-test-button')).toHaveAttribute('aria-label', 'Start TapTest')
     
     // Check pressed states
     await expect(page.getByTestId('timer-option-1')).toHaveAttribute('aria-pressed', 'true')

@@ -153,7 +153,7 @@ test.describe('Typing Test Screen', () => {
     
     // Check we're back on setup screen
     await expect(page).toHaveURL('/')
-    await expect(page.locator('h1')).toContainText('Typing Speed Test')
+    await expect(page.locator('h1')).toContainText('Setup Your Test')
   })
 
   test('should handle different difficulty levels', async ({ page }) => {

@@ -1,6 +1,6 @@
-# Typing Speed Test
+# TapTest
 
-A modern, responsive typing speed test application built with React, TypeScript, TailwindCSS, ShadCN UI, and comprehensive Playwright testing.
+A modern, responsive TapTest application built with React, TypeScript, TailwindCSS, ShadCN UI, and comprehensive Playwright testing.
 
 ## Features
 
@@ -26,18 +26,30 @@ A modern, responsive typing speed test application built with React, TypeScript,
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript
+### Frontend
+- **Framework**: React 18 + TypeScript
 - **Styling**: TailwindCSS + ShadCN UI components
+- **3D Graphics**: Three.js + React Three Fiber
 - **Routing**: React Router v6
 - **Icons**: Lucide React
-- **Testing**: Playwright
 - **Build Tool**: Vite
+
+### Backend
+- **Runtime**: Node.js + TypeScript
+- **Framework**: Express.js
+- **Database**: SQLite3
+- **Validation**: Zod schemas
+- **CORS**: Configurable cross-origin support
+
+### Development & Testing
+- **Testing**: Playwright (E2E)
 - **Package Manager**: npm
+- **Concurrency**: Run frontend + backend together
 
 ## Project Structure
 
 ```
-typing-speed-test/
+taptest/
 ├── src/
 │   ├── components/
 │   │   ├── ui/           # ShadCN UI components
@@ -67,26 +79,76 @@ typing-speed-test/
 
 ### Installation
 
-1. **Clone and install dependencies**:
+#### Full-Stack Setup (Recommended)
+
+1. **Clone and install all dependencies**:
 ```bash
 cd typing-speed-test
+npm run setup
+```
+
+2. **Start full-stack development server**:
+```bash
+npm run dev:fullstack
+```
+
+This will start both the frontend (Vite) and backend (Node.js) servers concurrently.
+
+#### Frontend-Only Setup
+
+1. **Install frontend dependencies**:
+```bash
 npm install
 ```
 
-2. **Start development server**:
+2. **Start frontend development server**:
 ```bash
 npm run dev
 ```
 
-3. **Build for production**:
+#### Server-Only Setup
+
+1. **Install server dependencies**:
+```bash
+npm run server:install
+```
+
+2. **Start backend server**:
+```bash
+npm run server:dev
+```
+
+### Production Build
+
+1. **Build frontend**:
 ```bash
 npm run build
 ```
 
-4. **Preview production build**:
+2. **Build backend**:
+```bash
+npm run server:build
+```
+
+3. **Preview production build**:
 ```bash
 npm run preview
 ```
+
+## API Endpoints
+
+The backend provides REST API endpoints for storing and retrieving typing test results:
+
+### Test Results
+- **POST /api/tests** - Save a new test result
+- **GET /api/tests?username=XYZ** - Get test results for a user (with pagination and filtering)
+- **GET /api/tests/stats/:username** - Get user statistics (for future profile pages)
+- **GET /api/tests/leaderboard** - Get leaderboard rankings (for future leaderboard feature)
+
+### Health Check
+- **GET /health** - Server health and status check
+
+See `server/README.md` for detailed API documentation.
 
 ### Testing
 

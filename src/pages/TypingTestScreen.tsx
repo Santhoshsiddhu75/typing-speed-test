@@ -10,24 +10,41 @@ import {
   DialogHeader, 
   DialogTitle 
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { 
-  Type, 
-  Target, 
   RotateCcw, 
   Home, 
-  CheckCircle2
+  CheckCircle2,
+  Save,
+  AlertTriangle,
+  User,
+  ArrowLeft
 } from 'lucide-react'
 import { TimerOption, DifficultyLevel, TypingStats, CharacterState, TestResult } from '@/types'
 import { getRandomText } from '@/data/texts'
 import { formatTime, calculateWPM, calculateCPM, calculateAccuracy } from '@/lib/utils'
+import { saveTypingTestResult } from '@/lib/api'
+import { useAuth } from '@/hooks/useAuth'
 import { SplitText } from '@/components/SplitText'
 import { TypingWaveform } from '@/components/TypingWaveform'
 import { Toggle } from '@/components/ui/toggle'
 import { CircularTimer } from '@/components/CircularTimer'
+import Logo from '@/components/Logo'
+import { ThemeOnlyToggle } from '@/components/ThemeOnlyToggle'
 
 const TypingTestScreen = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { user, isAuthenticated } = useAuth()
   const textContainerRef = useRef<HTMLDivElement>(null)
   const measureCharRef = useRef<HTMLSpanElement>(null)
   
@@ -48,6 +65,12 @@ const TypingTestScreen = () => {
   const [showSplitAnimation, setShowSplitAnimation] = useState(false)
   const [isFieldFocused, setIsFieldFocused] = useState(false)
   const [isCapsLockOn, setIsCapsLockOn] = useState(false)
+  
+  // Save and confirmation state
+  const [isSaving, setIsSaving] = useState(false)
+  const [isResultSaved, setIsResultSaved] = useState(false)
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   
   // Real-time typing speed tracking
   const [realtimeTypingSpeed, setRealtimeTypingSpeed] = useState(0)
@@ -247,6 +270,61 @@ const TypingTestScreen = () => {
     }
   }, [])
 
+  // Detect back navigation and generate new text if test is complete
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isTestComplete) {
+        // User returned to a completed test - generate new text to prevent cheating
+        console.log('User returned to completed test - generating new text')
+        
+        // Generate new text
+        const newText = getRandomText(difficulty, timer)
+        setTestText(newText)
+        
+        // Reset all test state
+        setCurrentIndex(0)
+        setUserInput('')
+        setIsTestActive(false)
+        setIsTestComplete(false)
+        setShowResults(false)
+        setTimeRemaining(timer * 60)
+        setStartTime(null)
+        setStats({
+          wpm: 0,
+          cpm: 0,
+          accuracy: 100,
+          timeRemaining: timer * 60,
+          correctChars: 0,
+          incorrectChars: 0,
+          totalChars: 0
+        })
+        
+        // Reset save state
+        setIsResultSaved(false)
+        setIsSaving(false)
+        setSaveError(null)
+        
+        // Reset typing speed tracking
+        setRealtimeTypingSpeed(0)
+        typingSpeedHistoryRef.current = []
+        lastKeypressTimeRef.current = 0
+        
+        // Focus the text container
+        setTimeout(() => {
+          if (textContainerRef.current) {
+            textContainerRef.current.focus()
+          }
+        }, 100)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [isTestComplete, difficulty, timer])
+
   // Handle key events directly on text container
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (isTestComplete || showResults) return
@@ -311,6 +389,62 @@ const TypingTestScreen = () => {
     }
   }
 
+  const handleSaveResult = async () => {
+    // Debug logging
+    console.log('handleSaveResult called');
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('user:', user);
+    console.log('user?.username:', user?.username);
+    
+    // Handle nested user object structure
+    const actualUser = (user as any)?.user || user;
+    const username = actualUser?.username;
+    
+    if (!isAuthenticated || !username) {
+      console.error('Authentication check failed:', { isAuthenticated, user, username });
+      setSaveError('You must be logged in to save results')
+      return
+    }
+
+    try {
+      setIsSaving(true)
+      setSaveError(null)
+      
+      const resultToSave: TestResult = {
+        wpm: stats.wpm,
+        cpm: stats.cpm,
+        accuracy: stats.accuracy,
+        totalTime: timer * 60 - timeRemaining,
+        difficulty,
+        totalChars: stats.totalChars,
+        correctChars: stats.correctChars,
+        incorrectChars: stats.incorrectChars
+      }
+      
+      await saveTypingTestResult(resultToSave, username)
+      setIsResultSaved(true)
+      
+    } catch (error) {
+      console.error('Failed to save result:', error)
+      setSaveError(error instanceof Error ? error.message : 'Failed to save result')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleBackToSetup = () => {
+    if (!isResultSaved && isAuthenticated) {
+      setShowUnsavedWarning(true)
+    } else {
+      navigate('/')
+    }
+  }
+
+  const handleConfirmBackWithoutSaving = () => {
+    setShowUnsavedWarning(false)
+    navigate('/')
+  }
+
   const handleRetakeTest = () => {
     // Generate new text for retry
     setTestText(getRandomText(difficulty, timer))
@@ -329,6 +463,13 @@ const TypingTestScreen = () => {
     setRealtimeTypingSpeed(0)
     lastKeypressTimeRef.current = 0
     typingSpeedHistoryRef.current = []
+    
+    // Reset save state
+    setIsSaving(false)
+    setIsResultSaved(false)
+    setShowUnsavedWarning(false)
+    setSaveError(null)
+    
     setStats({
       wpm: 0,
       cpm: 0,
@@ -343,10 +484,6 @@ const TypingTestScreen = () => {
     }
   }
 
-  const handleReturnToSetup = () => {
-    navigate('/')
-  }
-
   const testResult: TestResult = {
     wpm: stats.wpm,
     cpm: stats.cpm,
@@ -355,9 +492,77 @@ const TypingTestScreen = () => {
     difficulty
   }
 
+  // Handle nested user object structure for derived values
+  const actualUser = (user as any)?.user || user;
 
   return (
     <div className="min-h-screen p-4 bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden">
+      {/* Top Navigation Bar */}
+      <header 
+        className="absolute top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm"
+        role="banner"
+        aria-label="Typing test page header"
+      >
+        <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/')}
+                className="text-muted-foreground hover:text-foreground p-1.5 sm:p-2 flex-shrink-0"
+                aria-label="Navigate back to setup"
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <div className="h-6 w-px bg-border hidden sm:block" role="separator" aria-hidden="true" />
+              <div className="min-w-0 flex-shrink">
+                <Logo size="medium" showText={false} className="sm:hidden" />
+                <div className="hidden sm:flex flex-col">
+                  <Logo size="medium" />
+                  <p className="text-xs text-muted-foreground ml-1 mt-1">
+                    {timer} minute{timer > 1 ? 's' : ''} • {difficulty} 
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              {isAuthenticated && (
+                <nav aria-label="Profile navigation">
+                  <div className="flex items-center">
+                    <div className="relative">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate('/profile')}
+                        className="p-0"
+                        aria-label="Go to profile"
+                      >
+                        <div 
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center border-2 bg-card/80 backdrop-blur-sm shadow-lg"
+                          role="img"
+                          aria-label={`${actualUser?.username || 'User'} profile picture`}
+                        >
+                          {actualUser?.profile_picture ? (
+                            <img
+                              src={actualUser.profile_picture}
+                              alt={`${actualUser.username}'s profile picture`}
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" aria-hidden="true" />
+                          )}
+                        </div>
+                      </Button>
+                    </div>
+                  </div>
+                </nav>
+              )}
+              <ThemeOnlyToggle />
+            </div>
+          </div>
+        </div>
+      </header>
       {/* Large Background Circle centered on timer */}
       <div className="absolute inset-0 flex items-start justify-center pt-[200px] md:pt-[220px] z-0">
         <div 
@@ -388,23 +593,8 @@ const TypingTestScreen = () => {
       </div>
       
       <div className="max-w-6xl mx-auto space-y-6 relative z-10">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-base md:text-lg font-bold">Typing Speed Test</h1>
-            <p className="text-muted-foreground">
-              {timer} minute{timer > 1 ? 's' : ''} • {difficulty} difficulty
-            </p>
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={handleReturnToSetup}
-            className="w-full sm:w-auto"
-          >
-            <Home className="w-4 h-4 mr-2" />
-            Back to Setup
-          </Button>
-        </div>
+        {/* Content Area */}
+        <div className="pt-16 sm:pt-20 md:pt-24"></div>
 
         {/* Stats Display */}
         <div className="flex items-center justify-center max-w-2xl mx-auto gap-3 sm:gap-6 md:gap-8">
@@ -611,6 +801,7 @@ const TypingTestScreen = () => {
           <DialogContent 
             className="w-[90vw] max-w-md mx-auto" 
             data-testid="results-modal"
+            hideCloseButton={true}
             onInteractOutside={(e) => e.preventDefault()}
             onEscapeKeyDown={(e) => e.preventDefault()}
           >
@@ -620,7 +811,7 @@ const TypingTestScreen = () => {
                 Test Complete!
               </DialogTitle>
               <DialogDescription>
-                Here are your typing test results
+                Here are your TapTest results
               </DialogDescription>
             </DialogHeader>
             
@@ -664,27 +855,126 @@ const TypingTestScreen = () => {
               </div>
             </div>
 
+            {/* Save Error Display */}
+            {saveError && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-sm text-destructive">{saveError}</p>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {isResultSaved && (
+              <div className="p-3 bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    Result saved successfully!
+                  </p>
+                </div>
+              </div>
+            )}
+
             <DialogFooter className="flex-col sm:flex-row gap-3">
+              {/* Save Result Button / Check Profile Button */}
+              {isAuthenticated && (
+                <Button 
+                  onClick={isResultSaved ? () => navigate('/profile') : handleSaveResult} 
+                  disabled={isSaving}
+                  className={`w-full transition-all duration-500 ease-in-out transform ${
+                    isResultSaved 
+                      ? 'scale-105' 
+                      : 'scale-100'
+                  }`}
+                  variant={isResultSaved ? "outline" : "default"}
+                  data-testid={isResultSaved ? "check-profile-button" : "save-result-button"}
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </>
+                  ) : isResultSaved ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2 animate-pulse" />
+                      Check Profile
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Result
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {/* Back to Setup Button */}
               <Button 
-                onClick={handleRetakeTest} 
-                variant="outline" 
+                onClick={handleBackToSetup} 
+                variant={isAuthenticated && !isResultSaved ? "outline" : "default"}
                 className="w-full"
-                data-testid="retake-modal-button"
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Retake Test
-              </Button>
-              <Button 
-                onClick={handleReturnToSetup} 
-                className="w-full"
-                data-testid="return-setup-button"
+                data-testid="back-to-setup-button"
               >
                 <Home className="w-4 h-4 mr-2" />
-                Return to Setup
+                Back to Setup
               </Button>
+
+              {/* Show login prompt if not authenticated */}
+              {!isAuthenticated && (
+                <p className="text-xs text-muted-foreground text-center w-full">
+                  <Button 
+                    variant="link" 
+                    onClick={() => navigate('/login')}
+                    className="p-0 h-auto text-xs"
+                  >
+                    Log in
+                  </Button>
+                  {' '}to save your results to your profile
+                </p>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Unsaved Results Warning Dialog */}
+        <AlertDialog open={showUnsavedWarning} onOpenChange={setShowUnsavedWarning}>
+          <AlertDialogContent className="w-[95vw] max-w-md mx-auto">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="w-5 h-5" />
+                Unsaved Results
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-left">
+                You haven't saved your test results yet. Your performance data will be lost if you continue.
+                <br /><br />
+                <strong>Your Results:</strong>
+                <div className="mt-2 p-3 bg-muted/50 rounded-lg">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><strong>WPM:</strong> {testResult.wpm}</div>
+                    <div><strong>Accuracy:</strong> {testResult.accuracy}%</div>
+                    <div><strong>Time:</strong> {formatTime(Math.round(testResult.totalTime))}</div>
+                    <div><strong>Difficulty:</strong> {testResult.difficulty}</div>
+                  </div>
+                </div>
+                <br />
+                Would you like to go back and save your results first?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-3">
+              <AlertDialogCancel 
+                onClick={handleConfirmBackWithoutSaving}
+                className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Yes, Discard Results
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => setShowUnsavedWarning(false)}
+                className="w-full"
+              >
+                No, Keep Results
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )

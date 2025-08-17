@@ -1,24 +1,42 @@
-import { HashRouter as Router, Routes, Route } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import SetupScreen from '@/pages/SetupScreen'
 import TypingTestScreen from '@/pages/TypingTestScreen'
+import LoginPage from '@/pages/LoginPage'
+import RegisterPage from '@/pages/RegisterPage'
+import ProfilePage from '@/pages/ProfilePage'
 import './index.css'
+
+function AppContent() {
+  const location = useLocation();
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isTestPage = location.pathname === '/test';
+  const isProfilePage = location.pathname === '/profile';
+  const isSetupPage = location.pathname === '/';
+
+  return (
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+      {!isAuthPage && !isTestPage && !isProfilePage && !isSetupPage && <ThemeToggle />}
+      <Routes>
+        <Route path="/" element={<SetupScreen />} />
+        <Route path="/test" element={<TypingTestScreen />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
+  );
+}
 
 function App() {
   return (
     <ThemeProvider>
       <ErrorBoundary>
         <Router>
-          <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-            <ThemeToggle />
-            <Routes>
-              <Route path="/" element={<SetupScreen />} />
-              <Route path="/test" element={<TypingTestScreen />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
+          <AppContent />
         </Router>
       </ErrorBoundary>
     </ThemeProvider>

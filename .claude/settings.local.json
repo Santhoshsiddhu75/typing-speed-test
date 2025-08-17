@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "WebFetch(domain:reactbits.dev)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "mcp__shadcn-ui__get_block",
+      "mcp__shadcn-ui__get_directory_structure",
+      "WebFetch(domain:ui.shadcn.com)",
+      "mcp__shadcn-ui__get_component",
+      "mcp__shadcn-ui__list_components",
+      "mcp__shadcn-ui__get_component_demo",
+      "mcp__ide__getDiagnostics"
+    ],
+    "deny": []
+  }
+}

@@ -70,7 +70,7 @@ test.describe('Accessibility Tests', () => {
     
     // Check main heading has proper role
     const heading = page.locator('h1')
-    await expect(heading).toHaveText('Typing Speed Test')
+    await expect(heading).toHaveText('TapTest')
     
     // Check buttons have proper labels
     await expect(page.getByTestId('start-test-button')).toHaveAttribute('aria-label')

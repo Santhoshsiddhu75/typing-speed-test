@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Complete Application Flow', () => {
-  test('Complete typing test flow - Easy difficulty', async ({ page }) => {
+  test('Complete TapTest flow - Easy difficulty', async ({ page }) => {
     // Start on setup screen
     await page.goto('/')
     
@@ -52,7 +52,7 @@ test.describe('Complete Application Flow', () => {
     await expect(input).toBeFocused()
   })
 
-  test('Complete typing test flow - Hard difficulty', async ({ page }) => {
+  test('Complete TapTest flow - Hard difficulty', async ({ page }) => {
     // Start on setup screen
     await page.goto('/')
     
@@ -154,7 +154,7 @@ test.describe('Complete Application Flow', () => {
     // Go back
     await page.goBack()
     await expect(page).toHaveURL('/')
-    await expect(page.locator('h1')).toContainText('Typing Speed Test')
+    await expect(page.locator('h1')).toContainText('Setup Your Test')
     
     // Go forward
     await page.goForward()

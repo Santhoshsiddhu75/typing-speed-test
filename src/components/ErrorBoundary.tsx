@@ -18,11 +18,16 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public static getDerivedStateFromError(error: Error): State {
+    console.error('🚨🚨🚨 ERROR BOUNDARY TRIGGERED:', error);
+    console.error('🚨 Error message:', error.message);
+    console.error('🚨 Error stack:', error.stack);
     return { hasError: true, error }
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo)
+    console.error('🚨🚨🚨 ERROR BOUNDARY COMPONENT DID CATCH:', error, errorInfo);
+    console.error('🚨 Component stack:', errorInfo.componentStack);
+    // DO NOT AUTO-RELOAD - let user decide
   }
 
   private handleReload = () => {
