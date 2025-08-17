@@ -15,9 +15,7 @@ test.describe('Profile Page - Enhanced Layout', () => {
             created_at: '2024-01-01T00:00:00Z',
             updated_at: '2024-01-01T00:00:00Z',
             google_id: null,
-            profile_picture: null,
-            default_timer: 2,
-            default_difficulty: 'medium'
+            profile_picture: null
           }
         })
       });

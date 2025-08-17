@@ -342,8 +342,6 @@ export const userApi = {
   async updateProfile(userId: number, data: {
     username?: string;
     profile_picture?: string;
-    default_timer?: string;
-    default_difficulty?: string;
   }) {
     const token = localStorage.getItem('accessToken');
     if (!token) {

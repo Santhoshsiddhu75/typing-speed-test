@@ -7,9 +7,7 @@ test.describe('Enhanced Profile Page', () => {
       localStorage.setItem('user', JSON.stringify({
         id: 1,
         username: 'testuser',
-        created_at: '2024-01-01T00:00:00.000Z',
-        default_timer: 2,
-        default_difficulty: 'medium'
+        created_at: '2024-01-01T00:00:00.000Z'
       }));
     });
 
@@ -23,9 +21,7 @@ test.describe('Enhanced Profile Page', () => {
             user: {
               id: 1,
               username: 'testuser',
-              created_at: '2024-01-01T00:00:00.000Z',
-              default_timer: 2,
-              default_difficulty: 'medium'
+              created_at: '2024-01-01T00:00:00.000Z'
             }
           }
         })
@@ -213,9 +209,7 @@ test.describe('Enhanced Profile Page', () => {
           data: {
             user: {
               id: 1,
-              username: 'updateduser',
-              default_timer: 5,
-              default_difficulty: 'hard'
+              username: 'updateduser'
             }
           }
         })

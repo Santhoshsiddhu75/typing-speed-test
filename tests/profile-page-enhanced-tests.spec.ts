@@ -16,9 +16,7 @@ test.describe('Profile Page - Enhanced Features', () => {
             created_at: '2024-01-01T00:00:00Z',
             updated_at: '2024-01-01T00:00:00Z',
             google_id: null,
-            profile_picture: null,
-            default_timer: 2,
-            default_difficulty: 'medium'
+            profile_picture: null
           }
         })
       });
@@ -310,9 +308,7 @@ test.describe('Profile Page - Google User', () => {
             created_at: '2024-01-01T00:00:00Z',
             updated_at: '2024-01-01T00:00:00Z',
             google_id: 'google123456',
-            profile_picture: 'https://example.com/avatar.jpg',
-            default_timer: 2,
-            default_difficulty: 'medium'
+            profile_picture: 'https://example.com/avatar.jpg'
           }
         })
       });
@@ -379,9 +375,7 @@ test.describe('Profile Page - No Test Data', () => {
             created_at: '2024-01-01T00:00:00Z',
             updated_at: '2024-01-01T00:00:00Z',
             google_id: null,
-            profile_picture: null,
-            default_timer: 2,
-            default_difficulty: 'medium'
+            profile_picture: null
           }
         })
       });

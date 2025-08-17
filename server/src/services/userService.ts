@@ -201,7 +201,7 @@ export class UserService {
 
     try {
       const user = await database.get<User>(
-        'SELECT id, username, google_id, profile_picture, default_timer, default_difficulty, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, google_id, profile_picture, created_at, updated_at FROM users WHERE id = ?',
         [userId]
       );
 
@@ -422,8 +422,6 @@ export class UserService {
   static async updateUserProfile(userId: number, updateData: {
     username?: string;
     profile_picture?: string | null;
-    default_timer?: string;
-    default_difficulty?: string;
   }): Promise<User> {
     if (!userId || userId <= 0) {
       throw new Error('Invalid user ID');
@@ -462,15 +460,6 @@ export class UserService {
         updateValues.push(updateData.profile_picture);
       }
 
-      if (updateData.default_timer) {
-        updateFields.push('default_timer = ?');
-        updateValues.push(parseInt(updateData.default_timer));
-      }
-
-      if (updateData.default_difficulty) {
-        updateFields.push('default_difficulty = ?');
-        updateValues.push(updateData.default_difficulty);
-      }
 
       if (updateFields.length === 0) {
         // No updates requested, return existing user
@@ -490,7 +479,7 @@ export class UserService {
 
       // Return updated user
       const updatedUser = await database.get<User>(
-        'SELECT id, username, google_id, profile_picture, default_timer, default_difficulty, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, google_id, profile_picture, created_at, updated_at FROM users WHERE id = ?',
         [userId]
       );
 

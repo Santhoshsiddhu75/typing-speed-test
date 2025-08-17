@@ -19,28 +19,6 @@ const SetupScreen = () => {
   const [animatingDifficulty, setAnimatingDifficulty] = useState<DifficultyLevel | null>(null)
   const [buttonAnimation, setButtonAnimation] = useState<'none' | 'back-bounce-in' | 'start-slide-in' | 'start-exit'>('none')
 
-  // Auto-apply user defaults when available
-  useEffect(() => {
-    if (user && isAuthenticated) {
-      const actualUser = (user as any)?.user || user;
-      
-      // Set default timer if available
-      if (actualUser?.default_timer) {
-        const defaultTimer = parseInt(actualUser.default_timer.toString()) as TimerOption;
-        if ([1, 2, 5].includes(defaultTimer)) {
-          setSelectedTimer(defaultTimer);
-        }
-      }
-      
-      // Set default difficulty if available
-      if (actualUser?.default_difficulty) {
-        const defaultDifficulty = actualUser.default_difficulty as DifficultyLevel;
-        if (['easy', 'medium', 'hard'].includes(defaultDifficulty)) {
-          setSelectedDifficulty(defaultDifficulty);
-        }
-      }
-    }
-  }, [user, isAuthenticated])
 
   const timerOptions: { value: TimerOption; label: string; description: string }[] = [
     { value: 1, label: '1 Minute', description: 'Quick test' },
@@ -298,9 +276,6 @@ const SetupScreen = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <div className="font-semibold text-lg">{option.label}</div>
-                          {user && isAuthenticated && (user as any)?.user?.default_timer?.toString() === option.value.toString() && (
-                            <div className="w-2 h-2 bg-primary rounded-full" title="Your default"></div>
-                          )}
                         </div>
                         <div className="text-sm text-muted-foreground">{option.description}</div>
                       </div>
@@ -349,9 +324,6 @@ const SetupScreen = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <div className="font-semibold text-lg">{option.label}</div>
-                            {user && isAuthenticated && (user as any)?.user?.default_difficulty === option.value && (
-                              <div className="w-2 h-2 bg-primary rounded-full" title="Your default"></div>
-                            )}
                           </div>
                           <div className="text-sm text-muted-foreground">{option.description}</div>
                         </div>

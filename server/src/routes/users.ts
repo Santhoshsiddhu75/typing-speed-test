@@ -11,8 +11,6 @@ const router = express.Router();
 const UpdateProfileSchema = z.object({
   username: z.string().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/).optional(),
   profile_picture: z.string().url().optional(),
-  default_timer: z.enum(['1', '2', '5']).optional(),
-  default_difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
 }).strict();
 
 // Change password schema
@@ -76,8 +74,6 @@ router.patch('/users/:id', authenticateToken, async (req: express.Request, res: 
           id: updatedUser.id,
           username: updatedUser.username,
           profile_picture: updatedUser.profile_picture,
-          default_timer: updatedUser.default_timer,
-          default_difficulty: updatedUser.default_difficulty,
           created_at: updatedUser.created_at,
           updated_at: updatedUser.updated_at
         }

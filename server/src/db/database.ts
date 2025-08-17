@@ -48,8 +48,6 @@ class Database {
           password_hash TEXT,
           google_id TEXT UNIQUE,
           profile_picture TEXT,
-          default_timer INTEGER DEFAULT 2,
-          default_difficulty TEXT DEFAULT 'medium',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -98,19 +96,6 @@ class Database {
         // Column already exists, ignore error
       }
 
-      try {
-        await run(`ALTER TABLE users ADD COLUMN default_timer INTEGER DEFAULT 2`);
-        console.log('✅ Added default_timer column to users table');
-      } catch (error) {
-        // Column already exists, ignore error
-      }
-
-      try {
-        await run(`ALTER TABLE users ADD COLUMN default_difficulty TEXT DEFAULT 'medium'`);
-        console.log('✅ Added default_difficulty column to users table');
-      } catch (error) {
-        // Column already exists, ignore error
-      }
 
       console.log('✅ Database tables initialized successfully');
     } catch (error) {

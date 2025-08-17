@@ -8,8 +8,6 @@ export interface AuthUser {
   updated_at: string;
   google_id?: string;
   profile_picture?: string;
-  default_timer?: number;
-  default_difficulty?: string;
 }
 
 export const useAuth = () => {

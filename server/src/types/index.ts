@@ -21,8 +21,6 @@ export interface User {
   password_hash?: string;
   google_id?: string;
   profile_picture?: string;
-  default_timer?: number;
-  default_difficulty?: string;
   created_at: string;
   updated_at: string;
 }
