@@ -10,7 +10,8 @@ const TOPIC_WORDS = {
     objects: ['book', 'ball', 'cup', 'box', 'bag', 'toy', 'pen', 'hat', 'key', 'map'],
     people: ['man', 'woman', 'boy', 'girl', 'mom', 'dad', 'kid', 'baby', 'friend', 'person'],
     colors: ['red', 'blue', 'green', 'black', 'white', 'brown', 'pink', 'gray', 'gold', 'dark'],
-    sizes: ['big', 'small', 'long', 'short', 'tall', 'wide', 'thin', 'huge', 'tiny', 'full']
+    sizes: ['big', 'small', 'long', 'short', 'tall', 'wide', 'thin', 'huge', 'tiny', 'full'],
+    qualities: ['good', 'bad', 'nice', 'happy', 'sad', 'fast', 'slow', 'hot', 'cold', 'new']
   },
   medium: {
     subjects: ['technology', 'education', 'business', 'health', 'travel', 'culture', 'music', 'sports', 'food', 'nature'],
@@ -158,6 +159,6 @@ function generateText(difficulty: DifficultyLevel, targetWordCount: number): str
 
 
 export function getRandomText(difficulty: DifficultyLevel, timer: TimerOption): string {
-  const wordCount = timer === 1 ? 60 : timer === 2 ? 120 : 300
+  const wordCount = timer === 1 ? 70 : timer === 2 ? 120 : 300
   return generateText(difficulty, wordCount)
 }

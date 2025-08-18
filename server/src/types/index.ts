@@ -91,12 +91,20 @@ export const ChangePasswordRequestSchema = z.object({
   newPassword: passwordSchema,
 }).strict();
 
+export const GoogleUserInfoRequestSchema = z.object({
+  id: z.string().min(1, 'Google user ID is required'),
+  email: z.string().email('Valid email is required'),
+  name: z.string().min(1, 'Name is required'),
+  picture: z.string().url('Valid picture URL is required'),
+}).strict();
+
 // Request types
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 export type GoogleAuthRequest = z.infer<typeof GoogleAuthRequestSchema>;
 export type RefreshTokenRequest = z.infer<typeof RefreshTokenRequestSchema>;
 export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
+export type GoogleUserInfoRequest = z.infer<typeof GoogleUserInfoRequestSchema>;
 
 // API Response Types
 export interface ApiResponse<T = any> {

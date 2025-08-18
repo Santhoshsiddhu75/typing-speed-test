@@ -12,11 +12,13 @@ import {
   RegisterRequestSchema,
   LoginRequestSchema,
   GoogleAuthRequestSchema,
+  GoogleUserInfoRequestSchema,
   RefreshTokenRequestSchema,
   ChangePasswordRequestSchema,
   type RegisterRequest,
   type LoginRequest,
   type GoogleAuthRequest,
+  type GoogleUserInfoRequest,
   type RefreshTokenRequest,
   type ChangePasswordRequest,
   ApiResponse
@@ -232,14 +234,29 @@ router.post(
       }
 
       // Find or create user
+      console.log(`🔍 Google OAuth payload picture: ${payload.picture}`);
       const user = await UserService.findOrCreateGoogleUser({
         googleId: payload.sub,
         email: payload.email!,
-        name: payload.name!
+        name: payload.name!,
+        picture: payload.picture
+      });
+
+      console.log(`🔍 User returned from findOrCreateGoogleUser:`, { 
+        id: user.id, 
+        username: user.username, 
+        profile_picture: user.profile_picture 
       });
 
       // Generate tokens
       const { accessToken, refreshToken } = AuthUtils.generateTokenPair(user, securityContext);
+
+      const userResponse = AuthUtils.createUserResponse(user);
+      console.log(`🔍 User response after createUserResponse:`, { 
+        id: userResponse.id, 
+        username: userResponse.username, 
+        profile_picture: userResponse.profile_picture 
+      });
 
       console.log(`✅ Google OAuth successful for user: ${user.username}`);
 
@@ -247,7 +264,7 @@ router.post(
         success: true,
         message: 'Google authentication successful',
         data: {
-          user: AuthUtils.createUserResponse(user),
+          user: userResponse,
           accessToken,
           refreshToken,
           tokenType: 'Bearer',
@@ -269,6 +286,93 @@ router.post(
           statusCode = 400;
         } else if (error.message.includes('Invalid value')) {
           errorMessage = 'Invalid Google token';
+          statusCode = 400;
+        }
+      }
+
+      const response: ApiResponse = {
+        success: false,
+        error: errorMessage,
+        code: 'OAUTH_ERROR',
+        ...(process.env.NODE_ENV === 'development' && { 
+          stack: error instanceof Error ? error.stack : undefined 
+        })
+      };
+
+      res.status(statusCode).json(response);
+    }
+  }
+);
+
+/**
+ * POST /api/auth/google-userinfo
+ * SECURITY: Google OAuth integration using user info from access token
+ */
+router.post(
+  '/google-userinfo',
+  createRateLimit({
+    windowMs: AUTH_RATE_LIMITS.login.windowMs,
+    max: AUTH_RATE_LIMITS.login.max,
+    message: 'Too many Google OAuth attempts. Please try again later.'
+  }),
+  validateRequest(GoogleUserInfoRequestSchema),
+  async (req: express.Request, res: express.Response): Promise<void> => {
+    try {
+      const { id, email, name, picture }: GoogleUserInfoRequest = req.body;
+      const securityContext = AuthUtils.createSecurityContext(req);
+
+      console.log(`🔐 Google OAuth userinfo attempt from IP: ${AuthUtils.hashForLogging(securityContext.ipAddress)}`);
+
+      // Find or create user using the user info
+      console.log(`🔍 Google OAuth userinfo picture: ${picture}`);
+      const user = await UserService.findOrCreateGoogleUser({
+        googleId: id,
+        email: email,
+        name: name,
+        picture: picture
+      });
+
+      console.log(`🔍 User returned from findOrCreateGoogleUser:`, { 
+        id: user.id, 
+        username: user.username, 
+        profile_picture: user.profile_picture 
+      });
+
+      // Generate tokens
+      const { accessToken, refreshToken } = AuthUtils.generateTokenPair(user, securityContext);
+
+      const userResponse = AuthUtils.createUserResponse(user);
+      console.log(`🔍 User response after createUserResponse:`, { 
+        id: userResponse.id, 
+        username: userResponse.username, 
+        profile_picture: userResponse.profile_picture 
+      });
+
+      console.log(`✅ Google OAuth userinfo successful for user: ${user.username}`);
+
+      const response: ApiResponse = {
+        success: true,
+        message: 'Google authentication successful',
+        data: {
+          user: userResponse,
+          accessToken,
+          refreshToken,
+          tokenType: 'Bearer',
+          expiresIn: '15m'
+        }
+      };
+
+      res.json(response);
+
+    } catch (error) {
+      console.error('❌ Google OAuth userinfo error:', error);
+
+      let errorMessage = 'Google authentication failed';
+      let statusCode = 500;
+
+      if (error instanceof Error) {
+        if (error.message.includes('Invalid')) {
+          errorMessage = 'Invalid user information';
           statusCode = 400;
         }
       }
@@ -395,10 +499,23 @@ router.get(
       // Get user statistics
       const stats = await UserService.getUserStats(req.user.id);
 
+      console.log(`🔍 /me endpoint - req.user:`, { 
+        id: req.user.id, 
+        username: req.user.username, 
+        profile_picture: req.user.profile_picture 
+      });
+
+      const userResponse = AuthUtils.createUserResponse(req.user);
+      console.log(`🔍 /me endpoint - user response:`, { 
+        id: userResponse.id, 
+        username: userResponse.username, 
+        profile_picture: userResponse.profile_picture 
+      });
+
       const response: ApiResponse = {
         success: true,
         data: {
-          user: AuthUtils.createUserResponse(req.user),
+          user: userResponse,
           stats
         }
       };

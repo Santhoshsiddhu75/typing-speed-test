@@ -29,6 +29,7 @@ export const useAuth = () => {
 
         const userData = await authApi.getCurrentUser();
         console.log('useAuth - userData received:', userData);
+        console.log('🔍 useAuth - profile_picture in userData:', userData.profile_picture);
         setUser(userData);
         setIsAuthenticated(true);
       } catch (error) {

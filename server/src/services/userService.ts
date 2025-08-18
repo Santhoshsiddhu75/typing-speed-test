@@ -14,6 +14,7 @@ export interface GoogleUserData {
   email: string;
   name: string;
   username?: string;
+  picture?: string;
 }
 
 /**
@@ -225,7 +226,7 @@ export class UserService {
    * SECURITY: Validates Google user data and handles account linking
    */
   static async findOrCreateGoogleUser(googleUserData: GoogleUserData): Promise<User> {
-    const { googleId, email, name } = googleUserData;
+    const { googleId, email, name, picture } = googleUserData;
 
     if (!googleId || !email || !name) {
       throw new Error('Invalid Google user data');
@@ -234,11 +235,20 @@ export class UserService {
     try {
       // First, try to find existing user by Google ID
       let user = await database.get<User>(
-        'SELECT id, username, google_id, created_at, updated_at FROM users WHERE google_id = ?',
+        'SELECT id, username, google_id, profile_picture, created_at, updated_at FROM users WHERE google_id = ?',
         [googleId]
       );
 
       if (user) {
+        // Update profile picture if it has changed
+        if (picture && user.profile_picture !== picture) {
+          await database.run(
+            'UPDATE users SET profile_picture = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [picture, user.id]
+          );
+          user.profile_picture = picture;
+          console.log(`✅ Updated profile picture for existing Google user: ${user.username}`);
+        }
         console.log(`✅ Existing Google user found: ${user.username}`);
         return user;
       }
@@ -277,9 +287,9 @@ export class UserService {
 
       // Create new Google user
       const result = await database.run(`
-        INSERT INTO users (username, google_id, created_at, updated_at)
-        VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `, [username, googleId]);
+        INSERT INTO users (username, google_id, profile_picture, created_at, updated_at)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `, [username, googleId, picture || null]);
 
       if (!result.lastID) {
         throw new Error('Failed to create Google user');
@@ -287,7 +297,7 @@ export class UserService {
 
       // Fetch and return the created user
       const newUser = await database.get<User>(
-        'SELECT id, username, google_id, created_at, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, google_id, profile_picture, created_at, updated_at FROM users WHERE id = ?',
         [result.lastID]
       );
 

@@ -15,10 +15,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CleanStatsCard from '@/components/CleanStatsCard';
 import ProgressChart from '@/components/ProgressChart';
 import TestsTable from '@/components/TestsTable';
-import { ThemeOnlyToggle } from '@/components/ThemeOnlyToggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import Logo from '@/components/Logo';
+import Navbar from '@/components/Navbar';
 import InitialsAvatar from '@/components/InitialsAvatar';
 import AvatarUpload from '@/components/AvatarUpload';
+import AdBanner from '@/components/AdBanner';
 import { 
   User, 
   TrendingUp, 
@@ -83,6 +85,7 @@ const ProfilePage: React.FC = () => {
   const [avatarRefreshing, setAvatarRefreshing] = useState(false);
   const [deleteHistoryDialogOpen, setDeleteHistoryDialogOpen] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   
   
   const [passwordFormData, setPasswordFormData] = useState({
@@ -385,6 +388,11 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleLogout = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const confirmLogout = () => {
+    setLogoutDialogOpen(false);
     logout();
     navigate('/');
   };
@@ -456,61 +464,7 @@ const ProfilePage: React.FC = () => {
         />
       </div>
 
-      {/* Header */}
-      <header 
-        className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50"
-        role="banner"
-        aria-label="Profile page header"
-      >
-        <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/')}
-                className="text-muted-foreground hover:text-foreground p-1.5 sm:p-2 flex-shrink-0"
-                aria-label="Navigate back to TapTest homepage"
-              >
-                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              </Button>
-              <div className="h-6 w-px bg-border hidden sm:block" role="separator" aria-hidden="true" />
-              <div className="min-w-0 flex-shrink">
-                <Logo size="medium" showText={false} className="sm:hidden" />
-                <Logo size="medium" className="hidden sm:flex" />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              <nav aria-label="Profile navigation">
-                <div className="flex items-center">
-                  <div className="relative">
-                    <div 
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 bg-card/80 backdrop-blur-sm shadow-lg"
-                      role="img"
-                      aria-label={`${actualUser?.username || 'User'} profile picture`}
-                    >
-                      {actualUser?.profile_picture ? (
-                        <img
-                          src={actualUser.profile_picture}
-                          alt={`${actualUser.username}'s profile picture`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <InitialsAvatar 
-                          username={actualUser?.username || 'User'} 
-                          size="sm"
-                          className="w-full h-full rounded-none border-0"
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </nav>
-              <ThemeOnlyToggle />
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar backUrl="/" className="sticky" />
 
 
       <div className="container mx-auto px-4 py-8 relative z-10">
@@ -665,6 +619,15 @@ const ProfilePage: React.FC = () => {
               subtitle="Most recent"
             />
           </section>
+
+          {/* Advertisement Banner - Mobile */}
+          <div className="py-6">
+            <AdBanner 
+              size="horizontal" 
+              slot="profile-mobile-banner"
+              className="mx-auto"
+            />
+          </div>
 
           {/* 3. Charts and Data Tabs (exact copy from desktop) */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" aria-label="Profile data views">
@@ -1066,6 +1029,15 @@ const ProfilePage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Bottom Ad - Mobile Rectangle */}
+          <div className="pt-6 flex justify-center">
+            <AdBanner 
+              size="rectangle" 
+              slot="profile-mobile-bottom"
+              className="mx-auto"
+            />
+          </div>
         </div>
 
         {/* Desktop Layout - Wide Screens (xl and up) */}
@@ -1273,6 +1245,15 @@ const ProfilePage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Bottom Ad - Desktop Left Sidebar Rectangle */}
+            <div className="pt-6 flex justify-center">
+              <AdBanner 
+                size="rectangle" 
+                slot="profile-desktop-sidebar-bottom"
+                className="mx-auto"
+              />
+            </div>
           </aside>
 
           {/* Right Column - Stats & History (fluid) */}
@@ -1320,6 +1301,15 @@ const ProfilePage: React.FC = () => {
                 subtitle="Most recent"
               />
             </section>
+
+            {/* Advertisement Banner - Desktop */}
+            <div className="py-6">
+              <AdBanner 
+                size="horizontal" 
+                slot="profile-desktop-banner"
+                className="mx-auto"
+              />
+            </div>
 
             {/* Charts and Data Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" aria-label="Profile data views">
@@ -1860,6 +1850,25 @@ const ProfilePage: React.FC = () => {
             />
           </DialogContent>
         </Dialog>
+
+        {/* Logout Confirmation Dialog */}
+        <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Sign Out</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to sign out? You'll need to log in again to access your profile and test history.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmLogout} className="bg-destructive hover:bg-destructive/90">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

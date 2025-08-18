@@ -97,7 +97,7 @@ export class AuthUtils {
         issuer: 'typing-speed-test-api',
         audience: 'typing-speed-test-app',
         algorithm: 'HS256'
-      });
+      } as jwt.SignOptions);
     } catch (error) {
       console.error('Error generating access token:', error);
       throw new Error('Failed to generate authentication token');
@@ -123,7 +123,7 @@ export class AuthUtils {
         issuer: 'typing-speed-test-api',
         audience: 'typing-speed-test-app',
         algorithm: 'HS256'
-      });
+      } as jwt.SignOptions);
     } catch (error) {
       console.error('Error generating refresh token:', error);
       throw new Error('Failed to generate refresh token');

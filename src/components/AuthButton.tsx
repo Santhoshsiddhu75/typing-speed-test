@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,10 @@ interface AuthButtonProps {
 const AuthButton: React.FC<AuthButtonProps> = ({ className }) => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  
+  // Debug: Log user data to see what we have
+  console.log('AuthButton - User data:', user);
+  console.log('AuthButton - Profile picture:', user?.profile_picture);
 
   const handleClick = () => {
     if (isAuthenticated) {
@@ -42,32 +46,13 @@ const AuthButton: React.FC<AuthButtonProps> = ({ className }) => {
         <LogIn className="h-5 w-5" />
       )}
 
-      {/* Show profile content when authenticated */}
-      {isAuthenticated && user && (
-        <>
-          {user.google_id && user.profile_picture ? (
-            <img
-              src={user.profile_picture}
-              alt={`${user.username}'s profile`}
-              className="h-full w-full object-cover rounded-full"
-              onError={(e) => {
-                // Fallback to User icon if image fails to load
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const fallback = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
-                if (fallback) {
-                  fallback.style.display = 'block';
-                }
-              }}
-            />
-          ) : null}
-          <User 
-            className={cn(
-              "h-5 w-5 fallback-icon",
-              user.google_id && user.profile_picture ? "hidden" : "block"
-            )} 
-          />
-        </>
+      {/* Show profile picture when authenticated and available */}
+      {isAuthenticated && user && user.profile_picture && (
+        <img
+          src={user.profile_picture}
+          alt={`${user.username}'s profile`}
+          className="h-full w-full object-cover rounded-full"
+        />
       )}
     </Button>
   );

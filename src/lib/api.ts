@@ -139,7 +139,7 @@ export const testResultsApi = {
    */
   async createTestResult(testData: CreateTestResultRequest): Promise<TestResult> {
     const token = localStorage.getItem('accessToken');
-    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const headers: Record<string, string> = token ? { 'Authorization': `Bearer ${token}` } : {};
     
     return apiRequest<TestResult>('/tests', {
       method: 'POST',
@@ -165,7 +165,7 @@ export const testResultsApi = {
     if (params.end_date) searchParams.append('end_date', params.end_date);
 
     const token = localStorage.getItem('accessToken');
-    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const headers: Record<string, string> = token ? { 'Authorization': `Bearer ${token}` } : {};
 
     return apiRequest<PaginatedResponse<TestResult>>(`/tests?${searchParams.toString()}`, {
       headers
@@ -177,7 +177,7 @@ export const testResultsApi = {
    */
   async getUserStats(username: string) {
     const token = localStorage.getItem('accessToken');
-    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const headers: Record<string, string> = token ? { 'Authorization': `Bearer ${token}` } : {};
     
     return apiRequest(`/tests/stats/${username}`, {
       headers
@@ -275,11 +275,14 @@ export const authApi = {
       throw new Error('No authentication token found');
     }
 
-    return apiRequest<UserInfo>('/auth/me', {
+    const response = await apiRequest<{user: UserInfo, stats: any}>('/auth/me', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
+    
+    // Extract user from the response data structure
+    return response.user;
   },
 
   // Refresh access token
@@ -300,6 +303,14 @@ export const authApi = {
     return apiRequest<AuthResponse>('/auth/google', {
       method: 'POST',
       body: JSON.stringify({ idToken: googleIdToken })
+    });
+  },
+  
+  // Google OAuth login with user info
+  async googleLoginWithUserInfo(userInfo: { id: string; email: string; name: string; picture: string }): Promise<AuthResponse> {
+    return apiRequest<AuthResponse>('/auth/google-userinfo', {
+      method: 'POST',
+      body: JSON.stringify(userInfo)
     });
   },
 

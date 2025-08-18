@@ -282,10 +282,16 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     
     // Content Security Policy (adjust based on your needs)
-    'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'",
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src 'self' data: https:; connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; frame-ancestors 'none'",
     
     // Feature Policy (now Permissions Policy)
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    
+    // Cross-Origin-Opener-Policy to allow Google OAuth popups
+    'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    
+    // Cross-Origin-Embedder-Policy for security
+    'Cross-Origin-Embedder-Policy': 'unsafe-none',
     
     // Remove server information
     'Server': ''

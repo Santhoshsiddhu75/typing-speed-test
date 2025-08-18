@@ -5,6 +5,7 @@ interface LogoProps {
   className?: string;
   size?: 'small' | 'medium' | 'large';
   showText?: boolean;
+  showTagline?: boolean;
   clickable?: boolean;
   textClassName?: string;
 }
@@ -13,6 +14,7 @@ const Logo: React.FC<LogoProps> = ({
   className = '',
   size = 'medium',
   showText = true,
+  showTagline = true,
   clickable = true,
   textClassName = ''
 }) => {
@@ -78,8 +80,8 @@ const Logo: React.FC<LogoProps> = ({
           >
             TapTest
           </span>
-          {size === 'large' && (
-            <span className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">
+          {size === 'large' && showTagline && (
+            <span className="text-xs sm:text-sm text-muted-foreground mt-1">
               Master Your Typing Speed
             </span>
           )}

@@ -16,7 +16,6 @@ export const ThemeToggle = ({ className }: ThemeToggleProps) => {
       "flex items-center gap-2",
       className || "fixed top-4 right-4 z-50"
     )}>
-      <AuthButton />
       <Button
         variant="outline"
         size="sm"
@@ -50,6 +49,7 @@ export const ThemeToggle = ({ className }: ThemeToggleProps) => {
           />
         </div>
       </Button>
+      <AuthButton />
     </div>
   )
 }

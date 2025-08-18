@@ -27,7 +27,7 @@ router.post('/tests', async (req, res) => {
     // Save test result
     const result = await testResultsService.createTestResult(testData);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: result,
       message: 'Test result saved successfully'
@@ -37,10 +37,10 @@ router.post('/tests', async (req, res) => {
     console.error('Error saving test result:', error);
     console.error('Request body was:', req.body);
     
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? [(error as Error).message] : undefined
     } satisfies ApiResponse);
   }
 });
@@ -67,7 +67,7 @@ router.get('/tests', async (req, res) => {
     // Get test results
     const results = await testResultsService.getTestResults(params);
 
-    res.json({
+    return res.json({
       success: true,
       data: results
     } satisfies ApiResponse);
@@ -75,7 +75,7 @@ router.get('/tests', async (req, res) => {
   } catch (error) {
     console.error('Error fetching test results:', error);
     
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error'
     } satisfies ApiResponse);
@@ -107,7 +107,7 @@ router.get('/tests/stats/:username', async (req, res) => {
       } satisfies ApiResponse);
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: stats
     } satisfies ApiResponse);
@@ -115,7 +115,7 @@ router.get('/tests/stats/:username', async (req, res) => {
   } catch (error) {
     console.error('Error fetching user stats:', error);
     
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error'
     } satisfies ApiResponse);
@@ -140,7 +140,7 @@ router.get('/tests/leaderboard', async (req, res) => {
 
     const leaderboard = await testResultsService.getLeaderboard(difficulty, limit);
 
-    res.json({
+    return res.json({
       success: true,
       data: leaderboard
     } satisfies ApiResponse);
@@ -148,7 +148,7 @@ router.get('/tests/leaderboard', async (req, res) => {
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
     
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error'
     } satisfies ApiResponse);
@@ -180,7 +180,7 @@ router.delete('/tests', async (req, res) => {
 
     const deletedCount = await testResultsService.deleteUserResults(username);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         deleted: deletedCount,
@@ -191,7 +191,7 @@ router.delete('/tests', async (req, res) => {
   } catch (error) {
     console.error('Error deleting user test results:', error);
     
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error'
     } satisfies ApiResponse);
@@ -236,12 +236,12 @@ router.get('/tests/export', async (req, res) => {
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="typing-test-history-${username}-${new Date().toISOString().split('T')[0]}.csv"`);
-    res.send(csvContent);
+    return res.send(csvContent);
 
   } catch (error) {
     console.error('Error exporting test results:', error);
     
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error'
     } satisfies ApiResponse);

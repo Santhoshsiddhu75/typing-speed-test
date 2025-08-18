@@ -25,9 +25,7 @@ import {
   Home, 
   CheckCircle2,
   Save,
-  AlertTriangle,
-  User,
-  ArrowLeft
+  AlertTriangle
 } from 'lucide-react'
 import { TimerOption, DifficultyLevel, TypingStats, CharacterState, TestResult } from '@/types'
 import { getRandomText } from '@/data/texts'
@@ -38,8 +36,9 @@ import { SplitText } from '@/components/SplitText'
 import { TypingWaveform } from '@/components/TypingWaveform'
 import { Toggle } from '@/components/ui/toggle'
 import { CircularTimer } from '@/components/CircularTimer'
-import Logo from '@/components/Logo'
-import { ThemeOnlyToggle } from '@/components/ThemeOnlyToggle'
+import Navbar from '@/components/Navbar'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import AdBanner from '@/components/AdBanner'
 
 const TypingTestScreen = () => {
   const navigate = useNavigate()
@@ -497,72 +496,7 @@ const TypingTestScreen = () => {
 
   return (
     <div className="min-h-screen p-4 bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden">
-      {/* Top Navigation Bar */}
-      <header 
-        className="absolute top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm"
-        role="banner"
-        aria-label="Typing test page header"
-      >
-        <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/')}
-                className="text-muted-foreground hover:text-foreground p-1.5 sm:p-2 flex-shrink-0"
-                aria-label="Navigate back to setup"
-              >
-                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              </Button>
-              <div className="h-6 w-px bg-border hidden sm:block" role="separator" aria-hidden="true" />
-              <div className="min-w-0 flex-shrink">
-                <Logo size="medium" showText={false} className="sm:hidden" />
-                <div className="hidden sm:flex flex-col">
-                  <Logo size="medium" />
-                  <p className="text-xs text-muted-foreground ml-1 mt-1">
-                    {timer} minute{timer > 1 ? 's' : ''} • {difficulty} 
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              {isAuthenticated && (
-                <nav aria-label="Profile navigation">
-                  <div className="flex items-center">
-                    <div className="relative">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate('/profile')}
-                        className="p-0"
-                        aria-label="Go to profile"
-                      >
-                        <div 
-                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center border-2 bg-card/80 backdrop-blur-sm shadow-lg"
-                          role="img"
-                          aria-label={`${actualUser?.username || 'User'} profile picture`}
-                        >
-                          {actualUser?.profile_picture ? (
-                            <img
-                              src={actualUser.profile_picture}
-                              alt={`${actualUser.username}'s profile picture`}
-                              className="w-full h-full rounded-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" aria-hidden="true" />
-                          )}
-                        </div>
-                      </Button>
-                    </div>
-                  </div>
-                </nav>
-              )}
-              <ThemeOnlyToggle />
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar backUrl="/" />
       {/* Large Background Circle centered on timer */}
       <div className="absolute inset-0 flex items-start justify-center pt-[200px] md:pt-[220px] z-0">
         <div 
@@ -873,6 +807,15 @@ const TypingTestScreen = () => {
                 </div>
               </div>
             )}
+
+            {/* Advertisement - Results Modal */}
+            <div className="py-4 flex justify-center">
+              <AdBanner 
+                size="rectangle" 
+                slot="results-modal-ad"
+                className="mx-auto"
+              />
+            </div>
 
             <DialogFooter className="flex-col sm:flex-row gap-3">
               {/* Save Result Button / Check Profile Button */}

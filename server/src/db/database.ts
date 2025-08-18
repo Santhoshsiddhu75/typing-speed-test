@@ -106,13 +106,21 @@ class Database {
 
   // Generic query methods
   async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
-    const get = promisify(this.db.get.bind(this.db));
-    return await get(sql, params) as T;
+    return new Promise((resolve, reject) => {
+      this.db.get(sql, params, (err, row) => {
+        if (err) reject(err);
+        else resolve(row as T);
+      });
+    });
   }
 
   async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
-    const all = promisify(this.db.all.bind(this.db));
-    return await all(sql, params) as T[];
+    return new Promise((resolve, reject) => {
+      this.db.all(sql, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows as T[]);
+      });
+    });
   }
 
   async run(sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> {
