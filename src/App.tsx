@@ -7,6 +7,9 @@ import TypingTestScreen from '@/pages/TypingTestScreen'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import ProfilePage from '@/pages/ProfilePage'
+import PrivacyPolicy from '@/pages/PrivacyPolicy'
+import TermsOfService from '@/pages/TermsOfService'
+import AboutPage from '@/pages/AboutPage'
 import './index.css'
 
 function AppContent() {
@@ -15,16 +18,20 @@ function AppContent() {
   const isTestPage = location.pathname === '/test';
   const isProfilePage = location.pathname === '/profile';
   const isSetupPage = location.pathname === '/';
+  const isLegalPage = location.pathname === '/privacy' || location.pathname === '/terms' || location.pathname === '/about';
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-      {!isAuthPage && !isTestPage && !isProfilePage && !isSetupPage && <ThemeToggle />}
+      {!isAuthPage && !isTestPage && !isProfilePage && !isSetupPage && !isLegalPage && <ThemeToggle />}
       <Routes>
         <Route path="/" element={<SetupScreen />} />
         <Route path="/test" element={<TypingTestScreen />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

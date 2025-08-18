@@ -392,6 +392,32 @@ const SetupScreen = () => {
             </div>
           </CardContent>
         </Card> */}
+
+        {/* Footer Links */}
+        <div className="text-center pt-8 pb-4">
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+            <button
+              onClick={() => navigate('/about')}
+              className="hover:text-foreground transition-colors underline"
+            >
+              About
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => navigate('/privacy')}
+              className="hover:text-foreground transition-colors underline"
+            >
+              Privacy Policy
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => navigate('/terms')}
+              className="hover:text-foreground transition-colors underline"
+            >
+              Terms of Service
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
