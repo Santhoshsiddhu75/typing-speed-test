@@ -23,4 +23,4 @@ RUN npm prune --production
 EXPOSE 3003
 
 # Start the server
-CMD ["npm", "start"]
+CMD ["node", "dist/server.js"]
