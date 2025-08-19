@@ -176,7 +176,7 @@
   }
   
   .dark .typing-char-correct {
-    color: rgb(34, 197, 94); /* green-500 for dark mode */
+   color: rgb(34, 197, 94); /* emerald-400 for dark mode - brighter */
   }
   
   .typing-char-incorrect {
@@ -194,6 +194,10 @@
   
   .typing-char-upcoming {
     @apply text-muted-foreground;
+  }
+  
+  .dark .typing-char-upcoming {
+    color: rgb(156, 163, 175); /* gray-400 for dark mode - brighter than muted-foreground */
   }
   
   .typing-word-completed {
@@ -490,4 +494,67 @@
   .animate-fade-in {
     animation: fade-in 0.3s ease-out;
   }
+}
+
+/* Mobile-specific optimizations for typing input */
+@media (max-width: 768px) {
+  .typing-text {
+    /* Prevent zoom on focus for iOS */
+    font-size: 16px !important;
+    /* Better touch target */
+    min-height: 6rem;
+  }
+  
+  /* CRITICAL: Prevent iOS zoom on ALL form inputs */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  
+  /* Ensure smooth scrolling on mobile */
+  .typing-text * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Prevent iOS keyboard from shrinking viewport */
+@supports (-webkit-touch-callout: none) {
+  .typing-text {
+    /* iOS-specific font size to prevent zoom */
+    font-size: 16px !important;
+  }
+  
+  /* CRITICAL: Prevent iOS zoom on ALL form inputs */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Android-specific optimizations */
+@media screen and (-webkit-min-device-pixel-ratio: 1) and (max-width: 768px) {
+  input[type="text"] {
+    /* Prevent Android keyboard issues */
+    transform: translateZ(0);
+  }
+}
+
+/* Enhanced focus states for mobile */
+.typing-text:focus-within {
+  /* Visual feedback for active typing area */
+  box-shadow: 0 0 0 2px rgb(34, 197, 94, 0.2);
+}
+
+/* Prevent text selection in typing area on mobile */
+.typing-text {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* Prevent callout on iOS */
+  -webkit-touch-callout: none;
+}
+
+/* Ensure proper viewport handling */
+@viewport {
+  width: device-width;
 }

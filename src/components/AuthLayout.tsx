@@ -23,8 +23,8 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         <div 
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: '180vh',
-            height: '180vh',
+            width: 'min(180vh, 90vw)',
+            height: 'min(180vh, 90vw)',
             transform: 'translate(-50%, -50%)',
             backgroundColor: 'rgba(34, 197, 94, 0.15)',
             boxShadow: '0 0 80px rgba(34, 197, 94, 0.3), 0 0 160px rgba(34, 197, 94, 0.15)',

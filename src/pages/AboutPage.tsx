@@ -5,15 +5,18 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Target, Users, Zap, Brain, Trophy, Heart, Code, Mail } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Logo from '@/components/Logo';
+import Footer from '@/components/Footer';
 
 const AboutPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex flex-col">
       <Navbar showBackButton={true} backUrl="/" />
       
-      <div className="container mx-auto px-4 py-24 max-w-4xl">
+      {/* Main Content */}
+      <div className="flex-1">
+        <div className="container mx-auto px-4 py-24 max-w-4xl">
         <div className="mb-8">
           <Button
             variant="ghost"
@@ -293,7 +296,11 @@ const AboutPage: React.FC = () => {
             </Button>
           </div>
         </div>
+        </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

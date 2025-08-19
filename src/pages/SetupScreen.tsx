@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import Logo from '@/components/Logo'
 import Navbar from '@/components/Navbar'
 import AdBanner from '@/components/AdBanner'
+import Footer from '@/components/Footer'
 
 const SetupScreen = () => {
   const navigate = useNavigate()
@@ -119,15 +120,16 @@ const SetupScreen = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden flex flex-col">
       <Navbar showBackButton={false} />
+      
       {/* Large Background Circle centered */}
       <div className="absolute inset-0 flex items-center justify-center z-0">
         <div 
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: '180vh',
-            height: '180vh',
+            width: 'min(180vh, 90vw)',
+            height: 'min(180vh, 90vw)',
             transform: 'translate(-50%, -50%)',
             backgroundColor: 'rgba(34, 197, 94, 0.15)',
             boxShadow: '0 0 80px rgba(34, 197, 94, 0.3), 0 0 160px rgba(34, 197, 94, 0.15)',
@@ -150,9 +152,11 @@ const SetupScreen = () => {
         />
       </div>
       
-      <div className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in relative z-10">
-        {/* Header */}
-        <div className="text-center space-y-4 mt-20">
+      {/* Main Content - Centered */}
+      <div className="flex-1 flex items-start sm:items-center justify-center p-4 pt-20 sm:pt-24">
+        <div className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in relative z-10">
+        {/* Header - Hidden on mobile since logo is in navbar */}
+        <div className="text-center space-y-4 mt-4 sm:mt-8 hidden sm:block">
           <div className="flex items-center justify-center mb-6">
             <Logo size="large" showTagline={true} clickable={false} />
           </div>
@@ -393,32 +397,11 @@ const SetupScreen = () => {
           </CardContent>
         </Card> */}
 
-        {/* Footer Links */}
-        <div className="text-center pt-8 pb-4">
-          <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-            <button
-              onClick={() => navigate('/about')}
-              className="hover:text-foreground transition-colors underline"
-            >
-              About
-            </button>
-            <span>•</span>
-            <button
-              onClick={() => navigate('/privacy')}
-              className="hover:text-foreground transition-colors underline"
-            >
-              Privacy Policy
-            </button>
-            <span>•</span>
-            <button
-              onClick={() => navigate('/terms')}
-              className="hover:text-foreground transition-colors underline"
-            >
-              Terms of Service
-            </button>
-          </div>
         </div>
       </div>
+      
+      {/* Footer at bottom */}
+      <Footer />
     </div>
   )
 }

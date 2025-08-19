@@ -64,7 +64,7 @@ const Navbar: React.FC<NavbarProps> = ({
       <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           {/* Left side: Back button + Logo */}
-          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
             {showBackButton && (
               <Button
                 variant="ghost"
@@ -77,8 +77,17 @@ const Navbar: React.FC<NavbarProps> = ({
               </Button>
             )}
             
-            <div className="flex items-center min-w-0">
-              <Logo size="medium" showText={true} className="flex-shrink-0" />
+            <div className="flex items-center gap-3">
+              {/* Mobile logo */}
+              <div className="flex items-center gap-2 sm:hidden">
+                <img src="/assets/logounpress.png" alt="TapTest" className="h-6 w-6" />
+                <span className="font-bold text-foreground text-base">TapTest</span>
+              </div>
+              {/* Desktop logo */}
+              <div className="flex items-center gap-3 hidden sm:flex">
+                <img src="/assets/logounpress.png" alt="TapTest" className="h-10 w-10" />
+                <span className="font-bold text-foreground text-lg">TapTest</span>
+              </div>
             </div>
           </div>
 
@@ -90,7 +99,7 @@ const Navbar: React.FC<NavbarProps> = ({
               size="sm"
               onClick={handleProfileClick}
               className={cn(
-                "relative h-8 w-8 sm:h-10 sm:w-10 rounded-full p-0",
+                "relative h-7 w-7 sm:h-10 sm:w-10 rounded-full p-0",
                 "border-2 bg-card/80 backdrop-blur-sm",
                 "hover:bg-accent transition-all duration-300",
                 "shadow-lg hover:shadow-xl",
@@ -132,7 +141,7 @@ const Navbar: React.FC<NavbarProps> = ({
               size="sm"
               onClick={() => setFeedbackModalOpen(true)}
               className={cn(
-                "w-8 h-8 sm:w-10 sm:h-10 rounded-full p-0",
+                "w-7 h-7 sm:w-10 sm:h-10 rounded-full p-0",
                 "border-2 bg-card/80 backdrop-blur-sm",
                 "hover:bg-accent transition-all duration-300",
                 "shadow-lg hover:shadow-xl",
@@ -150,7 +159,7 @@ const Navbar: React.FC<NavbarProps> = ({
               size="sm"
               onClick={toggleTheme}
               className={cn(
-                "w-8 h-8 sm:w-10 sm:h-10 rounded-full p-0",
+                "w-7 h-7 sm:w-10 sm:h-10 rounded-full p-0",
                 "border-2 bg-card/80 backdrop-blur-sm",
                 "hover:bg-accent transition-all duration-300",
                 "shadow-lg hover:shadow-xl",

@@ -37,7 +37,6 @@ import { TypingWaveform } from '@/components/TypingWaveform'
 import { Toggle } from '@/components/ui/toggle'
 import { CircularTimer } from '@/components/CircularTimer'
 import Navbar from '@/components/Navbar'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import AdBanner from '@/components/AdBanner'
 
 const TypingTestScreen = () => {
@@ -45,6 +44,7 @@ const TypingTestScreen = () => {
   const [searchParams] = useSearchParams()
   const { user, isAuthenticated } = useAuth()
   const textContainerRef = useRef<HTMLDivElement>(null)
+  const hiddenInputRef = useRef<HTMLInputElement>(null)
   const measureCharRef = useRef<HTMLSpanElement>(null)
   
   // Test configuration
@@ -226,6 +226,34 @@ const TypingTestScreen = () => {
     }
   }, [isTestActive, timeRemaining, isTestComplete])
 
+  // CRITICAL: Prevent accidental back button navigation during active tests (Mobile UX)
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (isTestActive) {
+        e.preventDefault();
+        // Push the current state back to prevent navigation
+        window.history.pushState(null, '', window.location.href);
+        // Optional: Show confirmation dialog
+        const confirmExit = window.confirm(
+          'Your typing test is in progress. Are you sure you want to leave? Your progress will be lost.'
+        );
+        if (confirmExit) {
+          setIsTestActive(false);
+          window.history.back();
+        }
+      }
+    };
+
+    if (isTestActive) {
+      // Add extra history entry to catch back button
+      window.history.pushState(null, '', window.location.href);
+      window.addEventListener('popstate', handlePopState);
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isTestActive]);
 
   // Faster decay when not typing for better waveform responsiveness
   useEffect(() => {
@@ -262,11 +290,18 @@ const TypingTestScreen = () => {
   }, [userInput, testText, timeRemaining, startTime])
 
 
-  // Focus text container on mount and when test starts
+  // Focus input on mount and when test starts (mobile-friendly)
   useEffect(() => {
-    if (textContainerRef.current) {
-      textContainerRef.current.focus()
+    const focusInput = () => {
+      if (hiddenInputRef.current) {
+        hiddenInputRef.current.focus()
+      } else if (textContainerRef.current) {
+        textContainerRef.current.focus()
+      }
     }
+    
+    // Small delay to ensure elements are mounted
+    setTimeout(focusInput, 100)
   }, [])
 
   // Detect back navigation and generate new text if test is complete
@@ -308,9 +343,11 @@ const TypingTestScreen = () => {
         typingSpeedHistoryRef.current = []
         lastKeypressTimeRef.current = 0
         
-        // Focus the text container
+        // Focus the input (mobile-friendly)
         setTimeout(() => {
-          if (textContainerRef.current) {
+          if (hiddenInputRef.current) {
+            hiddenInputRef.current.focus()
+          } else if (textContainerRef.current) {
             textContainerRef.current.focus()
           }
         }, 100)
@@ -324,8 +361,8 @@ const TypingTestScreen = () => {
     }
   }, [isTestComplete, difficulty, timer])
 
-  // Handle key events directly on text container
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  // Handle key events from either input method
+  const handleKeyInput = (e: React.KeyboardEvent, fromHiddenInput = false) => {
     if (isTestComplete || showResults) return
 
     // Check caps lock status on every key press
@@ -337,6 +374,11 @@ const TypingTestScreen = () => {
         const newValue = userInput.slice(0, -1)
         setUserInput(newValue)
         setCurrentIndex(newValue.length)
+        
+        // Sync hidden input value if this came from visual div
+        if (!fromHiddenInput && hiddenInputRef.current) {
+          hiddenInputRef.current.value = newValue
+        }
       }
     } else if (e.key.length === 1) {
       // Handle regular character input
@@ -384,9 +426,116 @@ const TypingTestScreen = () => {
       if (newValue.length <= testText.length) {
         setUserInput(newValue)
         setCurrentIndex(newValue.length)
+        
+        // Sync hidden input value if this came from visual div
+        if (!fromHiddenInput && hiddenInputRef.current) {
+          hiddenInputRef.current.value = newValue
+        }
       }
     }
   }
+
+  // Legacy handler for visual div (desktop)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    handleKeyInput(e, false)
+  }
+
+  // Handler for hidden input (mobile)
+  const handleHiddenInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    handleKeyInput(e, true)
+  }
+
+  // Handle input changes from mobile keyboards (composition events)
+  const handleHiddenInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isTestComplete || showResults) return
+    
+    const newValue = e.target.value
+    const currentTime = Date.now()
+    
+    // Handle input length changes (typing or backspace)
+    if (newValue.length > userInput.length) {
+      // Typing - calculate speed and update
+      if (lastKeypressTimeRef.current > 0) {
+        const timeDiff = (currentTime - lastKeypressTimeRef.current) / 1000
+        const instantSpeed = timeDiff > 0 ? 1 / timeDiff : 0
+        
+        typingSpeedHistoryRef.current.push(instantSpeed)
+        if (typingSpeedHistoryRef.current.length > 3) {
+          typingSpeedHistoryRef.current.shift()
+        }
+        
+        let weightedSum = 0
+        let totalWeight = 0
+        typingSpeedHistoryRef.current.forEach((speed, index) => {
+          const weight = Math.pow(1.5, index)
+          weightedSum += speed * weight
+          totalWeight += weight
+        })
+        
+        const weightedAvgSpeed = totalWeight > 0 ? weightedSum / totalWeight : 0
+        setRealtimeTypingSpeed(weightedAvgSpeed)
+      } else {
+        setRealtimeTypingSpeed(4)
+      }
+      
+      lastKeypressTimeRef.current = currentTime
+      
+      // Start test on first keystroke
+      if (!isTestActive && !isTestComplete) {
+        setIsTestActive(true)
+        setStartTime(currentTime)
+      }
+    }
+    
+    // Allow typing up to the text length
+    if (newValue.length <= testText.length) {
+      setUserInput(newValue)
+      setCurrentIndex(newValue.length)
+    } else {
+      // Prevent input beyond text length
+      e.target.value = userInput
+    }
+  }
+
+  // Handle focus/blur for both inputs
+  const handleFocus = () => setIsFieldFocused(true)
+  const handleBlur = () => setIsFieldFocused(false)
+
+  // Click handler to focus hidden input on mobile
+  const handleTextContainerClick = () => {
+    if (isTestComplete || showResults) return
+    
+    if (hiddenInputRef.current) {
+      hiddenInputRef.current.focus()
+    } else if (textContainerRef.current) {
+      textContainerRef.current.focus()
+    }
+  }
+
+  // Detect mobile device for enhanced mobile support
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+  // Enhanced mobile focus management
+  useEffect(() => {
+    if (isMobile && isFieldFocused && hiddenInputRef.current) {
+      // Ensure mobile keyboard stays open
+      const preventBlur = (e: FocusEvent) => {
+        if (isTestActive && !isTestComplete && !showResults) {
+          e.preventDefault()
+          if (hiddenInputRef.current) {
+            setTimeout(() => hiddenInputRef.current?.focus(), 0)
+          }
+        }
+      }
+
+      const input = hiddenInputRef.current
+      input.addEventListener('blur', preventBlur)
+      
+      return () => {
+        input.removeEventListener('blur', preventBlur)
+      }
+    }
+  }, [isMobile, isFieldFocused, isTestActive, isTestComplete, showResults])
 
   const handleSaveResult = async () => {
     // Debug logging
@@ -478,9 +627,15 @@ const TypingTestScreen = () => {
       incorrectChars: 0,
       totalChars: 0
     })
-    if (textContainerRef.current) {
-      textContainerRef.current.focus()
-    }
+    
+    // Focus the appropriate input (mobile-friendly)
+    setTimeout(() => {
+      if (hiddenInputRef.current) {
+        hiddenInputRef.current.focus()
+      } else if (textContainerRef.current) {
+        textContainerRef.current.focus()
+      }
+    }, 100)
   }
 
   const testResult: TestResult = {
@@ -491,19 +646,19 @@ const TypingTestScreen = () => {
     difficulty
   }
 
-  // Handle nested user object structure for derived values
-  const actualUser = (user as any)?.user || user;
+  // Handle nested user object structure for derived values (used in JSX)
+  // const actualUser = (user as any)?.user || user;
 
   return (
     <div className="min-h-screen p-4 bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden">
       <Navbar backUrl="/" />
-      {/* Large Background Circle centered on timer */}
-      <div className="absolute inset-0 flex items-start justify-center pt-[200px] md:pt-[220px] z-0">
+        {/* Large Background Circle centered on timer */}
+        <div className="absolute inset-0 flex items-start justify-center pt-[200px] md:pt-[220px] z-0">
         <div 
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: '180vh',
-            height: '180vh',
+            width: 'min(180vh, 90vw)',
+            height: 'min(180vh, 90vw)',
             transform: 'translate(-50%, -50%)',
             backgroundColor: 'rgba(34, 197, 94, 0.15)',
             boxShadow: '0 0 80px rgba(34, 197, 94, 0.3), 0 0 160px rgba(34, 197, 94, 0.15)',
@@ -608,15 +763,41 @@ const TypingTestScreen = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Scrolling Text Display - Now acts as input field */}
+            {/* Hidden input for mobile keyboard trigger */}
+            <input
+              ref={hiddenInputRef}
+              type="text"
+              value={userInput}
+              onChange={handleHiddenInputChange}
+              onKeyDown={handleHiddenInputKeyDown}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              className="absolute opacity-0 pointer-events-none"
+              style={{
+                position: 'absolute',
+                left: '-9999px',
+                top: '-9999px',
+                width: '1px',
+                height: '1px'
+              }}
+              autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              aria-hidden="true"
+              tabIndex={-1}
+            />
+            
+            {/* Scrolling Text Display - Visual interface */}
             <div 
               ref={textContainerRef}
-              className="typing-text h-24 p-6 bg-muted/20 rounded-lg overflow-hidden relative cursor-text"
+              className="typing-text h-32 sm:h-24 p-4 sm:p-6 bg-muted/20 rounded-lg overflow-hidden relative cursor-text"
               data-testid="typing-area"
               tabIndex={0}
               onKeyDown={handleKeyDown}
-              onFocus={() => setIsFieldFocused(true)}
-              onBlur={() => setIsFieldFocused(false)}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              onClick={handleTextContainerClick}
               style={{
                 border: 'none',
                 outline: 'none'
@@ -810,10 +991,17 @@ const TypingTestScreen = () => {
 
             {/* Advertisement - Results Modal */}
             <div className="py-4 flex justify-center">
+              {/* Mobile ad for very small screens (320px) */}
+              <AdBanner 
+                size="mobile" 
+                slot="results-modal-ad"
+                className="mx-auto sm:hidden max-w-[300px]"
+              />
+              {/* Rectangle ad for larger screens */}
               <AdBanner 
                 size="rectangle" 
                 slot="results-modal-ad"
-                className="mx-auto"
+                className="mx-auto hidden sm:block"
               />
             </div>
 
@@ -919,6 +1107,7 @@ const TypingTestScreen = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      
     </div>
   )
 }

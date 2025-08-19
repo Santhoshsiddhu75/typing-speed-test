@@ -49,7 +49,7 @@ const Logo: React.FC<LogoProps> = ({
 
   return (
     <div 
-      className={`flex items-center gap-2 sm:gap-3 ${clickable ? 'cursor-pointer' : 'cursor-default'} ${className}`}
+      className={`flex items-center gap-3 ${clickable ? 'cursor-pointer' : 'cursor-default'} ${className}`}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -74,16 +74,16 @@ const Logo: React.FC<LogoProps> = ({
 
       {/* Brand Text */}
       {showText && (
-        <div className="flex flex-col">
-          <span 
-            className={`font-bold text-foreground tracking-wide ${textSizeClasses[size]} ${textClassName}`}
+        <div className="flex-shrink-0">
+          <div 
+            className={`font-bold text-foreground tracking-wide ${textSizeClasses[size]} ${textClassName} whitespace-nowrap`}
           >
             TapTest
-          </span>
+          </div>
           {size === 'large' && showTagline && (
-            <span className="text-xs sm:text-sm text-muted-foreground mt-1">
+            <div className="text-xs sm:text-sm text-muted-foreground mt-1">
               Master Your Typing Speed
-            </span>
+            </div>
           )}
         </div>
       )}

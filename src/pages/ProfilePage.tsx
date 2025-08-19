@@ -21,6 +21,7 @@ import Navbar from '@/components/Navbar';
 import InitialsAvatar from '@/components/InitialsAvatar';
 import AvatarUpload from '@/components/AvatarUpload';
 import AdBanner from '@/components/AdBanner';
+import Footer from '@/components/Footer';
 import { 
   User, 
   TrendingUp, 
@@ -434,14 +435,14 @@ const ProfilePage: React.FC = () => {
   const hasTests = recentTests.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden flex flex-col">
       {/* Large Background Circle centered */}
       <div className="absolute inset-0 flex items-center justify-center z-0">
         <div 
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: '180vh',
-            height: '180vh',
+            width: 'min(180vh, 90vw)',
+            height: 'min(180vh, 90vw)',
             transform: 'translate(-50%, -50%)',
             backgroundColor: 'rgba(34, 197, 94, 0.15)',
             boxShadow: '0 0 80px rgba(34, 197, 94, 0.3), 0 0 160px rgba(34, 197, 94, 0.15)',
@@ -466,8 +467,9 @@ const ProfilePage: React.FC = () => {
 
       <Navbar backUrl="/" className="sticky" />
 
-
-      <div className="container mx-auto px-4 py-8 relative z-10">
+      {/* Main Content */}
+      <div className="flex-1">
+        <div className="container mx-auto px-4 py-8 relative z-10">
         {error && (
           <Card 
             className="mb-6 border-destructive/50 bg-destructive/5"
@@ -555,20 +557,20 @@ const ProfilePage: React.FC = () => {
               <div className="space-y-3">
                 {/* Primary Actions - Single Row */}
                 <div className={`grid gap-2 ${!isGoogleUser ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                  <Button variant="outline" size="sm" className="flex items-center justify-center gap-1.5" onClick={() => setAvatarDialogOpen(true)}>
-                    <Camera className="h-3.5 w-3.5" />
+                  <Button variant="outline" size="default" className="flex items-center justify-center gap-2 min-h-[44px]" onClick={() => setAvatarDialogOpen(true)}>
+                    <Camera className="h-4 w-4" />
                     <span className="text-xs">Photo</span>
                   </Button>
                   {!isGoogleUser && (
-                    <Button variant="outline" size="sm" className="flex items-center justify-center gap-1.5" onClick={() => setPasswordDialogOpen(true)}>
-                      <Settings className="h-3.5 w-3.5" />
-                      <span className="text-xs">Password</span>
+                    <Button variant="outline" size="default" className="flex items-center justify-center gap-2 min-h-[44px]" onClick={() => setPasswordDialogOpen(true)}>
+                      <Settings className="h-4 w-4" />
+                        <span className="text-[10px] sm:text-xs">Password</span>
                     </Button>
                   )}
                 </div>
 
                 {/* Sign Out - Distinct styling */}
-                <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" onClick={handleLogout}>
+                <Button variant="ghost" size="default" className="w-full min-h-[44px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
                 </Button>
@@ -1007,24 +1009,24 @@ const ProfilePage: React.FC = () => {
               <div className="grid grid-cols-2 gap-2">
                 <Button 
                   variant="outline" 
-                  size="sm" 
-                  className="w-full justify-center" 
+                  size="default" 
+                  className="w-full justify-center min-h-[44px]" 
                   onClick={handleExportCSV}
                   disabled={!hasTests}
                 >
                   <Download className="h-4 w-4 mr-1" />
-                  Export CSV
+                  <span className="text-[10px] sm:text-xs">Export CSV</span>
                 </Button>
                 
                 <Button 
                   variant="outline" 
-                  size="sm" 
-                  className="w-full justify-center text-destructive hover:text-destructive" 
+                  size="default" 
+                  className="w-full justify-center min-h-[44px] text-destructive hover:text-destructive" 
                   onClick={() => setDeleteHistoryDialogOpen(true)}
                   disabled={!hasTests}
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
-                  Delete All
+                  <span className="text-[10px] sm:text-xs">Delete All</span>
                 </Button>
               </div>
             </CardContent>
@@ -1123,20 +1125,20 @@ const ProfilePage: React.FC = () => {
                 <div className="space-y-3">
                   {/* Primary Actions - Single Row */}
                   <div className={`grid gap-2 ${!isGoogleUser ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                    <Button variant="outline" size="sm" className="flex items-center justify-center gap-1.5" onClick={() => setAvatarDialogOpen(true)}>
-                      <Camera className="h-3.5 w-3.5" />
+                    <Button variant="outline" size="default" className="flex items-center justify-center gap-2 min-h-[44px]" onClick={() => setAvatarDialogOpen(true)}>
+                      <Camera className="h-4 w-4" />
                       <span className="text-xs">Photo</span>
                     </Button>
                     {!isGoogleUser && (
-                      <Button variant="outline" size="sm" className="flex items-center justify-center gap-1.5" onClick={() => setPasswordDialogOpen(true)}>
-                        <Settings className="h-3.5 w-3.5" />
+                      <Button variant="outline" size="default" className="flex items-center justify-center gap-2 min-h-[44px]" onClick={() => setPasswordDialogOpen(true)}>
+                        <Settings className="h-4 w-4" />
                         <span className="text-xs">Password</span>
                       </Button>
                     )}
                   </div>
 
                   {/* Sign Out - Distinct styling */}
-                  <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" onClick={handleLogout}>
+                  <Button variant="ghost" size="default" className="w-full min-h-[44px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Sign Out
                   </Button>
@@ -1223,24 +1225,24 @@ const ProfilePage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <Button 
                     variant="outline" 
-                    size="sm" 
-                    className="w-full justify-center" 
+                    size="default" 
+                    className="w-full justify-center min-h-[44px]" 
                     onClick={handleExportCSV}
                     disabled={!hasTests}
                   >
                     <Download className="h-4 w-4 mr-1" />
-                    Export CSV
+                    <span className="text-[10px] sm:text-xs">Export CSV</span>
                   </Button>
                   
                   <Button 
                     variant="outline" 
-                    size="sm" 
-                    className="w-full justify-center text-destructive hover:text-destructive" 
+                    size="default" 
+                    className="w-full justify-center min-h-[44px] text-destructive hover:text-destructive" 
                     onClick={() => setDeleteHistoryDialogOpen(true)}
                     disabled={!hasTests}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
-                    Delete All
+                    <span className="text-[10px] sm:text-xs">Delete All</span>
                   </Button>
                 </div>
               </CardContent>
@@ -1657,7 +1659,7 @@ const ProfilePage: React.FC = () => {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-3 min-h-[44px] min-w-[44px]"
                       onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
                     >
                       {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1681,7 +1683,7 @@ const ProfilePage: React.FC = () => {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-3 min-h-[44px] min-w-[44px]"
                       onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
                     >
                       {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1746,7 +1748,7 @@ const ProfilePage: React.FC = () => {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-3 min-h-[44px] min-w-[44px]"
                       onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
                     >
                       {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1869,7 +1871,11 @@ const ProfilePage: React.FC = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

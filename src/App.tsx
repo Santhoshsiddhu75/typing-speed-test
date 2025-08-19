@@ -1,16 +1,29 @@
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import SetupScreen from '@/pages/SetupScreen'
+const SetupScreen = lazy(() => import('@/pages/SetupScreen'))
 import TypingTestScreen from '@/pages/TypingTestScreen'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
-import ProfilePage from '@/pages/ProfilePage'
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
 import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import TermsOfService from '@/pages/TermsOfService'
 import AboutPage from '@/pages/AboutPage'
 import './index.css'
+
+// Loading component for route transitions - critical for Indian mobile users
+function RouteLoadingSpinner() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+        <p className="text-muted-foreground text-sm">Preparing your typing test...</p>
+      </div>
+    </div>
+  );
+}
 
 function AppContent() {
   const location = useLocation();
@@ -23,17 +36,19 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {!isAuthPage && !isTestPage && !isProfilePage && !isSetupPage && !isLegalPage && <ThemeToggle />}
-      <Routes>
-        <Route path="/" element={<SetupScreen />} />
-        <Route path="/test" element={<TypingTestScreen />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<TermsOfService />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={<RouteLoadingSpinner />}>
+        <Routes>
+          <Route path="/" element={<SetupScreen />} />
+          <Route path="/test" element={<TypingTestScreen />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </div>
   );
 }
