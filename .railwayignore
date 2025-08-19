@@ -1,0 +1,20 @@
+# Ignore frontend files for Railway deployment
+src/
+public/
+dist/
+node_modules/
+package.json
+package-lock.json
+vite.config.ts
+tsconfig.json
+tsconfig.node.json
+index.html
+tailwind.config.js
+postcss.config.js
+components.json
+tests/
+.vscode/
+.git/
+
+# Only deploy server directory
+!server/
