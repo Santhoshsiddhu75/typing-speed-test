@@ -36,7 +36,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentP
 
       // Send via EmailJS
       const emailjs = (window as any).emailjs;
-      await emailjs.send('service_y1qq7jj', 'template_o141xxj', feedbackData, 'yiOlVybVugqI-7cYH');
+      await emailjs.send('service_alxue6s', 'template_n0ii0t7', feedbackData, 'koMAW2NgGsVjoiGDF');
 
       setIsSubmitted(true);
       setTimeout(() => {
