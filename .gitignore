@@ -31,3 +31,14 @@ dist-ssr
 
 # Screenshots from tests
 tests/screenshots/
+
+# Environment variables - NEVER commit these!
+.env
+.env.local
+.env.production
+.env.development
+server/.env
+server/.env.local
+server/.env.production
+server/.env.development
+*.env
