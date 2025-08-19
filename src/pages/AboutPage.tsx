@@ -274,7 +274,7 @@ const AboutPage: React.FC = () => {
                   Send Feedback
                 </Button>
                 <div className="text-muted-foreground text-sm">
-                  <p><strong>Email:</strong> gamerabhi950@gmail.com</p>
+                  <p><strong>Email:</strong> taptest321@gmail.com</p>
                   <p><strong>Response Time:</strong> Usually within 24-48 hours</p>
                 </div>
               </div>

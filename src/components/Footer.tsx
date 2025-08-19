@@ -62,7 +62,7 @@ const Footer: React.FC = () => {
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 text-sm text-foreground mb-2">
               <Mail className="w-3 h-3 text-primary" />
-              <span className="font-semibold">gamerabhi950@gmail.com</span>
+              <span className="font-semibold">taptest321@gmail.com</span>
             </div>
             <button
               onClick={() => {
@@ -119,7 +119,7 @@ const Footer: React.FC = () => {
           <div className="space-y-3 text-right">
             <div className="flex items-center justify-end gap-2 text-sm text-foreground">
               <Mail className="w-3 h-3 text-primary" />
-              <span className="font-semibold">gamerabhi950@gmail.com</span>
+              <span className="font-semibold">taptest321@gmail.com</span>
             </div>
             <button
               onClick={() => {
