@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
-import Logo from '@/components/Logo';
 import FeedbackModal from '@/components/FeedbackModal';
 
 interface NavbarProps {

@@ -14,16 +14,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CleanStatsCard from '@/components/CleanStatsCard';
 import ProgressChart from '@/components/ProgressChart';
-import TestsTable from '@/components/TestsTable';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import Logo from '@/components/Logo';
 import Navbar from '@/components/Navbar';
 import InitialsAvatar from '@/components/InitialsAvatar';
 import AvatarUpload from '@/components/AvatarUpload';
 import AdBanner from '@/components/AdBanner';
 import Footer from '@/components/Footer';
 import { 
-  User, 
   TrendingUp, 
   Calendar, 
   Target, 
@@ -33,14 +29,12 @@ import {
   LogOut, 
   Eye, 
   EyeOff, 
-  ArrowLeft,
   Trophy,
   Shield,
   Clock,
   Zap,
   Camera,
   Info,
-  BarChart,
   Check,
   X
 } from 'lucide-react';
@@ -78,7 +72,7 @@ const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyLevel | 'all'>('all');
   const [progressDifficultyFilter, setProgressDifficultyFilter] = useState<DifficultyLevel | 'all'>('all');
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey] = useState(0);
   
   // Edit states
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);

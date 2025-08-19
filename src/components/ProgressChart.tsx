@@ -12,13 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
 import { TestResult } from '@/types';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface ProgressChartProps {
   data: TestResult[];
@@ -26,19 +20,8 @@ interface ProgressChartProps {
 }
 
 
-// Chart configuration
-const chartConfig = {
-  wpm: {
-    label: "WPM",
-    color: "rgb(34, 197, 94)", // Your signature green
-  },
-  testNumber: {
-    label: "Test #",
-  },
-} satisfies any
 
 const ProgressChart: React.FC<ProgressChartProps> = ({ data, className }) => {
-  const { theme } = useTheme();
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
   const chartRef = React.useRef<HTMLDivElement>(null);
@@ -235,7 +218,7 @@ const ProgressChart: React.FC<ProgressChartProps> = ({ data, className }) => {
                   cursor: 'default'
                 }}
               >
-                {chartData.map((entry, index) => (
+                {chartData.map((_, index) => (
                   <Cell 
                     key={`cell-${index}`} 
                     fill="rgb(34, 197, 94)"

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Lock, Eye, EyeOff, Loader2, Check, X, User, AlertTriangle, Info } from 'lucide-react';
+import { Lock, Eye, EyeOff, Loader2, Check, X, User, Info } from 'lucide-react';
 import { authApi } from '@/lib/api';
 
 export interface RegisterFormData {
@@ -126,7 +126,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
   // Close username info tooltip when clicking outside
   React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = () => {
       if (showUsernameInfo) {
         setShowUsernameInfo(false);
       }
