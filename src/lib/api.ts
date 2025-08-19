@@ -2,7 +2,7 @@
 import { TestResult } from '@/types';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-backend-domain.com/api' // Update this for production
+  ? 'https://web-production-abb30.up.railway.app/api'
   : 'http://localhost:3003/api';
 
 // API Response Types
