@@ -1,22 +1,8 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "dist/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/dist/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/dist/index.html"
+      "source": "/((?!api).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -38,7 +24,7 @@
       ]
     },
     {
-      "source": "/dist/**/*.{js,css,woff,woff2,otf,ttf}",
+      "source": "/assets/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
