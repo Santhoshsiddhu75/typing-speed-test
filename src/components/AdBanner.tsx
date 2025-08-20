@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface AdBannerProps {
@@ -14,82 +14,86 @@ declare global {
 }
 
 const AdBanner: React.FC<AdBannerProps> = ({ size, className, slot = "1234567890" }) => {
-  useEffect(() => {
-    try {
-      // Only push ads if Google AdSense is loaded
-      if (typeof window !== 'undefined' && window.adsbygoogle) {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      }
-    } catch (err) {
-      console.error('AdSense error:', err);
-    }
-  }, []);
+  // Slot will be used when ads are implemented
+  console.log('Ad slot:', slot);
+  // Commented out AdSense pushing to prevent console errors
+  // This will be uncommented when actual ads are implemented
+  // useEffect(() => {
+  //   try {
+  //     // Only push ads if Google AdSense is loaded
+  //     if (typeof window !== 'undefined' && window.adsbygoogle) {
+  //       (window.adsbygoogle = window.adsbygoogle || []).push({});
+  //     }
+  //   } catch (err) {
+  //     console.error('AdSense error:', err);
+  //   }
+  // }, []);
 
-  // Ad size configurations
-  const getAdConfig = () => {
-    switch (size) {
-      case 'horizontal':
-        return {
-          style: { 
-            display: 'block',
-            width: '100%',
-            height: '90px',
-            maxWidth: '728px',
-          },
-          format: 'auto',
-          responsive: 'true',
-          slot: slot
-        };
-      case 'rectangle':
-        return {
-          style: { 
-            display: 'block',
-            width: '300px',
-            height: '250px',
-          },
-          format: 'rectangle',
-          responsive: 'false',
-          slot: slot
-        };
-      case 'mobile':
-        return {
-          style: { 
-            display: 'block',
-            width: '100%',
-            height: '50px',
-            maxWidth: '320px',
-          },
-          format: 'auto',
-          responsive: 'true',
-          slot: slot
-        };
-      case 'compact':
-        return {
-          style: { 
-            display: 'block',
-            width: '100%',
-            height: '60px',
-            maxWidth: '320px',
-          },
-          format: 'auto',
-          responsive: 'true',
-          slot: slot
-        };
-      default:
-        return {
-          style: { 
-            display: 'block',
-            width: '100%',
-            height: '90px',
-          },
-          format: 'auto',
-          responsive: 'true',
-          slot: slot
-        };
-    }
-  };
+  // Ad size configurations - Will be used when ads are implemented
+  // const getAdConfig = () => {
+  //   switch (size) {
+  //     case 'horizontal':
+  //       return {
+  //         style: { 
+  //           display: 'block',
+  //           width: '100%',
+  //           height: '90px',
+  //           maxWidth: '728px',
+  //         },
+  //         format: 'auto',
+  //         responsive: 'true',
+  //         slot: slot
+  //       };
+  //     case 'rectangle':
+  //       return {
+  //         style: { 
+  //           display: 'block',
+  //           width: '300px',
+  //           height: '250px',
+  //         },
+  //         format: 'rectangle',
+  //         responsive: 'false',
+  //         slot: slot
+  //       };
+  //     case 'mobile':
+  //       return {
+  //         style: { 
+  //           display: 'block',
+  //           width: '100%',
+  //           height: '50px',
+  //           maxWidth: '320px',
+  //         },
+  //         format: 'auto',
+  //         responsive: 'true',
+  //         slot: slot
+  //       };
+  //     case 'compact':
+  //       return {
+  //         style: { 
+  //           display: 'block',
+  //           width: '100%',
+  //           height: '60px',
+  //           maxWidth: '320px',
+  //         },
+  //         format: 'auto',
+  //         responsive: 'true',
+  //         slot: slot
+  //       };
+  //     default:
+  //       return {
+  //         style: { 
+  //           display: 'block',
+  //           width: '100%',
+  //           height: '90px',
+  //         },
+  //         format: 'auto',
+  //         responsive: 'true',
+  //         slot: slot
+  //       };
+  //   }
+  // };
 
-  const adConfig = getAdConfig();
+  // const adConfig = getAdConfig(); // Will be used when ads are implemented
 
   return (
     <div className={cn(
@@ -102,39 +106,28 @@ const AdBanner: React.FC<AdBannerProps> = ({ size, className, slot = "1234567890
       size === 'compact' && "w-full max-w-xs mx-auto py-2",
       className
     )}>
-      {/* Development placeholder - replace with actual AdSense when ready */}
-      {process.env.NODE_ENV === 'development' ? (
-        <div className={cn(
-          "flex items-center justify-center text-muted-foreground text-sm",
-          "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20",
-          "border border-blue-200 dark:border-blue-800 rounded",
-          size === 'horizontal' && "w-full h-[90px] max-w-[728px]",
-          size === 'rectangle' && "w-[300px] h-[250px]",
-          size === 'mobile' && "w-full h-[50px] max-w-[320px]",
-          size === 'compact' && "w-full h-[60px] max-w-[320px]"
-        )}>
-          <div className="text-center">
-            <p className="font-medium text-blue-600 dark:text-blue-400">
-              Ad Space ({size})
-            </p>
-            <p className="text-xs text-blue-500 dark:text-blue-300 mt-1">
-              {size === 'horizontal' && '728x90 Desktop / 320x50 Mobile'}
-              {size === 'rectangle' && '300x250 Rectangle'}  
-              {size === 'mobile' && '320x50 Mobile Banner'}
-              {size === 'compact' && '320x60 Compact Banner'}
-            </p>
-          </div>
+      {/* Advertisement placeholder - ready for ad network integration */}
+      <div className={cn(
+        "flex items-center justify-center text-muted-foreground text-sm",
+        "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20",
+        "border border-amber-200 dark:border-amber-800 rounded",
+        size === 'horizontal' && "w-full h-[90px] max-w-[728px]",
+        size === 'rectangle' && "w-[300px] h-[250px]",
+        size === 'mobile' && "w-full h-[50px] max-w-[320px]",
+        size === 'compact' && "w-full h-[60px] max-w-[320px]"
+      )}>
+        <div className="text-center">
+          <p className="font-medium text-amber-600 dark:text-amber-400">
+            📢 Advertisement Space ({size})
+          </p>
+          <p className="text-xs text-amber-500 dark:text-amber-300 mt-1">
+            {size === 'horizontal' && 'Banner Ad: 728x90 Desktop / 320x50 Mobile'}
+            {size === 'rectangle' && 'Display Ad: 300x250 Rectangle'}  
+            {size === 'mobile' && 'Mobile Ad: 320x50 Banner'}
+            {size === 'compact' && 'Compact Ad: 320x60 Banner'}
+          </p>
         </div>
-      ) : (
-        <ins
-          className="adsbygoogle"
-          style={adConfig.style}
-          data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX" // Replace with your AdSense publisher ID
-          data-ad-slot={adConfig.slot}
-          data-ad-format={adConfig.format}
-          data-full-width-responsive={adConfig.responsive}
-        />
-      )}
+      </div>
     </div>
   );
 };
