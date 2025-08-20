@@ -1,7 +1,7 @@
 {
   "name": "typing-speed-test",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "homepage": "https://santhoshsiddhu75.github.io/typing-speed-test",
   "scripts": {
