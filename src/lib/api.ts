@@ -1,7 +1,7 @@
 // API client for test results
 import { TestResult } from '@/types';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
+const API_BASE_URL = (process.env.NODE_ENV === 'production' || window.location.hostname !== 'localhost')
   ? 'https://web-production-abb30.up.railway.app/api'
   : 'http://localhost:3003/api';
 
