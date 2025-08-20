@@ -2,9 +2,9 @@
 import { TestResult } from '@/types';
 
 // Use environment variable first, then fallback to hardcoded URLs
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+const API_BASE_URL = (import.meta.env as any)?.VITE_API_BASE_URL || 
   (process.env.NODE_ENV === 'production' || window.location.hostname !== 'localhost')
-  ? 'https://web-production-abb30.up.railway.app/api'
+  ? 'https://web-production-abb30.up-railway.app/api'
   : 'http://localhost:3003/api';
 
 console.log('🔍 API_BASE_URL:', API_BASE_URL);
