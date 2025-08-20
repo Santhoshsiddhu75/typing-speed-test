@@ -37,6 +37,7 @@ export const useAuth = () => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('rememberMe');
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -69,6 +70,7 @@ export const useAuth = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('rememberMe');
     setUser(null);
     setIsAuthenticated(false);
   }, []);

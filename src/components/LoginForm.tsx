@@ -16,7 +16,6 @@ export interface LoginFormData {
 
 interface LoginFormProps {
   onSubmit?: (data: LoginFormData) => Promise<void> | void;
-  onForgotPassword?: () => void;
   onSignUpClick?: () => void;
   isLoading?: boolean;
   className?: string;
@@ -30,7 +29,6 @@ interface FormErrors {
 
 const LoginForm: React.FC<LoginFormProps> = ({
   onSubmit,
-  onForgotPassword,
   onSignUpClick,
   isLoading = false,
   className = ''
@@ -329,8 +327,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
             )}
           </div>
 
-          {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between">
+          {/* Remember Me */}
+          <div className="flex items-center">
             <Checkbox
               id="remember-me"
               label="Remember me"
@@ -341,16 +339,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
               disabled={currentIsLoading}
               data-testid="remember-me-checkbox"
             />
-            
-            <button
-              type="button"
-              onClick={onForgotPassword}
-              className="text-sm text-primary hover:text-primary/80 underline-offset-4 hover:underline transition-colors"
-              disabled={currentIsLoading}
-              data-testid="forgot-password-link"
-            >
-              Forgot password?
-            </button>
           </div>
 
           {/* Submit Button */}

@@ -100,6 +100,7 @@ async function apiRequest<T = any>(
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
+          localStorage.removeItem('rememberMe');
           throw new Error('Session expired. Please log in again.');
         }
       }
@@ -319,6 +320,7 @@ export const authApi = {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('rememberMe');
   }
 };
 
@@ -464,6 +466,7 @@ export const userApi = {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('rememberMe');
         throw new Error('Session expired. Please log in again.');
       }
     }

@@ -9,7 +9,7 @@ const LoginPage: React.FC = () => {
 
   const handleLogin = async (data: LoginFormData) => {
     try {
-      console.log('Login attempt:', data.username);
+      console.log('Login attempt:', data.username, 'Remember me:', data.rememberMe);
       
       // Call the real authentication API
       const response = await authApi.login({
@@ -21,6 +21,14 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('accessToken', response.accessToken);
       localStorage.setItem('refreshToken', response.refreshToken);
       localStorage.setItem('user', JSON.stringify(response.user));
+      
+      // Store remember me preference for longer token expiry
+      if (data.rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+        console.log('Remember me enabled - tokens will persist longer');
+      } else {
+        localStorage.removeItem('rememberMe');
+      }
       
       console.log('Login successful for user:', response.user.username);
       
@@ -35,12 +43,6 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleForgotPassword = () => {
-    // TODO: Navigate to forgot password page or show modal
-    console.log('Forgot password clicked');
-    // navigate('/forgot-password');
-  };
-
   const handleSignUpClick = () => {
     navigate('/register');
   };
@@ -49,7 +51,6 @@ const LoginPage: React.FC = () => {
     <AuthLayout>
       <LoginForm
         onSubmit={handleLogin}
-        onForgotPassword={handleForgotPassword}
         onSignUpClick={handleSignUpClick}
       />
     </AuthLayout>

@@ -115,11 +115,15 @@ const TypingTestScreen = () => {
     const targetScrollPosition = currentCharPosition - centerPosition + (charWidth / 2)
     const scrollAmount = Math.max(0, targetScrollPosition)
     
-    // Add some padding for mobile - ensure we don't get too close to edges
-    const mobilePadding = containerWidth < 768 ? 40 : 20
-    const adjustedScroll = Math.max(0, scrollAmount - mobilePadding)
-    
-    return adjustedScroll
+    // For mobile, ensure better centering by reducing edge padding
+    if (containerWidth < 768) {
+      // On mobile, prioritize centering over edge padding
+      return scrollAmount
+    } else {
+      // On desktop, add some padding for better readability
+      const desktopPadding = 20
+      return Math.max(0, scrollAmount - desktopPadding)
+    }
   }, [currentIndex, getCharWidth])
 
   // Update scroll offset when current index changes
@@ -370,6 +374,10 @@ const TypingTestScreen = () => {
 
     if (e.key === 'Backspace') {
       e.preventDefault()
+      
+      // Trigger "The typing field scroll" on backspace too
+      doTypingFieldScroll()
+      
       if (userInput.length > 0) {
         const newValue = userInput.slice(0, -1)
         setUserInput(newValue)
@@ -385,6 +393,9 @@ const TypingTestScreen = () => {
       e.preventDefault()
       const newValue = userInput + e.key
       const currentTime = Date.now()
+      
+      // Trigger "The typing field scroll" every time user types
+      doTypingFieldScroll()
       
       // Calculate real-time typing speed (characters per second) with better responsiveness
       if (lastKeypressTimeRef.current > 0) {
@@ -452,6 +463,9 @@ const TypingTestScreen = () => {
     const newValue = e.target.value
     const currentTime = Date.now()
     
+    // Trigger "The typing field scroll" on ANY input change (typing or backspace)
+    doTypingFieldScroll()
+    
     // Handle input length changes (typing or backspace)
     if (newValue.length > userInput.length) {
       // Typing - calculate speed and update
@@ -497,13 +511,33 @@ const TypingTestScreen = () => {
     }
   }
 
+  // "The typing field scroll" - positions typing field at rock bottom on mobile
+  const doTypingFieldScroll = () => {
+    if (isMobile && textContainerRef.current) {
+      // Use setTimeout to ensure scroll happens after any other events
+      setTimeout(() => {
+        textContainerRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'end' 
+        })
+      }, 100)
+    }
+  }
+
   // Handle focus/blur for both inputs
-  const handleFocus = () => setIsFieldFocused(true)
+  const handleFocus = () => {
+    setIsFieldFocused(true)
+    // Trigger "The typing field scroll" when user clicks
+    doTypingFieldScroll()
+  }
   const handleBlur = () => setIsFieldFocused(false)
 
   // Click handler to focus hidden input on mobile
   const handleTextContainerClick = () => {
     if (isTestComplete || showResults) return
+    
+    // Trigger "The typing field scroll" IMMEDIATELY when clicking green dotted field
+    doTypingFieldScroll()
     
     if (hiddenInputRef.current) {
       hiddenInputRef.current.focus()

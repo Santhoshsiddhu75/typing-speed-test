@@ -88,7 +88,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentP
             Send Feedback
           </DialogTitle>
           <DialogDescription>
-            Help us improve TapTest! Your feedback is valuable to us.
+           
           </DialogDescription>
         </DialogHeader>
 
@@ -96,7 +96,8 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentP
           {/* Feedback Type */}
           <div>
             <Label htmlFor="feedback-type">What type of feedback?</Label>
-            <Select value={feedbackType} onValueChange={setFeedbackType} required>
+            <div className="mt-2">
+              <Select value={feedbackType} onValueChange={setFeedbackType} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select feedback type" />
               </SelectTrigger>
@@ -127,6 +128,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentP
                 </SelectItem>
               </SelectContent>
             </Select>
+            </div>
           </div>
 
           {/* Message */}

@@ -557,7 +557,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               id="accept-terms"
               label={
                 <span>
-                  I agree to the{' '}
+                  {' '}
                   <button
                     type="button"
                     onClick={onTermsClick}
