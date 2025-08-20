@@ -32,11 +32,6 @@ const LoginFormDemo: React.FC = () => {
     setIsLoading(false)
   }
 
-  const handleForgotPassword = () => {
-    console.log("Forgot password clicked")
-    // Handle forgot password flow (open modal, navigate to reset page, etc.)
-    alert("Forgot password functionality would be implemented here")
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -50,7 +45,6 @@ const LoginFormDemo: React.FC = () => {
         
         <LoginForm
           onSubmit={handleLogin}
-          onForgotPassword={handleForgotPassword}
           isLoading={isLoading}
         />
         
