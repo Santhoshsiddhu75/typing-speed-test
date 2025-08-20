@@ -108,23 +108,23 @@ const AdBanner: React.FC<AdBannerProps> = ({ size, className, slot = "1234567890
     )}>
       {/* Advertisement placeholder - ready for ad network integration */}
       <div className={cn(
-        "flex items-center justify-center text-muted-foreground text-sm",
-        "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20",
-        "border border-amber-200 dark:border-amber-800 rounded",
+        "flex items-center justify-center text-muted-foreground/60 text-sm",
+        "bg-muted/20 border border-muted/40 rounded",
+        "hover:bg-muted/30 transition-colors duration-300",
         size === 'horizontal' && "w-full h-[90px] max-w-[728px]",
         size === 'rectangle' && "w-[300px] h-[250px]",
         size === 'mobile' && "w-full h-[50px] max-w-[320px]",
         size === 'compact' && "w-full h-[60px] max-w-[320px]"
       )}>
         <div className="text-center">
-          <p className="font-medium text-amber-600 dark:text-amber-400">
-            📢 Advertisement Space ({size})
+          <p className="font-medium text-muted-foreground/70">
+            Advertisement Space ({size})
           </p>
-          <p className="text-xs text-amber-500 dark:text-amber-300 mt-1">
-            {size === 'horizontal' && 'Banner Ad: 728x90 Desktop / 320x50 Mobile'}
-            {size === 'rectangle' && 'Display Ad: 300x250 Rectangle'}  
-            {size === 'mobile' && 'Mobile Ad: 320x50 Banner'}
-            {size === 'compact' && 'Compact Ad: 320x60 Banner'}
+          <p className="text-xs text-muted-foreground/50 mt-1">
+            {size === 'horizontal' && 'Banner: 728×90 Desktop / 320×50 Mobile'}
+            {size === 'rectangle' && 'Display: 300×250 Rectangle'}  
+            {size === 'mobile' && 'Mobile: 320×50 Banner'}
+            {size === 'compact' && 'Compact: 320×60 Banner'}
           </p>
         </div>
       </div>
