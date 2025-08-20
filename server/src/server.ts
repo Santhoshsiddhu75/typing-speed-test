@@ -27,7 +27,7 @@ app.use(cors({
     'http://localhost:5173', // Vite dev server
     'http://localhost:3000', // Alternative dev port
     'https://santhoshsiddhu75.github.io', // GitHub Pages
-    'https://typing-speed-test-ten-delta.vercel.app' // Vercel deployment
+    'https://taptest-snowy.vercel.app' // Vercel deployment
   ],
   credentials: true
 }));
