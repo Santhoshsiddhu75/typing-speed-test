@@ -1,0 +1,33 @@
+# Robots.txt for TapTest - Typing Speed Test Application
+# https://taptest-snowy.vercel.app
+
+User-agent: *
+Allow: /
+
+# Allow all pages for search engine indexing
+Allow: /login
+Allow: /register
+Allow: /profile
+Allow: /test
+
+# Disallow sensitive or unnecessary paths
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /server/
+
+# Allow access to assets and static files
+Allow: /assets/
+Allow: /models/
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.svg$
+Allow: /*.woff$
+Allow: /*.woff2$
+
+# Sitemap location
+Sitemap: https://taptest-snowy.vercel.app/sitemap.xml
+
+# Crawl delay (optional - 1 second between requests)
+Crawl-delay: 1

@@ -26,8 +26,10 @@ app.use(cors({
   origin: [
     'http://localhost:5173', // Vite dev server
     'http://localhost:3000', // Alternative dev port
+    'http://192.168.29.20:5173', // Local IP for mobile testing
     'https://santhoshsiddhu75.github.io', // GitHub Pages
-    'https://taptest-snowy.vercel.app' // Vercel deployment
+    'https://taptest-snowy.vercel.app', // Vercel deployment
+    'https://web-production-abb30.up.railway.app' // Railway backend
   ],
   credentials: true
 }));
@@ -111,9 +113,10 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-// Start server
-app.listen(PORT, () => {
+// Start server - listen on all interfaces for local network access
+app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🌐 Network access: http://192.168.29.20:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🎯 API endpoints: http://localhost:${PORT}/api`);
 });
