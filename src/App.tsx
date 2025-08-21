@@ -4,13 +4,13 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import ErrorBoundary from '@/components/ErrorBoundary'
 const SetupScreen = lazy(() => import('@/pages/SetupScreen'))
-import TypingTestScreen from '@/pages/TypingTestScreen'
-import LoginPage from '@/pages/LoginPage'
-import RegisterPage from '@/pages/RegisterPage'
+const TypingTestScreen = lazy(() => import('@/pages/TypingTestScreen'))
+const LoginPage = lazy(() => import('@/pages/LoginPage'))
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
-import PrivacyPolicy from '@/pages/PrivacyPolicy'
-import TermsOfService from '@/pages/TermsOfService'
-import AboutPage from '@/pages/AboutPage'
+const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'))
+const TermsOfService = lazy(() => import('@/pages/TermsOfService'))
+const AboutPage = lazy(() => import('@/pages/AboutPage'))
 import './index.css'
 
 // Loading component for route transitions - critical for Indian mobile users
