@@ -1,7 +1,9 @@
-import React from 'react';
-import KeyboardBackground from './KeyboardBackground';
+import React, { Suspense, lazy } from 'react';
 import { ThemeOnlyToggle } from './ThemeOnlyToggle';
 import Logo from './Logo';
+
+// Lazy load the heavy 3D component
+const KeyboardBackground = lazy(() => import('./KeyboardBackground'));
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -57,11 +59,20 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
       <div className="hidden md:flex min-h-screen relative z-10">
         {/* Left Section - 3D Keyboard Background */}
         <div className="relative flex-1 overflow-hidden">
-          <KeyboardBackground
-            id="keyboard-desktop"
-            className="absolute inset-0"
-            style={{ zIndex: 0 }}
-          />
+          <Suspense fallback={
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                <p className="text-xs text-muted-foreground">Loading 3D...</p>
+              </div>
+            </div>
+          }>
+            <KeyboardBackground
+              id="keyboard-desktop"
+              className="absolute inset-0"
+              style={{ zIndex: 0 }}
+            />
+          </Suspense>
           
           {/* Subtle gradient overlay for seamless transition - but allow pointer events through */}
           <div 
@@ -92,11 +103,20 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
       <div className="md:hidden min-h-screen relative z-10">
         {/* Top Section - 3D Keyboard Background */}
         <div className="relative h-64 overflow-hidden">
-          <KeyboardBackground
-            id="keyboard-mobile"
-            className="absolute inset-0"
-            style={{ zIndex: 0 }}
-          />
+          <Suspense fallback={
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-1"></div>
+                <p className="text-xs text-muted-foreground">Loading 3D...</p>
+              </div>
+            </div>
+          }>
+            <KeyboardBackground
+              id="keyboard-mobile"
+              className="absolute inset-0"
+              style={{ zIndex: 0 }}
+            />
+          </Suspense>
           
           {/* Seamless gradient overlay for smooth transition - but allow pointer events through */}
           <div 
