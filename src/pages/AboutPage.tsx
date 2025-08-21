@@ -11,7 +11,13 @@ const AboutPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex flex-col">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex flex-col"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 20px)',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 60px)'
+      }}
+    >
       <Navbar showBackButton={true} backUrl="/" />
       
       {/* Main Content */}

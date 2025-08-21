@@ -23,6 +23,34 @@ const Navbar: React.FC<NavbarProps> = ({
   const { user, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile on mount, window resize, and route changes
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile(); // Check on mount and route change
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [location.pathname]); // Add location dependency to recalculate on navigation
+
+  // Force viewport recalculation on route changes to fix mobile browser inconsistencies
+  React.useEffect(() => {
+    if (isMobile) {
+      // Force browser to recalculate viewport and safe areas
+      const forceRecalc = () => {
+        document.documentElement.style.height = '100.1vh';
+        setTimeout(() => {
+          document.documentElement.style.height = '100vh';
+        }, 10);
+      };
+      
+      forceRecalc();
+    }
+  }, [location.pathname, isMobile]);
 
   // Handle nested user object structure
   const actualUser = (user as any)?.user || user;
@@ -54,9 +82,13 @@ const Navbar: React.FC<NavbarProps> = ({
   return (
     <header 
       className={cn(
-        "absolute top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm",
+        "fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm",
+        "mobile-safe-navbar", // Add custom CSS class for mobile safe area
         className
       )}
+      style={{
+        paddingTop: isMobile ? 'max(env(safe-area-inset-top), 20px)' : '0px'
+      }}
       role="banner"
       aria-label="Main navigation"
     >

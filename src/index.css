@@ -511,6 +511,17 @@
   }
   
   /* Ensure smooth scrolling on mobile */
+/* Fast smooth scroll for typing test - speed is critical */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Override for faster scrolling on mobile typing test */
+@media (max-width: 768px) {
+  html {
+    scroll-behavior: auto; /* Allow our custom smooth scroll to work */
+  }
+}
   .typing-text * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -667,5 +678,25 @@ html, body {
   body.typing-active {
     position: fixed !important;
     overflow: hidden !important;
+  }
+}
+
+/* Mobile safe area support for navbar */
+@media (max-width: 768px) {
+  .mobile-safe-navbar {
+    /* CSS-only safe area support with fallback */
+    padding-top: max(env(safe-area-inset-top), 20px) !important;
+    /* Force browser recalculation */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 50 !important;
+  }
+  
+  /* Ensure safe area insets are properly applied on all mobile browsers */
+  .mobile-safe-navbar {
+    /* iOS Safari specific */
+    padding-top: max(env(safe-area-inset-top), constant(safe-area-inset-top), 20px) !important;
   }
 }

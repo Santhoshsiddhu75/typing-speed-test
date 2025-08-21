@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/assets/logounpress.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- Performance and Resource Hints (ZERO RISK) -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="theme-color" content="#22c55e">
+    <meta name="color-scheme" content="light dark">
     <meta name="description" content="TapTest - Master your typing speed with our interactive TapTest. Track your WPM, accuracy, and improve your typing skills." />
     <meta name="keywords" content="typing test, typing speed, WPM, typing practice, keyboard skills, typing accuracy" />
     <meta property="og:title" content="TapTest - Master Your Typing Speed" />
@@ -11,18 +16,25 @@
     <meta property="og:type" content="website" />
     <title>TapTest - Master Your Typing Speed</title>
     
+    <!-- Resource Hints for Performance (ZERO RISK) -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
     <!-- TweakCN Theme Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Font preloading removed due to unreliable URLs - Google Fonts CSS handles loading -->
+    
     <link href="https://fonts.googleapis.com/css2?family=Autour+One&family=Alegreya:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- EmailJS -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-      (function(){
-        emailjs.init("koMAW2NgGsVjoiGDF");
-      })();
-    </script>
+    <!-- EmailJS - Load asynchronously for better performance -->
+    <script async src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" onload="emailjs.init('koMAW2NgGsVjoiGDF')"></script>
+    
+    <!-- Prefetch likely user navigation (LOW RISK) -->
+    <link rel="prefetch" href="/test">
+    <link rel="prefetch" href="/login">
 
     <!-- Google AdSense - Commented out to prevent console errors until ads are implemented -->
     <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXXX"

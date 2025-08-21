@@ -19,7 +19,13 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden ${className}`}>
+    <div 
+      className={`min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden ${className}`}
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 20px)',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 60px)'
+      }}
+    >
       {/* Large Background Circle centered */}
       <div className="absolute inset-0 flex items-center justify-center z-0">
         <div 
@@ -136,7 +142,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         </div>
 
         {/* Bottom Section - Form Area (seamless transition) */}
-        <div className="flex items-start justify-center p-6 pt-6 md:pt-20 bg-background/80 backdrop-blur-sm">
+        <div className="flex items-start justify-center p-6 pt-6 pb-10 md:pt-20 bg-background/80 backdrop-blur-sm">
           <div className="w-full max-w-sm space-y-6">
             {/* TapTest Logo and Name */}
             <div className="flex flex-col items-center space-y-4 mb-6">

@@ -429,7 +429,13 @@ const ProfilePage: React.FC = () => {
   const hasTests = recentTests.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden flex flex-col">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden flex flex-col"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 40px)',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 60px)'
+      }}
+    >
       {/* Large Background Circle centered */}
       <div className="absolute inset-0 flex items-center justify-center z-0">
         <div 

@@ -4,7 +4,7 @@ import { DifficultyLevel, TimerOption } from '@/types'
 const TOPIC_WORDS = {
   easy: {
     animals: ['cat', 'dog', 'bird', 'fish', 'cow', 'pig', 'duck', 'frog', 'bee', 'ant'],
-    actions: ['run', 'jump', 'walk', 'sit', 'eat', 'sleep', 'play', 'look', 'move', 'stop'],
+    actions: ['run', 'jump', 'walk', 'sit', 'eat', 'talk', 'play', 'look', 'move', 'stop'],
     places: ['home', 'park', 'yard', 'room', 'bed', 'car', 'tree', 'hill', 'lake', 'road'],
     times: ['day', 'night', 'morning', 'today', 'now', 'later', 'soon', 'then', 'first', 'last'],
     objects: ['book', 'ball', 'cup', 'box', 'bag', 'toy', 'pen', 'hat', 'key', 'map'],

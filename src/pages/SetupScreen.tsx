@@ -120,7 +120,13 @@ const SetupScreen = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden flex flex-col">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden flex flex-col"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 20px)',
+        paddingBottom: 'max(env(safe-area-inset-bottom),60px)'
+      }}
+    >
       <Navbar showBackButton={false} />
       
       {/* Large Background Circle centered */}

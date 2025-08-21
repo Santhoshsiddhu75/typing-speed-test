@@ -14,8 +14,9 @@ declare global {
 }
 
 const AdBanner: React.FC<AdBannerProps> = ({ size, className, slot = "1234567890" }) => {
+  // slot is reserved for future use when ads are implemented
+  void slot;
   // Slot will be used when ads are implemented
-  console.log('Ad slot:', slot);
   // Commented out AdSense pushing to prevent console errors
   // This will be uncommented when actual ads are implemented
   // useEffect(() => {

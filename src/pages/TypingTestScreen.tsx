@@ -25,7 +25,8 @@ import {
   Home, 
   CheckCircle2,
   Save,
-  AlertTriangle
+  AlertTriangle,
+  ArrowLeft
 } from 'lucide-react'
 import { TimerOption, DifficultyLevel, TypingStats, CharacterState, TestResult } from '@/types'
 import { getRandomText } from '@/data/texts'
@@ -46,6 +47,12 @@ const TypingTestScreen = () => {
   const textContainerRef = useRef<HTMLDivElement>(null)
   const hiddenInputRef = useRef<HTMLInputElement>(null)
   const measureCharRef = useRef<HTMLSpanElement>(null)
+  const waveformRef = useRef<HTMLDivElement>(null)
+  const timerRef = useRef<HTMLDivElement>(null)
+  const toggleRef = useRef<HTMLDivElement>(null)
+  const cardHeaderRef = useRef<HTMLDivElement>(null)
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const cardHeaderElementRef = useRef<HTMLDivElement>(null)
   
   // Test configuration
   const timer = parseInt(searchParams.get('timer') || '1') as TimerOption
@@ -511,23 +518,35 @@ const TypingTestScreen = () => {
     }
   }
 
-  // "The typing field scroll" - positions typing field at rock bottom on mobile
+  // "The typing field scroll" - scroll to timer numbers at top
   const doTypingFieldScroll = () => {
-    if (isMobile && textContainerRef.current) {
-      // Use setTimeout to ensure scroll happens after any other events
-      setTimeout(() => {
-        textContainerRef.current?.scrollIntoView({ 
+    if (isMobile && timerRef.current) {
+      // Find the timer display element inside the timer (the "1:00" text)
+      const timerDisplay = timerRef.current.querySelector('[data-testid="timer-display"]') as HTMLElement
+      if (timerDisplay) {
+        // Scroll to put the timer numbers (1:00) at top of screen
+        timerDisplay.scrollIntoView({ 
           behavior: 'smooth', 
-          block: 'end' 
+          block: 'start',
+          inline: 'nearest'
         })
-      }, 100)
+      } else {
+        // Fallback to timer container
+        timerRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start',
+          inline: 'nearest'
+        })
+      }
     }
   }
 
   // Handle focus/blur for both inputs
   const handleFocus = () => {
     setIsFieldFocused(true)
-    // Trigger "The typing field scroll" when user clicks
+    
+    // Always trigger scroll to show the green dotted border on mobile
+    // This handles both click on container and programmatic focus of hidden input
     doTypingFieldScroll()
   }
   const handleBlur = () => setIsFieldFocused(false)
@@ -536,9 +555,10 @@ const TypingTestScreen = () => {
   const handleTextContainerClick = () => {
     if (isTestComplete || showResults) return
     
-    // Trigger "The typing field scroll" IMMEDIATELY when clicking green dotted field
+    // Immediate scroll when user taps - don't wait for anything
     doTypingFieldScroll()
     
+    // Focus to trigger keyboard
     if (hiddenInputRef.current) {
       hiddenInputRef.current.focus()
     } else if (textContainerRef.current) {
@@ -549,7 +569,7 @@ const TypingTestScreen = () => {
   // Detect mobile device for enhanced mobile support
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
-  // Enhanced mobile focus management
+  // Enhanced mobile focus management + Keyboard detection
   useEffect(() => {
     if (isMobile && isFieldFocused && hiddenInputRef.current) {
       // Ensure mobile keyboard stays open
@@ -570,6 +590,33 @@ const TypingTestScreen = () => {
       }
     }
   }, [isMobile, isFieldFocused, isTestActive, isTestComplete, showResults])
+
+  // Mobile keyboard detection - scroll when viewport changes (keyboard appears)
+  useEffect(() => {
+    if (!isMobile) return
+
+    const handleViewportChange = () => {
+      if (isFieldFocused && textContainerRef.current) {
+        // Keyboard appeared or disappeared - scroll to center the typing area
+        doTypingFieldScroll()
+      }
+    }
+
+    // Listen for viewport changes (keyboard opening/closing)
+    const visualViewport = window.visualViewport
+    if (visualViewport) {
+      visualViewport.addEventListener('resize', handleViewportChange)
+      return () => {
+        visualViewport.removeEventListener('resize', handleViewportChange)
+      }
+    } else {
+      // Fallback for older browsers
+      window.addEventListener('resize', handleViewportChange)
+      return () => {
+        window.removeEventListener('resize', handleViewportChange)
+      }
+    }
+  }, [isMobile, isFieldFocused])
 
   const handleSaveResult = async () => {
     // Debug logging
@@ -625,6 +672,57 @@ const TypingTestScreen = () => {
   const handleConfirmBackWithoutSaving = () => {
     setShowUnsavedWarning(false)
     navigate('/')
+  }
+
+  const handleCloseResults = (open: boolean) => {
+    if (!open) {
+      // Close results dialog and generate new content for typing
+      setShowResults(false)
+      
+      // Generate new text
+      const newText = getRandomText(difficulty, timer)
+      setTestText(newText)
+      
+      // Reset all test state to allow new test
+      setCurrentIndex(0)
+      setUserInput('')
+      setIsTestActive(false)
+      setIsTestComplete(false)
+      setTimeRemaining(timer * 60)
+      setStartTime(null)
+      setScrollOffset(0)
+      setShowSplitAnimation(false)
+      setIsFieldFocused(false)
+      setRealtimeTypingSpeed(0)
+      lastKeypressTimeRef.current = 0
+      typingSpeedHistoryRef.current = []
+      
+      // Reset save state
+      setIsSaving(false)
+      setIsResultSaved(false)
+      setShowUnsavedWarning(false)
+      setSaveError(null)
+      
+      // Reset stats
+      setStats({
+        wpm: 0,
+        cpm: 0,
+        accuracy: 0,
+        timeRemaining: timer * 60,
+        correctChars: 0,
+        incorrectChars: 0,
+        totalChars: 0
+      })
+      
+      // Focus the appropriate input for new test (mobile-friendly)
+      setTimeout(() => {
+        if (hiddenInputRef.current) {
+          hiddenInputRef.current.focus()
+        } else if (textContainerRef.current) {
+          textContainerRef.current.focus()
+        }
+      }, 100)
+    }
   }
 
   const handleRetakeTest = () => {
@@ -684,7 +782,12 @@ const TypingTestScreen = () => {
   // const actualUser = (user as any)?.user || user;
 
   return (
-    <div className="min-h-screen p-4 bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden">
+    <div 
+      className="min-h-screen p-4 bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 20px)'
+      }}
+    >
       <Navbar backUrl="/" />
         {/* Large Background Circle centered on timer */}
         <div className="absolute inset-0 flex items-start justify-center pt-[200px] md:pt-[220px] z-0">
@@ -730,7 +833,7 @@ const TypingTestScreen = () => {
           </Card>
           
           {/* Circular Timer - Center */}
-          <div className="flex-shrink-0">
+          <div ref={timerRef} className="flex-shrink-0">
             <CircularTimer 
               timeRemaining={timeRemaining}
               totalTime={timer * 60}
@@ -747,9 +850,9 @@ const TypingTestScreen = () => {
         </div>
 
         {/* Typing Waveform Visualizer */}
-        <div className="relative">
+        <div ref={waveformRef} className="relative">
           {/* Toggle Switch */}
-          <div className="absolute top-2 right-2 z-10">
+          <div ref={toggleRef} className="absolute top-2 right-2 z-10">
             <Toggle
               checked={showWaveform}
               onCheckedChange={setShowWaveform}
@@ -777,10 +880,10 @@ const TypingTestScreen = () => {
 
         {/* Typing Area */}
         <Card className="border-2 bg-white dark:bg-[rgb(28,46,56)]">
-          <CardHeader>
-            <div className="flex items-center">
+          <CardHeader ref={cardHeaderElementRef}>
+            <div ref={cardHeaderRef} className="flex items-center">
               <div className="flex-1"></div>
-              <CardTitle className="text-center whitespace-nowrap text-sm sm:text-base md:text-xl">Type the text below</CardTitle>
+              <CardTitle ref={titleRef} className="text-center whitespace-nowrap text-sm sm:text-base md:text-xl">Type the text below</CardTitle>
               <div className="flex-1 flex justify-end">
                 {/* Caps Lock Indicator */}
                 <div 
@@ -797,7 +900,7 @@ const TypingTestScreen = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Hidden input for mobile keyboard trigger */}
+            {/* Hidden input for mobile keyboard trigger - positioned over typing area to prevent scroll issues */}
             <input
               ref={hiddenInputRef}
               type="text"
@@ -806,13 +909,14 @@ const TypingTestScreen = () => {
               onKeyDown={handleHiddenInputKeyDown}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              className="absolute opacity-0 pointer-events-none"
+              className="absolute opacity-0 pointer-events-none z-[-1]"
               style={{
                 position: 'absolute',
-                left: '-9999px',
-                top: '-9999px',
+                left: '50%',
+                top: '50%',
                 width: '1px',
-                height: '1px'
+                height: '1px',
+                transform: 'translate(-50%, -50%)'
               }}
               autoComplete="off"
               autoCapitalize="off"
@@ -945,14 +1049,23 @@ const TypingTestScreen = () => {
           </CardContent>
         </Card>
 
+        {/* Back to Setup Button */}
+        <div className="flex justify-center mt-6">
+          <Button 
+            onClick={() => navigate('/')}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Setup Screen
+          </Button>
+        </div>
+
         {/* Results Modal */}
-        <Dialog open={showResults} onOpenChange={() => {/* Prevent accidental closing */}}>
+        <Dialog open={showResults} onOpenChange={handleCloseResults}>
           <DialogContent 
             className="w-[90vw] max-w-md mx-auto" 
             data-testid="results-modal"
-            hideCloseButton={true}
-            onInteractOutside={(e) => e.preventDefault()}
-            onEscapeKeyDown={(e) => e.preventDefault()}
           >
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-2xl">
