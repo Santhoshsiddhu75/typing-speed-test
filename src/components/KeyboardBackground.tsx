@@ -1,7 +1,7 @@
 import React, { Suspense, useRef, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, OrbitControls } from '@react-three/drei'
-import * as THREE from 'three'
+import { Group, Mesh } from 'three'
 
 interface KeyboardModelProps {
   position?: [number, number, number]
@@ -11,7 +11,7 @@ interface KeyboardModelProps {
 
 // Animated keyboard model component
 function KeyboardModel({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 1 }: KeyboardModelProps) {
-  const groupRef = useRef<THREE.Group>(null)
+  const groupRef = useRef<Group>(null)
   
   // Animation loop
   useFrame((state) => {
@@ -60,7 +60,7 @@ function KeyboardModel({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 1 }
 
 // Animated loading fallback component
 function LoadingFallback() {
-  const meshRef = useRef<THREE.Mesh>(null)
+  const meshRef = useRef<Mesh>(null)
   
   useFrame((state) => {
     if (meshRef.current) {
