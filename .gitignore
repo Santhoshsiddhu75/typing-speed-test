@@ -42,3 +42,7 @@ server/.env.local
 server/.env.production
 server/.env.development
 *.env
+
+# Local Interview Guide & Generation Assets
+taptest-interview-guide.pdf
+scratch/

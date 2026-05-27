@@ -29,6 +29,8 @@ app.use(cors({
     'http://192.168.29.20:5173', // Local IP for mobile testing
     'https://santhoshsiddhu75.github.io', // GitHub Pages
     'https://taptest-snowy.vercel.app', // Vercel deployment
+    'https://taptest.in',               // New custom domain
+    'https://www.taptest.in',           // New www custom domain
     'https://web-production-abb30.up.railway.app' // Railway backend
   ],
   credentials: true

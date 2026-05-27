@@ -1,5 +1,5 @@
 # Robots.txt for TapTest - Typing Speed Test Application
-# https://taptest-snowy.vercel.app
+# https://taptest.in
 
 User-agent: *
 Allow: /
@@ -27,7 +27,7 @@ Allow: /*.woff$
 Allow: /*.woff2$
 
 # Sitemap location
-Sitemap: https://taptest-snowy.vercel.app/sitemap.xml
+Sitemap: https://taptest.in/sitemap.xml
 
 # Crawl delay (optional - 1 second between requests)
 Crawl-delay: 1

@@ -10,6 +10,7 @@ interface AuthButtonProps {
 }
 
 const AuthButton: React.FC<AuthButtonProps> = ({ className }) => {
+  
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   

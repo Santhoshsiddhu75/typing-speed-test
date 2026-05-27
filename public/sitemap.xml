@@ -6,7 +6,7 @@
 
     <!-- Homepage - Main entry point -->
     <url>
-        <loc>https://taptest-snowy.vercel.app/</loc>
+        <loc>https://taptest.in/</loc>
         <lastmod>2025-08-21</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
@@ -14,7 +14,7 @@
 
     <!-- Typing Test - Core functionality -->
     <url>
-        <loc>https://taptest-snowy.vercel.app/test</loc>
+        <loc>https://taptest.in/test</loc>
         <lastmod>2025-08-21</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
@@ -22,7 +22,7 @@
 
     <!-- Login Page -->
     <url>
-        <loc>https://taptest-snowy.vercel.app/login</loc>
+        <loc>https://taptest.in/login</loc>
         <lastmod>2025-08-21</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
@@ -30,7 +30,7 @@
 
     <!-- Register Page -->
     <url>
-        <loc>https://taptest-snowy.vercel.app/register</loc>
+        <loc>https://taptest.in/register</loc>
         <lastmod>2025-08-21</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
@@ -38,7 +38,7 @@
 
     <!-- Profile Page -->
     <url>
-        <loc>https://taptest-snowy.vercel.app/profile</loc>
+        <loc>https://taptest.in/profile</loc>
         <lastmod>2025-08-21</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
