@@ -11,6 +11,7 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
 const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'))
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'))
 const AboutPage = lazy(() => import('@/pages/AboutPage'))
+import BuyMeCoffeeFloatingButton from '@/components/BuyMeCoffeeFloatingButton'
 import './index.css'
 
 // Loading component for route transitions - critical for Indian mobile users
@@ -36,6 +37,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {!isAuthPage && !isTestPage && !isProfilePage && !isSetupPage && !isLegalPage && <ThemeToggle />}
+      <BuyMeCoffeeFloatingButton />
       <Suspense fallback={<RouteLoadingSpinner />}>
         <Routes>
           <Route path="/" element={<SetupScreen />} />
