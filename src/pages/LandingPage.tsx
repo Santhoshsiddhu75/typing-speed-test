@@ -4,23 +4,23 @@ import { ArrowRight } from 'lucide-react'
 import LandingNav from '@/components/landing/LandingNav'
 import FloatingKeys from '@/components/landing/FloatingKeys'
 import HeroDemo from '@/components/landing/HeroDemo'
-import TryItSection from '@/components/landing/TryItSection'
+import DemoSection from '@/components/landing/DemoSection'
 import Footer from '@/components/Footer'
 
 const LandingPage = () => {
   const navigate = useNavigate()
-  const tryItRef = useRef<HTMLElement>(null)
+  const demoRef = useRef<HTMLElement>(null)
 
   // Not an href anchor: the app runs on HashRouter, which has already spent
   // the URL's hash on routing, so "#try" would break navigation rather than
   // scroll. This keeps working whichever router we end up on.
-  const scrollToTryIt = useCallback(() => {
-    tryItRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const scrollToDemo = useCallback(() => {
+    demoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
 
   return (
     <div className="tt-landing min-h-screen">
-      <LandingNav onTryIt={scrollToTryIt} />
+      <LandingNav onSeeDemo={scrollToDemo} />
 
       <section className="relative overflow-hidden pt-[92px] sm:pt-[104px]">
         <div className="tt-wash" aria-hidden="true" />
@@ -48,8 +48,8 @@ const LandingPage = () => {
                 Start a 1-minute test
                 <ArrowRight className="h-4 w-4" />
               </button>
-              <button type="button" onClick={scrollToTryIt} className="tt-btn tt-btn-quiet">
-                Try a line first
+              <button type="button" onClick={scrollToDemo} className="tt-btn tt-btn-quiet">
+                Watch a full test
               </button>
             </div>
 
@@ -72,7 +72,7 @@ const LandingPage = () => {
         <div className="h-12 sm:h-[72px]" />
       </section>
 
-      <TryItSection ref={tryItRef} />
+      <DemoSection ref={demoRef} />
 
       <Footer />
     </div>

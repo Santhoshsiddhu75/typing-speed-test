@@ -6,9 +6,10 @@ const DEMO_TEXT = 'The bicycle changed ordinary life faster than almost any inve
 /** Two keystrokes land wrong, as they would in an actual run. */
 const MISTAKES = new Set([21, 46])
 
-const STEP_MS = 54
+// 141ms a character is about 85 words per minute — the same pace the demo
+// section runs at, so the two never imply different speeds.
+const STEP_MS = 141
 const HOLD_MS = 2600
-const PEAK_WPM = 78
 const RING_CIRCUMFERENCE = 257.61
 
 function prefersReducedMotion() {
@@ -52,8 +53,14 @@ export const HeroDemo: React.FC<{ className?: string }> = ({ className }) => {
   }, [reduced])
 
   const progress = typed / DEMO_TEXT.length
-  const wpm = Math.round(PEAK_WPM * progress)
-  const secondsLeft = Math.max(0, Math.round(60 - 42 * progress))
+
+  let correct = 0
+  for (let i = 0; i < typed; i += 1) {
+    if (!MISTAKES.has(i)) correct += 1
+  }
+  const minutes = (typed * STEP_MS) / 60000
+  const wpm = minutes > 0 ? Math.round(correct / 5 / minutes) : 0
+  const secondsLeft = Math.max(0, Math.round(60 - (typed * STEP_MS) / 1000))
 
   return (
     <div className={cn('tt-demo-card relative w-full max-w-[470px]', className)}>
