@@ -11,16 +11,16 @@ interface LandingNavProps {
 }
 
 /**
- * The landing page's own bar. Deliberately not a variant of `Navbar`, which
- * carries back-button logic and the feedback modal for a different job.
+ * The landing page's own bar, in two states.
  *
- * It carries a solid surface in BOTH states — there is no transparent phase,
- * which is what previously let page text show through and read as a bug.
+ * At rest it is one wide card holding everything. On scroll it splits: the
+ * card's surface drops away and the two groups inside it grow surfaces of
+ * their own, so one bar becomes a circle on the left and a pill on the right
+ * with the page showing between them. The wordmark folds away at the same
+ * time, which is what lets the brand side close up into a circle.
  *
- * At rest it is a wide, softly rounded card with the full wordmark. Past the
- * fold it contracts into a narrow pill and the wordmark folds away, leaving
- * the mark alone, so the bar changes what it contains and not only its size.
- * The scrim behind it blurs whatever passes either side of the pill.
+ * Both states are solid. There is no transparent phase at any point, so nav
+ * text can never sit on top of page text.
  */
 export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
   const navigate = useNavigate()
@@ -40,26 +40,38 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
 
       <div
         className={cn(
-          'tt-nav-ease relative mx-auto transition-all duration-500',
-          scrolled ? 'mt-3 max-w-[920px] px-3 sm:px-4' : 'mt-3 max-w-[1240px] px-4 sm:px-6'
+          'tt-nav-ease relative mx-auto mt-3 transition-all duration-500',
+          scrolled ? 'max-w-[1180px] px-4 sm:px-8' : 'max-w-[1240px] px-4 sm:px-6'
         )}
       >
         <div
           className={cn(
-            'tt-nav-ease tt-nav-surface pointer-events-auto flex items-center justify-between border transition-all duration-500',
+            'tt-nav-ease flex items-center justify-between border transition-all duration-500',
             scrolled
-              ? 'rounded-full border-border/70 px-4 py-1.5 shadow-xl sm:px-6'
-              : 'rounded-2xl border-border/60 px-5 py-3.5 shadow-md sm:px-8 sm:py-4'
+              ? 'border-transparent bg-transparent p-0 shadow-none'
+              : 'tt-nav-surface rounded-2xl border-border/60 px-5 py-3.5 shadow-md sm:px-8 sm:py-4'
           )}
         >
-          {/* Logo renders the mark only, so the wordmark beside it can fold
-              away on its own rather than hard-swapping. */}
-          <Link to="/" className="flex flex-shrink-0 items-center gap-2.5" aria-label="TapTest home">
+          {/* Left island — closes into a circle once the wordmark folds. */}
+          <Link
+            to="/"
+            aria-label="TapTest home"
+            className={cn(
+              'tt-island tt-nav-spring pointer-events-auto flex flex-shrink-0 items-center gap-2.5',
+              scrolled && 'is-split p-1.5'
+            )}
+          >
             <Logo size={scrolled ? 'small' : 'medium'} showText={false} clickable={false} />
             <span className={cn('tt-wordmark', scrolled && 'is-folded')}>TapTest</span>
           </Link>
 
-          <div className="flex items-center gap-4 sm:gap-5">
+          {/* Right island. */}
+          <div
+            className={cn(
+              'tt-island tt-nav-spring pointer-events-auto flex items-center gap-4 sm:gap-5',
+              scrolled && 'is-split px-3 py-1.5 sm:px-4'
+            )}
+          >
             <div className="flex items-center gap-6">
               {/* Dropped at phone width — the hero's own button sits right under it. */}
               <button
