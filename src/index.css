@@ -1145,19 +1145,11 @@ html, body {
 /* easeOutQuint: moves decisively, settles softly. */
 .tt-nav-ease { transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
 
-/* Heavy frosting rather than a light tint. At 80% with a 4px blur, text
-   scrolling underneath stays legible through the bar and the whole thing
-   reads as a mistake; 24px of blur turns it into a surface. */
-.tt-nav-pill {
-  background: color-mix(in srgb, var(--background) 82%, transparent);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  backdrop-filter: blur(24px) saturate(160%);
-}
-
-/* No backdrop-filter means no frosting, so fall back to an opaque bar —
-   still readable, just without the depth. */
-@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
-  .tt-nav-pill { background: var(--background); }
+/* A real surface, not a tint. Every earlier attempt kept some transparency
+   and every one of them let page text read through the bar. The card colour
+   also makes it a distinct plane from the page rather than a wash of it. */
+.tt-nav-surface {
+  background: var(--card);
 }
 
 @media (prefers-reduced-motion: reduce) {

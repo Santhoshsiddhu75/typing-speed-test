@@ -12,6 +12,19 @@ export default defineConfig({
     },
   },
   server: {
+    // Build output and test artefacts are not source. Watching them means a
+    // `npm run build` while the dev server is up rewrites files the watcher
+    // holds open, which on Windows throws EBUSY and kills the server — the
+    // dev server dies silently and the browser quietly serves stale code.
+    watch: {
+      ignored: [
+        '**/dist/**',
+        '**/playwright-report/**',
+        '**/test-results/**',
+        '**/server/dist/**',
+        '**/scratch/**',
+      ],
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3003',
