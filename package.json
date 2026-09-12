@@ -19,7 +19,8 @@
     "server:dev": "cd server && npm run dev",
     "server:build": "cd server && npm run build",
     "server:start": "cd server && npm start",
-    "setup": "npm install && npm run server:install"
+    "setup": "npm install && npm run server:install",
+    "check:passages": "node scripts/check-passages.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.14",

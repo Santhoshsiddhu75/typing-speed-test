@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Clock, Target, Play, Zap, Brain, Flame, ArrowLeft } from 'lucide-react'
+import { Clock, Target, Play, ArrowLeft } from 'lucide-react'
 import { TimerOption, DifficultyLevel } from '@/types'
 import { cn } from '@/lib/utils'
 import Logo from '@/components/Logo'
 import Navbar from '@/components/Navbar'
+import TimerClock from '@/components/TimerClock'
+import DifficultyMedallion from '@/components/DifficultyMedallion'
 import AdBanner from '@/components/AdBanner'
 import Footer from '@/components/Footer'
 
@@ -20,40 +22,22 @@ const SetupScreen = () => {
   const [buttonAnimation, setButtonAnimation] = useState<'none' | 'back-bounce-in' | 'start-slide-in' | 'start-exit'>('none')
 
 
-  const timerOptions: { value: TimerOption; label: string; description: string }[] = [
-    { value: 1, label: '1 Minute', description: 'Quick test' },
-    { value: 2, label: '2 Minutes', description: 'Standard test' },
-    { value: 5, label: '5 Minutes', description: 'Extended test' },
+  // `period` is how long the clock's sweep hand takes for one turn — the
+  // longer the test, the slower the dial.
+  const timerOptions: { value: TimerOption; label: string; description: string; period: number }[] = [
+    { value: 1, label: '1 Minute', description: 'Quick test', period: 10 },
+    { value: 2, label: '2 Minutes', description: 'Standard test', period: 15 },
+    { value: 5, label: '5 Minutes', description: 'Extended test', period: 20 },
   ]
 
-  const difficultyOptions: { 
+  const difficultyOptions: {
     value: DifficultyLevel
     label: string
     description: string
-    icon: typeof Zap
-    color: string
   }[] = [
-    { 
-      value: 'easy', 
-      label: 'Easy', 
-      description: 'Simple words',
-      icon: Zap,
-      color: 'text-secondary'
-    },
-    { 
-      value: 'medium', 
-      label: 'Medium', 
-      description: 'Technical vocabulary',
-      icon: Brain,
-      color: 'text-accent-foreground'
-    },
-    { 
-      value: 'hard', 
-      label: 'Hard', 
-      description: 'Complex scientific text',
-      icon: Flame,
-      color: 'text-destructive'
-    },
+    { value: 'easy', label: 'Easy', description: 'Simple words' },
+    { value: 'medium', label: 'Medium', description: 'Technical vocabulary' },
+    { value: 'hard', label: 'Hard', description: 'Complex scientific text' },
   ]
 
   const handleTimerSelect = (timer: TimerOption) => {
@@ -233,18 +217,15 @@ const SetupScreen = () => {
                     aria-pressed={selectedTimer === option.value}
                     aria-label={`Select ${option.label} timer`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className="font-semibold text-lg">{option.label}</div>
-                        </div>
+                    <div className="flex flex-row items-center gap-4 md:flex-col">
+                      <TimerClock
+                        period={option.period}
+                        className={cn(animatingTimer === option.value && "tt-pop")}
+                      />
+                      <div className="md:text-center">
+                        <div className="font-semibold text-lg">{option.label}</div>
                         <div className="text-sm text-muted-foreground">{option.description}</div>
                       </div>
-                      <Clock className={cn(
-                        "w-6 h-6 transition-all duration-200",
-                        selectedTimer === option.value ? "text-primary" : "text-muted-foreground",
-                        animatingTimer === option.value && "animate-timer-tick"
-                      )} />
                     </div>
                   </button>
                 ))}
@@ -258,7 +239,6 @@ const SetupScreen = () => {
             )}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {difficultyOptions.map((option) => {
-                  const IconComponent = option.icon
                   const getAnimationClass = () => {
                     if (animatingDifficulty !== option.value) return ""
                     switch (option.value) {
@@ -281,18 +261,15 @@ const SetupScreen = () => {
                       aria-pressed={selectedDifficulty === option.value}
                       aria-label={`Select ${option.label} difficulty`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <div className="font-semibold text-lg">{option.label}</div>
-                          </div>
+                      <div className="flex flex-row items-center gap-4 md:flex-col">
+                        <DifficultyMedallion
+                          difficulty={option.value}
+                          className={getAnimationClass()}
+                        />
+                        <div className="md:text-center">
+                          <div className="font-semibold text-lg">{option.label}</div>
                           <div className="text-sm text-muted-foreground">{option.description}</div>
                         </div>
-                        <IconComponent className={cn(
-                          "w-6 h-6 transition-all duration-200",
-                          selectedDifficulty === option.value ? option.color : "text-muted-foreground",
-                          getAnimationClass()
-                        )} />
                       </div>
                     </button>
                   )
@@ -305,12 +282,13 @@ const SetupScreen = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {timerOptions.map((option) => (
                   <div key={option.value} className="selection-card text-left">
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-row items-center gap-4 md:flex-col">
+                      {/* Matches the dial's box without paying for its animation. */}
+                      <div className="h-[72px] w-[72px] shrink-0 md:h-[120px] md:w-[120px]" />
+                      <div className="md:text-center">
                         <div className="font-semibold text-lg">{option.label}</div>
                         <div className="text-sm text-muted-foreground">{option.description}</div>
                       </div>
-                      <Clock className="w-6 h-6" />
                     </div>
                   </div>
                 ))}
