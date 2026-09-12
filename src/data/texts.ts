@@ -1,164 +1,81 @@
 import { DifficultyLevel, TimerOption } from '@/types'
+import { PASSAGES } from './passages'
 
-// Topic-specific word pools for meaningful text generation
-const TOPIC_WORDS = {
-  easy: {
-    animals: ['cat', 'dog', 'bird', 'fish', 'cow', 'pig', 'duck', 'frog', 'bee', 'ant'],
-    actions: ['run', 'jump', 'walk', 'sit', 'eat', 'talk', 'play', 'look', 'move', 'stop'],
-    places: ['home', 'park', 'yard', 'room', 'bed', 'car', 'tree', 'hill', 'lake', 'road'],
-    times: ['day', 'night', 'morning', 'today', 'now', 'later', 'soon', 'then', 'first', 'last'],
-    objects: ['book', 'ball', 'cup', 'box', 'bag', 'toy', 'pen', 'hat', 'key', 'map'],
-    people: ['man', 'woman', 'boy', 'girl', 'mom', 'dad', 'kid', 'baby', 'friend', 'person'],
-    colors: ['red', 'blue', 'green', 'black', 'white', 'brown', 'pink', 'gray', 'gold', 'dark'],
-    sizes: ['big', 'small', 'long', 'short', 'tall', 'wide', 'thin', 'huge', 'tiny', 'full'],
-    qualities: ['good', 'bad', 'nice', 'happy', 'sad', 'fast', 'slow', 'hot', 'cold', 'new']
-  },
-  medium: {
-    subjects: ['technology', 'education', 'business', 'health', 'travel', 'culture', 'music', 'sports', 'food', 'nature'],
-    actions: ['develop', 'create', 'manage', 'organize', 'research', 'discover', 'improve', 'connect', 'support', 'explore'],
-    qualities: ['important', 'successful', 'creative', 'efficient', 'popular', 'modern', 'traditional', 'innovative', 'reliable', 'flexible'],
-    places: ['office', 'university', 'hospital', 'restaurant', 'airport', 'museum', 'library', 'theater', 'stadium', 'market'],
-    people: ['students', 'teachers', 'doctors', 'engineers', 'artists', 'musicians', 'athletes', 'writers', 'scientists', 'professionals'],
-    concepts: ['knowledge', 'experience', 'opportunity', 'challenge', 'solution', 'progress', 'success', 'development', 'communication', 'information'],
-    tools: ['computer', 'software', 'internet', 'database', 'system', 'network', 'platform', 'application', 'device', 'equipment']
-  },
-  hard: {
-    fields: ['neuroscience', 'biotechnology', 'astrophysics', 'archaeology', 'psychology', 'philosophy', 'economics', 'linguistics', 'anthropology', 'sociology'],
-    processes: ['implementation', 'transformation', 'optimization', 'configuration', 'interpretation', 'experimentation', 'investigation', 'collaboration', 'specialization', 'systematization'],
-    qualities: ['comprehensive', 'sophisticated', 'revolutionary', 'unprecedented', 'extraordinary', 'fundamental', 'theoretical', 'experimental', 'controversial', 'phenomenological'],
-    concepts: ['consciousness', 'methodology', 'infrastructure', 'architecture', 'administration', 'organization', 'responsibility', 'characteristic', 'understanding', 'communication'],
-    outcomes: ['advancement', 'achievement', 'breakthrough', 'discovery', 'innovation', 'development', 'establishment', 'recognition', 'transformation', 'realization'],
-    institutions: ['university', 'laboratory', 'organization', 'administration', 'institution', 'corporation', 'establishment', 'foundation', 'association', 'confederation']
+/**
+ * Words handed to the test, generously above what anyone can actually type in
+ * the time. The screen caps input at the length of this text, so these need
+ * headroom: at 200 words a one minute test would silently cap a fast typist
+ * at 200 WPM rather than letting them finish.
+ */
+const WORD_TARGETS: Record<TimerOption, number> = {
+  1: 220,
+  2: 400,
+  5: 900,
+}
+
+const DEFAULT_WORD_TARGET = 220
+
+/** Fisher-Yates, on a copy — the exported pools are never mutated. */
+function shuffled<T>(items: readonly T[]): T[] {
+  const copy = [...items]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
   }
+  return copy
 }
 
-// Sentence templates for each difficulty level
-const TEMPLATES = {
-  easy: [
-    'the [animals] [actions] in the [places] when it gets [times]',
-    '[people] like to [actions] with their [objects] every [times]',
-    'a [colors] [animals] [actions] near the [places] and looks [qualities]',
-    'when [people] [actions] they feel [qualities] and [actions] more',
-    'the [sizes] [objects] sits on the [places] all [times] long',
-    '[people] can [actions] and [actions] when they have [objects]',
-    'every [times] the [animals] [actions] around the [places] quickly',
-    'most [people] [actions] their [objects] in the [places] at [times]'
-  ],
-  medium: [
-    'During [times], [people] typically [actions] their [concepts] through [tools].',
-    'Modern [subjects] helps [people] [actions] more [qualities] solutions for daily challenges.',
-    'Many [people] visit [places] to [actions] new [concepts] and gain valuable experience.',
-    'Technology allows [people] to [actions] and [actions] their work more efficiently.',
-    'Students can [actions] important [concepts] by using various [tools] and methods.',
-    'Professional [people] often [actions] in [places] to discuss [qualities] projects.',
-    'Research shows that [subjects] continues to [actions] and transform modern society.',
-    'Organizations [actions] new [tools] to improve their [concepts] and reach better results.'
-  ],
-  hard: [
-    'Contemporary [fields] demonstrates [qualities] [concepts] that facilitate systematic [processes].',
-    'Researchers [actions] [qualities] methodologies to investigate complex [concepts] within academic [institutions].',
-    'Advanced [processes] requires comprehensive understanding of [qualities] theoretical frameworks.',
-    'Modern [institutions] implement sophisticated [tools] to optimize their organizational [processes].',
-    'Scientific [fields] continues to [actions] unprecedented [outcomes] through collaborative research initiatives.',
-    'Theoretical [concepts] underlying [qualities] [processes] represents fundamental advances in human knowledge.',
-    'Academic [institutions] facilitate [qualities] [processes] by providing comprehensive resources and expertise.',
-    'Revolutionary [outcomes] in [fields] demonstrates the extraordinary potential of systematic [processes].'
-  ]
+/**
+ * Easy mode drops capitals and punctuation, so beginners never reach for the
+ * shift key. The passages still read as sentences; they just lose their marks.
+ */
+function formatForDifficulty(passage: string, difficulty: DifficultyLevel): string {
+  if (difficulty !== 'easy') return passage
+
+  return passage
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
-// Fill template with random words from topic pools
-function fillTemplate(template: string, difficulty: DifficultyLevel): string {
-  const topicWords = TOPIC_WORDS[difficulty]
-  
-  return template.replace(/\[(\w+)\]/g, (match, category) => {
-    const categoryWords = topicWords[category as keyof typeof topicWords] as string[]
-    if (!categoryWords || categoryWords.length === 0) return match // Return original if category not found
-    
-    const randomWord = categoryWords[Math.floor(Math.random() * categoryWords.length)]
-    return randomWord
-  })
+function countWords(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length
 }
 
-// Apply difficulty-specific formatting rules
-function applyFormatting(text: string, difficulty: DifficultyLevel): string {
-  if (difficulty === 'easy') {
-    // Easy: only lowercase, no punctuation
-    return text.toLowerCase().replace(/[.,!?]/g, '')
-  } else if (difficulty === 'medium' || difficulty === 'hard') {
-    // Medium/Hard: proper English grammar and capitalization
-    let formatted = text.toLowerCase()
-    
-    // Capitalize first letter of the text
-    formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1)
-    
-    // Capitalize after periods (sentence beginnings)
-    formatted = formatted.replace(/\.\s+([a-z])/g, (_, letter) => {
-      return '. ' + letter.toUpperCase()
-    })
-    
-    // Capitalize proper nouns and important words (but keep it natural)
-    // Only capitalize specific words that should be capitalized in English
-    const wordsToCapitalize = [
-      'america', 'american', 'english', 'internet', 'technology', 'students', 
-      'university', 'college', 'government', 'research', 'science', 'education',
-      'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
-      'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august',
-      'september', 'october', 'november', 'december'
-    ]
-    
-    wordsToCapitalize.forEach(word => {
-      const regex = new RegExp(`\\b${word}\\b`, 'gi')
-      formatted = formatted.replace(regex, (match) => 
-        match.charAt(0).toUpperCase() + match.slice(1).toLowerCase()
-      )
-    })
-    
-    return formatted
-  }
-  
-  return text
-}
-
-// Generate text with exact word count using templates
-function generateText(difficulty: DifficultyLevel, targetWordCount: number): string {
-  const templates = TEMPLATES[difficulty]
-  const sentences: string[] = []
-  let currentWordCount = 0
-  
-  // Keep generating sentences until we reach target word count
-  while (currentWordCount < targetWordCount) {
-    // Pick random template
-    const template = templates[Math.floor(Math.random() * templates.length)]
-    
-    // Fill template with topic words
-    let sentence = fillTemplate(template, difficulty)
-    
-    // Apply formatting rules
-    sentence = applyFormatting(sentence, difficulty)
-    
-    // Count words in this sentence
-    const sentenceWords = sentence.split(' ').filter(word => word.length > 0)
-    const sentenceWordCount = sentenceWords.length
-    
-    // Check if adding this sentence would exceed target
-    if (currentWordCount + sentenceWordCount <= targetWordCount) {
-      sentences.push(sentence)
-      currentWordCount += sentenceWordCount
-    } else {
-      // Need to trim the sentence to fit exactly
-      const wordsNeeded = targetWordCount - currentWordCount
-      const trimmedSentence = sentenceWords.slice(0, wordsNeeded).join(' ')
-      sentences.push(trimmedSentence)
-      currentWordCount = targetWordCount
-      break
-    }
-  }
-  
-  return sentences.join(' ')
-}
-
-
+/**
+ * Builds a test by stitching whole passages together in random order until the
+ * target is met. Passages are drawn without replacement so a single test never
+ * repeats itself, and the deck reshuffles if a long test exhausts the pool.
+ *
+ * Whole passages only — the previous implementation sliced the final sentence
+ * to hit an exact count, which left every test ending on a fragment. Landing
+ * slightly over the target costs nothing, since unused words are simply never
+ * reached.
+ */
 export function getRandomText(difficulty: DifficultyLevel, timer: TimerOption): string {
-  const wordCount = timer === 1 ? 70 : timer === 2 ? 120 : 300
-  return generateText(difficulty, wordCount)
+  const target = WORD_TARGETS[timer] ?? DEFAULT_WORD_TARGET
+  const pool = PASSAGES[difficulty]
+
+  if (!pool || pool.length === 0) return ''
+
+  const chosen: string[] = []
+  let total = 0
+  let deck = shuffled(pool)
+  let next = 0
+
+  while (total < target) {
+    if (next >= deck.length) {
+      deck = shuffled(pool)
+      next = 0
+    }
+
+    const passage = formatForDifficulty(deck[next], difficulty)
+    next += 1
+
+    chosen.push(passage)
+    total += countWords(passage)
+  }
+
+  return chosen.join(' ')
 }
