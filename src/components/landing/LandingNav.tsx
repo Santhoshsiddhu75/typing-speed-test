@@ -37,18 +37,18 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
       <div
         className={cn(
           'tt-nav-ease mx-auto transition-all duration-500',
-          scrolled ? 'mt-2.5 max-w-[1040px] px-3 sm:px-4' : 'mt-0 max-w-[1200px] px-5 sm:px-14'
+          scrolled ? 'mt-3.5 max-w-[920px] px-3 sm:px-4' : 'mt-0 max-w-[1240px] px-5 sm:px-14'
         )}
       >
         <div
           className={cn(
             'tt-nav-ease pointer-events-auto flex items-center justify-between rounded-full border transition-all duration-500',
             scrolled
-              ? 'tt-nav-pill border-border/70 px-4 py-2 shadow-lg sm:px-6'
-              : 'border-transparent bg-transparent px-0 py-4 shadow-none sm:py-5'
+              ? 'tt-nav-pill border-border/70 px-4 py-1.5 shadow-xl sm:px-6'
+              : 'border-transparent bg-transparent px-0 py-5 shadow-none sm:py-7'
           )}
         >
-          <Logo size="small" showTagline={false} clickable />
+          <Logo size={scrolled ? 'small' : 'medium'} showTagline={false} clickable />
 
           <div className="flex items-center gap-4 sm:gap-5">
             <div className="flex items-center gap-6">

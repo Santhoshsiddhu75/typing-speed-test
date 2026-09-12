@@ -22,7 +22,7 @@ const LandingPage = () => {
     <div className="tt-landing min-h-screen">
       <LandingNav onSeeDemo={scrollToDemo} />
 
-      <section className="relative overflow-hidden pt-[92px] sm:pt-[104px]">
+      <section className="relative overflow-hidden pt-[92px] sm:pt-[122px]">
         <div className="tt-wash" aria-hidden="true" />
         <div className="tt-wash-2" aria-hidden="true" />
         <FloatingKeys />
