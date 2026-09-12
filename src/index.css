@@ -1028,6 +1028,10 @@ html, body {
   background: var(--primary); color: var(--primary-foreground);
   box-shadow: 0 12px 30px -10px var(--primary);
 }
+/* Square, for an icon on its own. */
+.tt-btn-icon { width: 52px; padding: 0; flex-shrink: 0; }
+@media (min-width: 640px) { .tt-btn-icon { width: 50px; } }
+
 .tt-btn-quiet {
   background: transparent; color: var(--foreground);
   border: 2px solid var(--border);

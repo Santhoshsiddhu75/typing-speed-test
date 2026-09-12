@@ -109,7 +109,6 @@ export const DemoSection = forwardRef<HTMLElement>((_props, sectionRef) => {
   const accuracy = typed > 0 ? Math.round((correct / typed) * 100) : 100
   const progress = Math.round((typed / DEMO_TEXT.length) * 100)
   const secondsLeft = Math.max(0, Math.round(TEST_SECONDS - elapsedMs / 1000))
-  const elapsedSeconds = Math.round(elapsedMs / 1000)
 
   return (
     <section ref={sectionRef} className="tt-try relative overflow-hidden py-14 sm:py-[68px]">
@@ -121,7 +120,7 @@ export const DemoSection = forwardRef<HTMLElement>((_props, sectionRef) => {
           Watch a test run.
         </h2>
         <p className="mx-auto mt-3.5 text-pretty text-[15.5px] leading-relaxed text-muted-foreground sm:text-[16.5px]">
-          Real prose, real mistakes, and the numbers moving as they would while you type.
+          Real prose, real mistakes, real numbers.
         </p>
 
         <div ref={cardRef} className="tt-demo-card mt-7 text-left sm:mt-[38px]">
@@ -170,18 +169,24 @@ export const DemoSection = forwardRef<HTMLElement>((_props, sectionRef) => {
               <p className="text-[19px] leading-snug">
                 That run was <b className="font-semibold text-primary">{wpm} WPM</b> at{' '}
                 <b className="font-semibold text-primary">{accuracy}%</b> accuracy.
-                <span className="mt-1.5 block text-sm text-muted-foreground">
-                  {elapsedSeconds} seconds of a one-minute test. Yours will look like this.
-                </span>
               </p>
 
-              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                <button type="button" onClick={play} className="tt-btn tt-btn-quiet">
-                  <RotateCcw className="h-4 w-4" />
-                  Watch again
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={play}
+                  aria-label="Play the demo again"
+                  title="Play again"
+                  className="tt-btn tt-btn-quiet tt-btn-icon"
+                >
+                  <RotateCcw className="h-[18px] w-[18px]" />
                 </button>
-                <button type="button" onClick={() => navigate('/start')} className="tt-btn tt-btn-primary">
-                  Try it yourself
+                <button
+                  type="button"
+                  onClick={() => navigate('/start')}
+                  className="tt-btn tt-btn-primary flex-1 sm:flex-none"
+                >
+                  Try it
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
