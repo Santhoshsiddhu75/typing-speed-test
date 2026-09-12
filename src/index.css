@@ -1163,3 +1163,58 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .tt-nav-ease { transition-duration: 0.01ms; }
 }
+
+/* The band the nav floats over. A floating pill leaves the rest of the strip
+   bare, so text scrolling past sits crisply beside it and the collision reads
+   as a bug. Blurring that band and fading it out with a mask makes content
+   dissolve on its way out of the viewport instead of sliding cleanly under. */
+.tt-nav-scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 132px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--background) 70%, transparent) 0%,
+    color-mix(in srgb, var(--background) 30%, transparent) 55%,
+    transparent 100%
+  );
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 48%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 48%, transparent 100%);
+}
+
+.tt-nav-scrim.is-on { opacity: 1; }
+
+/* The wordmark folds away on contract rather than disappearing, so the bar
+   changes what it holds and not only its size. */
+.tt-wordmark {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 160px;
+  opacity: 1;
+  transition:
+    max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.3s ease,
+    margin-left 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tt-wordmark.is-folded {
+  max-width: 0;
+  opacity: 0;
+  /* Swallows the flex gap so the mark does not sit adrift. */
+  margin-left: -10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-nav-scrim,
+  .tt-wordmark { transition-duration: 0.01ms; }
+}
