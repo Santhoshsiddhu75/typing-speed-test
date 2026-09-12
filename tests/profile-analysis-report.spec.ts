@@ -28,7 +28,7 @@ test.describe('Profile Page Analysis and Visual Audit Report', () => {
     console.log('\n🎨 2. COLOR PALETTE ANALYSIS');
     
     // Go to home page and analyze colors there
-    await page.goto('/');
+    await page.goto('/#/start');
     await page.waitForTimeout(2000);
     
     const colorAnalysis = await page.evaluate(() => {

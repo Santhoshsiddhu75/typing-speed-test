@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Setup Screen', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/#/start')
   })
 
   test('should display the main title and description', async ({ page }) => {
@@ -84,7 +84,7 @@ test.describe('Setup Screen', () => {
 test.describe('Setup Screen Responsive', () => {
   test('should be responsive on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 }) // iPhone SE
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Check elements are still visible and properly arranged
     await expect(page.locator('h1')).toBeVisible()
@@ -98,7 +98,7 @@ test.describe('Setup Screen Responsive', () => {
 
   test('should be responsive on tablet', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 }) // iPad
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Check elements are properly arranged
     await expect(page.locator('h1')).toBeVisible()
@@ -110,7 +110,7 @@ test.describe('Setup Screen Responsive', () => {
 
   test('should be responsive on desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 })
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Check elements are properly arranged
     await expect(page.locator('h1')).toBeVisible()

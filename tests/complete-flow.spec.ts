@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Complete Application Flow', () => {
   test('Complete TapTest flow - Easy difficulty', async ({ page }) => {
     // Start on setup screen
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Select 1 minute, easy difficulty (defaults)
     await expect(page.getByTestId('timer-option-1')).toHaveClass(/selection-card-active/)
@@ -54,7 +54,7 @@ test.describe('Complete Application Flow', () => {
 
   test('Complete TapTest flow - Hard difficulty', async ({ page }) => {
     // Start on setup screen
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Select 2 minutes, hard difficulty
     await page.getByTestId('timer-option-2').click()
@@ -90,7 +90,7 @@ test.describe('Complete Application Flow', () => {
   })
 
   test('Complete test and view results', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Select very short test for quick completion
     await page.getByTestId('timer-option-1').click()
@@ -145,7 +145,7 @@ test.describe('Complete Application Flow', () => {
 
   test('Browser back/forward navigation', async ({ page }) => {
     // Start on setup
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Navigate to test
     await page.getByTestId('start-test-button').click()
@@ -195,7 +195,7 @@ test.describe('Complete Application Flow', () => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
       
       // Test setup screen
-      await page.goto('/')
+      await page.goto('/#/start')
       await expect(page.locator('h1')).toBeVisible()
       await expect(page.getByTestId('start-test-button')).toBeVisible()
       
