@@ -110,7 +110,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
               onClick={() => navigate('/start')}
               className={cn(
                 'tt-nav-ease hidden items-center whitespace-nowrap rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-md transition-all duration-500 hover:shadow-lg sm:inline-flex',
-                scrolled ? 'h-[36px] px-4' : 'h-[40px] px-5'
+                scrolled ? 'h-[32px] px-3.5' : 'h-[40px] px-5'
               )}
             >
               Start typing
@@ -125,7 +125,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
               className={cn(
                 'transition-all duration-500',
                 scrolled &&
-                  'border-0 bg-transparent shadow-none backdrop-blur-none hover:bg-transparent hover:shadow-none'
+                  'h-8 w-8 border-0 bg-transparent shadow-none backdrop-blur-none hover:bg-transparent hover:shadow-none sm:h-8 sm:w-8'
               )}
             />
           </div>

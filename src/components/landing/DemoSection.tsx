@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -28,8 +28,19 @@ function prefersReducedMotion() {
   )
 }
 
-export const DemoSection = forwardRef<HTMLElement>((_props, sectionRef) => {
+export interface DemoHandle {
+  /** Scrolls the section into view. */
+  scrollIntoView: () => void
+  /**
+   * Replays only if the run has already ended. A run in progress is left
+   * alone — restarting it would snatch back the thing the click asked to see.
+   */
+  replayIfFinished: () => void
+}
+
+export const DemoSection = forwardRef<DemoHandle>((_props, ref) => {
   const navigate = useNavigate()
+  const sectionRef = useRef<HTMLElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<number | undefined>(undefined)
   const resultRef = useRef<number | undefined>(undefined)
@@ -69,6 +80,18 @@ export const DemoSection = forwardRef<HTMLElement>((_props, sectionRef) => {
       }
     }, STEP_MS)
   }, [stop])
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      scrollIntoView: () =>
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      replayIfFinished: () => {
+        if (finished) play()
+      },
+    }),
+    [finished, play]
+  )
 
   // Starts when it comes into view, not on page load — otherwise it has played
   // itself out before anyone has scrolled far enough to see it.

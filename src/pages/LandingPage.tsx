@@ -4,18 +4,23 @@ import { ArrowRight } from 'lucide-react'
 import LandingNav from '@/components/landing/LandingNav'
 import FloatingKeys from '@/components/landing/FloatingKeys'
 import HeroDemo from '@/components/landing/HeroDemo'
-import DemoSection from '@/components/landing/DemoSection'
+import DemoSection, { DemoHandle } from '@/components/landing/DemoSection'
 import Footer from '@/components/Footer'
 
 const LandingPage = () => {
   const navigate = useNavigate()
-  const demoRef = useRef<HTMLElement>(null)
+  const demoRef = useRef<DemoHandle>(null)
 
   // Not an href anchor: the app runs on HashRouter, which has already spent
   // the URL's hash on routing, so "#try" would break navigation rather than
   // scroll. This keeps working whichever router we end up on.
+  //
+  // Replaying waits for the scroll to settle, so a finished run restarts as
+  // you arrive rather than while you are still travelling. A run already in
+  // progress is left alone.
   const scrollToDemo = useCallback(() => {
-    demoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    demoRef.current?.scrollIntoView()
+    window.setTimeout(() => demoRef.current?.replayIfFinished(), 450)
   }, [])
 
   return (
