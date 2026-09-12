@@ -15,29 +15,42 @@ interface LandingNavProps {
  *
  * At rest it is one wide card holding everything. On scroll it splits: the
  * card's surface drops away and the two groups inside it grow surfaces of
- * their own, so one bar becomes a circle on the left and a pill on the right
- * with the page showing between them. The wordmark folds away at the same
- * time, which is what lets the brand side close up into a circle.
+ * their own, so one bar becomes two capsules with the page showing between
+ * them. The logo shrinks as they separate.
  *
  * Both states are solid. There is no transparent phase at any point, so nav
- * text can never sit on top of page text.
+ * text can never sit on top of page text — which is why there is no blurred
+ * scrim behind them: with solid islands it only smeared the page into a ghost.
  */
 export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
   const [scrolled, setScrolled] = useState(false)
 
+  // index.css pins html and body (position: fixed; overflow: hidden) and makes
+  // #root the scroll container, so window.scrollY never moves and scroll
+  // events never reach window — they do not bubble. Listen on both and take
+  // whichever is actually moving.
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    const root = document.getElementById('root')
+
+    const read = () => {
+      const offset = Math.max(window.scrollY || 0, root?.scrollTop || 0)
+      setScrolled(offset > 8)
+    }
+
+    read()
+    window.addEventListener('scroll', read, { passive: true })
+    root?.addEventListener('scroll', read, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', read)
+      root?.removeEventListener('scroll', read)
+    }
   }, [])
 
   return (
     <header className="pointer-events-none fixed left-0 right-0 top-0 z-50">
-      <div className={cn('tt-nav-scrim', scrolled && 'is-on')} aria-hidden="true" />
-
       <div
         className={cn(
           'tt-nav-ease relative mx-auto mt-3 transition-all duration-500',
@@ -52,17 +65,17 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
               : 'tt-nav-surface rounded-2xl border-border/60 px-5 py-3.5 shadow-md sm:px-8 sm:py-4'
           )}
         >
-          {/* Left island — closes into a circle once the wordmark folds. */}
+          {/* Left island. */}
           <Link
             to="/"
             aria-label="TapTest home"
             className={cn(
               'tt-island tt-nav-spring pointer-events-auto flex flex-shrink-0 items-center gap-2.5',
-              scrolled && 'is-split p-1.5'
+              scrolled && 'is-split px-3 py-1.5 sm:px-4'
             )}
           >
             <Logo size={scrolled ? 'small' : 'medium'} showText={false} clickable={false} />
-            <span className={cn('tt-wordmark', scrolled && 'is-folded')}>TapTest</span>
+            <span className="tt-wordmark">TapTest</span>
           </Link>
 
           {/* Right island. */}

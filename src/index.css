@@ -1156,32 +1156,6 @@ html, body {
   .tt-nav-ease { transition-duration: 0.01ms; }
 }
 
-/* The band the nav floats over. A floating pill leaves the rest of the strip
-   bare, so text scrolling past sits crisply beside it and the collision reads
-   as a bug. Blurring that band and fading it out with a mask makes content
-   dissolve on its way out of the viewport instead of sliding cleanly under. */
-.tt-nav-scrim {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 132px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s ease;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--background) 70%, transparent) 0%,
-    color-mix(in srgb, var(--background) 30%, transparent) 55%,
-    transparent 100%
-  );
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  -webkit-mask-image: linear-gradient(to bottom, #000 48%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 48%, transparent 100%);
-}
-
-.tt-nav-scrim.is-on { opacity: 1; }
 
 /* The wordmark folds away on contract rather than disappearing, so the bar
    changes what it holds and not only its size. */
@@ -1207,7 +1181,6 @@ html, body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tt-nav-scrim,
   .tt-wordmark { transition-duration: 0.01ms; }
 }
 
@@ -1224,10 +1197,10 @@ html, body {
 
 .tt-island.is-split {
   background: var(--card);
-  border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  border-color: var(--border);
   box-shadow:
-    0 10px 30px -12px var(--card-shadow),
-    0 2px 6px -3px var(--card-shadow);
+    0 14px 34px -10px var(--card-shadow),
+    0 3px 8px -3px var(--card-shadow);
 }
 
 /* Slight overshoot on the way out — the islands arrive rather than slide. */
