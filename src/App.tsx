@@ -3,6 +3,7 @@ import { Suspense, lazy } from 'react'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import ErrorBoundary from '@/components/ErrorBoundary'
+const LandingPage = lazy(() => import('@/pages/LandingPage'))
 const SetupScreen = lazy(() => import('@/pages/SetupScreen'))
 const TypingTestScreen = lazy(() => import('@/pages/TypingTestScreen'))
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
@@ -31,16 +32,18 @@ function AppContent() {
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isTestPage = location.pathname === '/test';
   const isProfilePage = location.pathname === '/profile';
-  const isSetupPage = location.pathname === '/';
+  const isLandingPage = location.pathname === '/';
+  const isSetupPage = location.pathname === '/start';
   const isLegalPage = location.pathname === '/privacy' || location.pathname === '/terms' || location.pathname === '/about';
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-      {!isAuthPage && !isTestPage && !isProfilePage && !isSetupPage && !isLegalPage && <ThemeToggle />}
+      {!isAuthPage && !isTestPage && !isProfilePage && !isLandingPage && !isSetupPage && !isLegalPage && <ThemeToggle />}
       <BuyMeCoffeeFloatingButton />
       <Suspense fallback={<RouteLoadingSpinner />}>
         <Routes>
-          <Route path="/" element={<SetupScreen />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/start" element={<SetupScreen />} />
           <Route path="/test" element={<TypingTestScreen />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

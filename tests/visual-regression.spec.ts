@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Visual Regression Tests', () => {
   test('Setup screen visual consistency', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Wait for page to fully load
     await page.waitForLoadState('networkidle')
@@ -74,7 +74,7 @@ test.describe('Visual Regression Tests', () => {
       content: 'html { @apply dark; }'
     })
     
-    await page.goto('/')
+    await page.goto('/#/start')
     await page.waitForLoadState('networkidle')
     
     await expect(page).toHaveScreenshot('setup-screen-dark.png', {
@@ -85,7 +85,7 @@ test.describe('Visual Regression Tests', () => {
 
   test('Mobile viewport visual consistency', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 })
-    await page.goto('/')
+    await page.goto('/#/start')
     
     await page.waitForLoadState('networkidle')
     
@@ -97,7 +97,7 @@ test.describe('Visual Regression Tests', () => {
 
   test('Tablet viewport visual consistency', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 })
-    await page.goto('/')
+    await page.goto('/#/start')
     
     await page.waitForLoadState('networkidle')
     

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Accessibility Tests', () => {
   test('Setup screen should have proper keyboard navigation', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Tab through timer options
     await page.keyboard.press('Tab')
@@ -66,7 +66,7 @@ test.describe('Accessibility Tests', () => {
   })
 
   test('Should have proper ARIA labels and roles', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Check main heading has proper role
     const heading = page.locator('h1')
@@ -83,7 +83,7 @@ test.describe('Accessibility Tests', () => {
   })
 
   test('Should have proper color contrast and text scaling', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Test with increased text size
     await page.addStyleTag({
@@ -103,7 +103,7 @@ test.describe('Accessibility Tests', () => {
   })
 
   test('Should work with high contrast mode', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Simulate high contrast mode
     await page.addStyleTag({
@@ -131,7 +131,7 @@ test.describe('Accessibility Tests', () => {
   test('Should handle reduced motion preferences', async ({ page }) => {
     // Set prefers-reduced-motion
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Elements should still function without animations
     await page.getByTestId('timer-option-2').click()
@@ -157,7 +157,7 @@ test.describe('Accessibility Tests', () => {
   })
 
   test('Should support screen reader users', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/#/start')
     
     // Check for screen reader friendly content
     await expect(page.locator('text=Choose how long you want to test')).toBeVisible()

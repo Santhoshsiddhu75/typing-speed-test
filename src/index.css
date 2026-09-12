@@ -901,3 +901,247 @@ html, body {
   .tt-i-hard,
   .tt-pop { animation: none; }
 }
+
+/* ==========================================================================
+   Landing page
+   ========================================================================== */
+
+:root {
+  --primary-deep: rgb(22, 163, 74);
+  --keycap-a: rgb(255, 255, 255);
+  --keycap-b: rgb(243, 249, 253);
+  --keycap-border: rgb(223, 234, 243);
+  --keycap-edge: rgb(225, 236, 244);
+  --keycap-letter: rgb(172, 187, 201);
+  --keycap-shadow: rgba(31, 51, 73, 0.28);
+  --landing-wash: rgba(34, 197, 94, 0.16);
+  --landing-wash-2: rgba(34, 197, 94, 0.12);
+  --card-shadow: rgba(31, 51, 73, 0.34);
+  --ch-upcoming: rgb(163, 175, 189);
+  --ch-done: rgb(45, 58, 74);
+  --ch-bad: rgb(220, 38, 38);
+  --ch-bad-bg: rgba(239, 68, 68, 0.12);
+}
+
+.dark {
+  --primary-deep: rgb(110, 231, 183);
+  --keycap-a: rgb(42, 57, 80);
+  --keycap-b: rgb(28, 40, 60);
+  --keycap-border: rgba(148, 163, 184, 0.18);
+  --keycap-edge: rgba(8, 14, 26, 0.8);
+  --keycap-letter: rgba(148, 163, 184, 0.5);
+  --keycap-shadow: rgba(0, 0, 0, 0.72);
+  --landing-wash: rgba(52, 211, 153, 0.15);
+  --landing-wash-2: rgba(52, 211, 153, 0.1);
+  --card-shadow: rgba(0, 0, 0, 0.7);
+  --ch-upcoming: rgb(100, 116, 139);
+  --ch-done: rgb(226, 232, 240);
+  --ch-bad: rgb(248, 113, 113);
+  --ch-bad-bg: rgba(248, 113, 113, 0.14);
+}
+
+.tt-landing { background: var(--background); color: var(--foreground); }
+
+.tt-wash,
+.tt-wash-2,
+.tt-try-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.tt-wash {
+  left: -260px; top: -420px; width: 1000px; height: 1000px;
+  background: radial-gradient(closest-side, var(--landing-wash), transparent 72%);
+}
+.tt-wash-2 {
+  right: -300px; bottom: -380px; width: 860px; height: 860px;
+  background: radial-gradient(closest-side, var(--landing-wash-2), transparent 72%);
+}
+.tt-try-glow {
+  left: 50%; top: 40%; width: 900px; height: 700px; margin-left: -450px;
+  background: radial-gradient(closest-side, var(--landing-wash-2), transparent 72%);
+}
+
+@media (max-width: 767px) {
+  .tt-wash { left: -200px; top: -320px; width: 640px; height: 640px; }
+  .tt-wash-2 { right: -220px; bottom: -300px; width: 560px; height: 560px; }
+}
+
+/* ---- Floating keycaps ---- */
+
+.tt-key {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: linear-gradient(165deg, var(--keycap-a), var(--keycap-b));
+  border: 1px solid var(--keycap-border);
+  box-shadow: 0 4px 0 var(--keycap-edge), 0 16px 30px -12px var(--keycap-shadow);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--keycap-letter);
+  animation: tt-float 7s ease-in-out infinite;
+}
+
+.tt-key-mid { opacity: 0.8; }
+.tt-key-far { opacity: 0.55; filter: blur(1.4px); }
+
+@keyframes tt-float {
+  0%, 100% { transform: translateY(0) rotate(var(--tt-key-rotate, 0deg)); }
+  50% { transform: translateY(-13px) rotate(var(--tt-key-rotate, 0deg)); }
+}
+
+@media (max-width: 767px) {
+  .tt-key-wide-only { display: none; }
+}
+
+/* ---- Shared landing bits ---- */
+
+.tt-kicker {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--primary-deep);
+}
+@media (min-width: 640px) { .tt-kicker { font-size: 19px; } }
+
+.tt-rule {
+  width: 64px; height: 3px; border-radius: 2px;
+  background: var(--primary);
+  margin: 20px 0 18px;
+}
+@media (min-width: 640px) { .tt-rule { margin: 26px 0 22px; } }
+
+.tt-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  height: 52px; padding: 0 26px; border-radius: 10px;
+  font-family: inherit; font-size: 15px; font-weight: 600;
+  cursor: pointer; border: none;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+@media (min-width: 640px) { .tt-btn { height: 50px; } }
+.tt-btn:hover { transform: translateY(-1px); }
+
+.tt-btn-primary {
+  background: var(--primary); color: var(--primary-foreground);
+  box-shadow: 0 12px 30px -10px var(--primary);
+}
+.tt-btn-quiet {
+  background: transparent; color: var(--foreground);
+  border: 2px solid var(--border);
+}
+
+/* ---- Demo card ---- */
+
+.tt-demo-card {
+  border-radius: 18px;
+  padding: 18px 18px 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 40px 70px -30px var(--card-shadow), 0 2px 6px -2px var(--card-shadow);
+}
+@media (min-width: 640px) { .tt-demo-card { padding: 22px 24px 24px; } }
+
+.tt-card-tilt { transform: rotate(-1.4deg); }
+.tt-card-behind {
+  position: absolute; left: 26px; right: -16px; top: 18px; bottom: -18px;
+  border-radius: 18px; z-index: 0;
+  background: color-mix(in srgb, var(--card) 55%, transparent);
+  border: 1px solid var(--border);
+  transform: rotate(2.8deg);
+}
+@media (max-width: 767px) {
+  .tt-card-tilt { transform: none; }
+  .tt-card-behind { display: none; }
+}
+
+.tt-chip {
+  padding: 4px 11px; border-radius: 999px; font-size: 12px;
+  background: var(--muted); color: var(--muted-foreground);
+}
+
+.tt-demo-face { fill: var(--card); stroke: var(--border); stroke-width: 1.4; }
+.tt-demo-track { fill: none; stroke: var(--border); stroke-width: 6; }
+.tt-demo-arc {
+  fill: none; stroke: var(--primary); stroke-width: 6; stroke-linecap: round;
+  transition: stroke-dashoffset .12s linear;
+}
+
+.tt-demo-line {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.95;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  padding: 14px 0 12px;
+}
+@media (min-width: 640px) { .tt-demo-line { font-size: 14px; line-height: 2; padding: 18px 0 16px; } }
+
+.tt-demo-line-lg { font-size: 16px; }
+@media (min-width: 640px) { .tt-demo-line-lg { font-size: 19px; } }
+
+.tt-ch { position: relative; color: var(--ch-upcoming); }
+.tt-ch-ok { color: var(--ch-done); }
+.tt-ch-bad { color: var(--ch-bad); background: var(--ch-bad-bg); border-radius: 2px; }
+
+.tt-ch-cursor::before {
+  content: '';
+  position: absolute; left: -1px; top: 0.18em;
+  width: 2px; height: 1.1em;
+  background: var(--primary);
+  animation: tt-blink 1s steps(1) infinite;
+}
+@keyframes tt-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+.tt-stat-num {
+  font-family: var(--font-mono);
+  font-size: 21px; font-weight: 600; line-height: 1;
+  color: var(--primary-deep);
+}
+@media (min-width: 640px) { .tt-stat-num { font-size: 24px; } }
+
+.tt-stat-label {
+  font-size: 11px; letter-spacing: 0.09em;
+  color: var(--muted-foreground);
+}
+
+/* The input sits invisibly over the text, so a click or tap anywhere in the
+   block focuses it and typing flows straight in. */
+.tt-capture {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; border: none; background: transparent;
+  font: inherit; color: transparent; caret-color: transparent;
+  cursor: text; z-index: 2; padding: 0; margin: 0;
+}
+.tt-capture:focus { outline: none; }
+
+.tt-bar {
+  height: 4px; border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.tt-bar-fill {
+  height: 100%; border-radius: 999px;
+  background: var(--primary);
+  transition: width .12s linear;
+}
+
+.tt-ping {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--primary);
+  animation: tt-ping 1.6s ease-in-out infinite;
+}
+@keyframes tt-ping {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-key,
+  .tt-ping,
+  .tt-ch-cursor::before { animation: none; }
+  .tt-btn:hover { transform: none; }
+}
