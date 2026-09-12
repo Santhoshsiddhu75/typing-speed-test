@@ -25,9 +25,9 @@ const SetupScreen = () => {
   // `period` is how long the clock's sweep hand takes for one turn — the
   // longer the test, the slower the dial.
   const timerOptions: { value: TimerOption; label: string; description: string; period: number }[] = [
-    { value: 1, label: '1 Minute', description: 'Quick test', period: 5 },
-    { value: 2, label: '2 Minutes', description: 'Standard test', period: 10 },
-    { value: 5, label: '5 Minutes', description: 'Extended test', period: 15 },
+    { value: 1, label: '1 Minute', description: 'Quick test', period: 10 },
+    { value: 2, label: '2 Minutes', description: 'Standard test', period: 15 },
+    { value: 5, label: '5 Minutes', description: 'Extended test', period: 20 },
   ]
 
   const difficultyOptions: {
