@@ -71,7 +71,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
             aria-label="TapTest home"
             className={cn(
               'tt-island tt-nav-spring pointer-events-auto flex flex-shrink-0 items-center gap-2.5',
-              scrolled && 'is-split px-3 py-1.5 sm:px-4'
+              scrolled && 'is-split px-3 py-2 sm:px-4'
             )}
           >
             <Logo size={scrolled ? 'small' : 'medium'} showText={false} clickable={false} />
@@ -82,7 +82,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
           <div
             className={cn(
               'tt-island tt-nav-spring pointer-events-auto flex items-center gap-4 sm:gap-5',
-              scrolled && 'is-split px-3 py-1.5 sm:px-4'
+              scrolled && 'is-split px-3 py-2 sm:px-4'
             )}
           >
             <div className="flex items-center gap-6">
