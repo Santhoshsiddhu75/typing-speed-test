@@ -22,6 +22,12 @@
   --border: rgb(229, 231, 235);
   --input: rgb(229, 231, 235);
   --ring: rgb(34, 197, 94);
+  --clock-face: rgb(255, 255, 255);
+  --clock-tick: rgb(107, 114, 128);
+  --difficulty-easy: rgb(34, 197, 94);
+  --difficulty-medium: rgb(245, 158, 11);
+  --difficulty-hard: rgb(239, 68, 68);
+  --flame-hot: rgb(249, 115, 22);
   --chart-1: rgb(34, 197, 94);
   --chart-2: rgb(16, 185, 129);
   --chart-3: rgb(5, 150, 105);
@@ -71,6 +77,12 @@
   --border: rgb(75, 85, 99);
   --input: rgb(75, 85, 99);
   --ring: rgb(52, 211, 153);
+  --clock-face: rgb(28, 46, 56);
+  --clock-tick: rgb(209, 213, 219);
+  --difficulty-easy: rgb(52, 211, 153);
+  --difficulty-medium: rgb(251, 191, 36);
+  --difficulty-hard: rgb(248, 113, 113);
+  --flame-hot: rgb(251, 146, 60);
   --chart-1: rgb(52, 211, 153);
   --chart-2: rgb(45, 212, 191);
   --chart-3: rgb(34, 197, 94);
@@ -699,4 +711,185 @@ html, body {
     /* iOS Safari specific */
     padding-top: max(env(safe-area-inset-top), constant(safe-area-inset-top), 20px) !important;
   }
+}
+/* ==========================================================================
+   Setup screen — timer clocks & difficulty medallions
+   ========================================================================== */
+
+/* Stroke weights are set in viewBox units, so they shrink with the rendered
+   size. These vars hold the phone weights and are lightened at md, where the
+   dial is drawn at its full 120px. */
+.tt-clock,
+.tt-medallion {
+  --tt-sw-face: 1.4;
+  --tt-sw-tick-minor: 6;
+  --tt-sw-tick-major: 10;
+  --tt-sw-trail: 3.4;
+  --tt-sw-hand-min: 2.8;
+  --tt-sw-hand-hr: 4.6;
+  --tt-sw-seg: 8;
+}
+
+@media (min-width: 768px) {
+  .tt-clock,
+  .tt-medallion {
+    --tt-sw-face: 1;
+    --tt-sw-tick-minor: 5;
+    --tt-sw-tick-major: 9;
+    --tt-sw-trail: 2.5;
+    --tt-sw-hand-min: 2;
+    --tt-sw-hand-hr: 3.5;
+    --tt-sw-seg: 6;
+  }
+}
+
+.tt-face {
+  fill: var(--clock-face);
+  stroke: var(--clock-tick);
+  stroke-opacity: 0.2;
+  stroke-width: var(--tt-sw-face);
+}
+
+/* ---- Timer clock ---- */
+
+.tt-tick-minor {
+  fill: none;
+  stroke: var(--clock-tick);
+  stroke-opacity: 0.3;
+  stroke-width: var(--tt-sw-tick-minor);
+  stroke-dasharray: 1.6 23.53;
+}
+
+.tt-tick-major {
+  fill: none;
+  stroke: var(--clock-tick);
+  stroke-opacity: 0.5;
+  stroke-width: var(--tt-sw-tick-major);
+  stroke-dasharray: 2.4 73;
+}
+
+/* Closes once on mount and stays closed — the circumference at r=41. */
+.tt-trail {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: var(--tt-sw-trail);
+  stroke-linecap: round;
+  stroke-dasharray: 257.61;
+  stroke-dashoffset: 257.61;
+  animation: tt-sweep var(--tt-p) linear 1 forwards;
+}
+
+.tt-hand-min {
+  transform-origin: 60px 60px;
+  animation: tt-spin var(--tt-p) linear infinite;
+}
+
+.tt-hand-hr {
+  transform-origin: 60px 60px;
+  animation: tt-spin calc(var(--tt-p) * 6) linear infinite;
+}
+
+.tt-hand-min line {
+  stroke: var(--primary);
+  stroke-width: var(--tt-sw-hand-min);
+  stroke-linecap: round;
+}
+
+.tt-hand-hr line {
+  stroke: var(--foreground);
+  stroke-width: var(--tt-sw-hand-hr);
+  stroke-linecap: round;
+}
+
+.tt-pin { fill: var(--foreground); }
+.tt-pin-dot { fill: var(--clock-face); }
+
+@keyframes tt-sweep {
+  from { stroke-dashoffset: 257.61; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes tt-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- Difficulty medallion ---- */
+
+/* Three arcs of equal length at 120deg, drawn from a single dash pattern. */
+.tt-seg {
+  fill: none;
+  stroke: var(--clock-tick);
+  stroke-opacity: 0.2;
+  stroke-width: var(--tt-sw-seg);
+  stroke-linecap: round;
+  stroke-dasharray: 74 208.74;
+}
+
+.tt-m-easy .tt-seg-on { stroke: var(--difficulty-easy); stroke-opacity: 1; }
+.tt-m-medium .tt-seg-on { stroke: var(--difficulty-medium); stroke-opacity: 1; }
+.tt-m-hard .tt-seg-on { stroke: var(--difficulty-hard); stroke-opacity: 1; }
+
+/* The icons stay neutral; colour lives in the arcs and in the light each
+   icon throws while it animates. */
+.tt-medallion-icon { color: var(--foreground); }
+
+.tt-i-easy {
+  transform-origin: 50% 50%;
+  animation: tt-zap 2.6s ease-in-out infinite;
+}
+
+.tt-i-medium {
+  transform-origin: 50% 50%;
+  animation: tt-brain 3.2s ease-in-out infinite;
+}
+
+/* Movement and heat run on different cycles so the flicker never repeats. */
+.tt-i-hard {
+  transform-origin: 50% 88%;
+  animation: tt-flame 1.5s ease-in-out infinite, tt-flame-glow 2.1s ease-in-out infinite;
+}
+
+@keyframes tt-zap {
+  0%, 44% { opacity: 1; transform: scale(1); filter: none; }
+  47% { opacity: 0.18; transform: scale(0.97); filter: none; }
+  50% { opacity: 1; transform: scale(1.08); filter: drop-shadow(0 0 7px var(--difficulty-easy)); }
+  54% { opacity: 0.3; transform: scale(1); filter: none; }
+  58% { opacity: 1; transform: scale(1.04); filter: drop-shadow(0 0 10px var(--difficulty-easy)); }
+  66%, 100% { opacity: 1; transform: scale(1); filter: none; }
+}
+
+@keyframes tt-brain {
+  0%, 100% { transform: scale(1); filter: none; }
+  50% { transform: scale(1.06); filter: drop-shadow(0 0 6px var(--difficulty-medium)); }
+}
+
+@keyframes tt-flame {
+  0%, 100% { transform: scaleY(1) scaleX(1) translateX(0) rotate(0deg); }
+  20% { transform: scaleY(1.09) scaleX(0.96) translateX(-0.6px) rotate(-2.5deg); }
+  45% { transform: scaleY(0.95) scaleX(1.04) translateX(0.7px) rotate(2deg); }
+  70% { transform: scaleY(1.06) scaleX(0.98) translateX(-0.35px) rotate(-1.2deg); }
+}
+
+@keyframes tt-flame-glow {
+  0%, 100% { filter: drop-shadow(0 0 5px var(--difficulty-hard)); }
+  40% { filter: drop-shadow(0 0 9px var(--flame-hot)); }
+}
+
+/* Feedback on tap, since the dial is already in motion. */
+.tt-pop { animation: tt-pop 0.45s ease-out; }
+
+@keyframes tt-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.09); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-trail { animation: none; stroke-dashoffset: 0; }
+  .tt-hand-min { animation: none; }
+  .tt-hand-hr { animation: none; transform: rotate(30deg); }
+  .tt-i-easy,
+  .tt-i-medium,
+  .tt-i-hard,
+  .tt-pop { animation: none; }
 }
