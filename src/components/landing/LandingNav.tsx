@@ -116,7 +116,18 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
               Start typing
             </button>
 
-            <ThemeOnlyToggle />
+            {/* Inside the split capsule the toggle's own bordered circle reads
+                as a button inside a button, so it drops to a bare icon. It
+                keeps the circle at rest, where it sits on open background and
+                needs the edge. twMerge lets these override the component's
+                defaults rather than fighting them. */}
+            <ThemeOnlyToggle
+              className={cn(
+                'transition-all duration-500',
+                scrolled &&
+                  'border-0 bg-transparent shadow-none backdrop-blur-none hover:bg-transparent hover:shadow-none'
+              )}
+            />
           </div>
         </div>
       </div>
