@@ -177,18 +177,31 @@ const Lane: React.FC<{ player?: RacePlayer; label: string; mine?: boolean }> = (
   player,
   label,
   mine,
-}) => (
-  <div className={cn('tt-lane', mine && 'is-mine')}>
-    <div className="tt-lane-head">
-      <span className="tt-lane-name">{player?.name ?? label}</span>
-      <span className="tt-lane-wpm tabular-nums">
-        {player?.wpm ?? 0} <small>wpm</small>
-      </span>
+}) => {
+  // The notice at the top fades after a few seconds. Without something on the
+  // lane itself, a bar that simply stopped moving would read as a bug for the
+  // rest of the race.
+  const gone = Boolean(player && !player.connected && !player.finished)
+
+  return (
+    <div className={cn('tt-lane', mine && 'is-mine', gone && 'is-gone')}>
+      <div className="tt-lane-head">
+        <span className="tt-lane-name">
+          {player?.name ?? label}
+          {gone && <em className="tt-lane-gone">left</em>}
+        </span>
+        <span className="tt-lane-wpm tabular-nums">
+          {player?.wpm ?? 0} <small>wpm</small>
+        </span>
+      </div>
+      <div className="tt-lane-track">
+        <div
+          className="tt-lane-fill"
+          style={{ width: `${Math.round((player?.progress ?? 0) * 100)}%` }}
+        />
+      </div>
     </div>
-    <div className="tt-lane-track">
-      <div className="tt-lane-fill" style={{ width: `${Math.round((player?.progress ?? 0) * 100)}%` }} />
-    </div>
-  </div>
-)
+  )
+}
 
 export default RaceTrack

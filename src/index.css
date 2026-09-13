@@ -1635,3 +1635,25 @@ html, body {
     text-overflow: ellipsis;
   }
 }
+
+/* An abandoned lane. Dimmed and hatched rather than hidden — the opponent's
+   score still stands, it just stopped moving, and a plain frozen bar would
+   read as a broken one once the notice at the top has faded. */
+.tt-lane.is-gone { opacity: 0.55; }
+
+.tt-lane.is-gone .tt-lane-fill {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--muted-foreground) 0 4px,
+    transparent 4px 8px
+  );
+  transition: none;
+}
+
+.tt-lane-gone {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted-foreground);
+  margin-left: 7px;
+}

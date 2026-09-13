@@ -592,7 +592,14 @@ the tokens, unused). Off-brand colours went from **47 to 0**.
 
 ## In progress — branch `multiplayer-race`
 
-Head-to-head racing. Backend is done and verified (`f089040`); the client is not built.
+Head-to-head racing, playable end to end. Create a room, share a six digit code, both
+screens count down off the server clock and start together, lanes fill live during the
+race, and the result counts both numbers up before naming a winner. Rematch restarts in
+the same room with a fresh seed — no code re-shared. A mid-race disconnect raises a
+fading notice and marks the abandoned lane, and never interrupts the surviving player.
+Entry points sit in the landing hero and under the setup screen buttons.
+
+Not yet deployed: Railway still needs the server code.
 
 Decisions taken, with the reasoning:
 
