@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,6 +8,7 @@ import testResultsRoutes from './routes/testResults.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
 import { securityHeaders, authCorsOptions } from './middleware/auth.js';
+import { attachRaceSocket } from './race/socket.js';
 
 // Load environment variables
 dotenv.config();
@@ -116,7 +118,12 @@ process.on('SIGINT', async () => {
 });
 
 // Start server - listen on all interfaces for local network access
-app.listen(Number(PORT), '0.0.0.0', () => {
+// Socket.IO needs the raw http server, so Express gets wrapped rather than
+// calling app.listen directly. Both share the one port and the one dyno.
+const httpServer = createServer(app);
+attachRaceSocket(httpServer);
+
+httpServer.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`🌐 Network access: http://192.168.29.20:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);

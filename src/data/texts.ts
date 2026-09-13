@@ -15,11 +15,29 @@ const WORD_TARGETS: Record<TimerOption, number> = {
 
 const DEFAULT_WORD_TARGET = 220
 
+type Rng = () => number
+
+/**
+ * mulberry32. Small, fast, and — the reason it is here — identical on every
+ * machine for a given seed, so two players handed the same seed build the same
+ * test from the same passage library without a word crossing the wire.
+ */
+function seededRng(seed: number): Rng {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
 /** Fisher-Yates, on a copy — the exported pools are never mutated. */
-function shuffled<T>(items: readonly T[]): T[] {
+function shuffled<T>(items: readonly T[], rng: Rng): T[] {
   const copy = [...items]
   for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = Math.floor(rng() * (i + 1))
     ;[copy[i], copy[j]] = [copy[j], copy[i]]
   }
   return copy
@@ -48,25 +66,34 @@ function countWords(text: string): number {
  * target is met. Passages are drawn without replacement so a single test never
  * repeats itself, and the deck reshuffles if a long test exhausts the pool.
  *
+ * Pass a seed and the result is deterministic: the same seed, difficulty and
+ * timer always produce the same test. That is what lets two players in a race
+ * type identical text without the server shipping them a thousand words.
+ *
  * Whole passages only — the previous implementation sliced the final sentence
  * to hit an exact count, which left every test ending on a fragment. Landing
  * slightly over the target costs nothing, since unused words are simply never
  * reached.
  */
-export function getRandomText(difficulty: DifficultyLevel, timer: TimerOption): string {
+export function getRandomText(
+  difficulty: DifficultyLevel,
+  timer: TimerOption,
+  seed?: number
+): string {
   const target = WORD_TARGETS[timer] ?? DEFAULT_WORD_TARGET
   const pool = PASSAGES[difficulty]
+  const rng: Rng = seed === undefined ? Math.random : seededRng(seed)
 
   if (!pool || pool.length === 0) return ''
 
   const chosen: string[] = []
   let total = 0
-  let deck = shuffled(pool)
+  let deck = shuffled(pool, rng)
   let next = 0
 
   while (total < target) {
     if (next >= deck.length) {
-      deck = shuffled(pool)
+      deck = shuffled(pool, rng)
       next = 0
     }
 
