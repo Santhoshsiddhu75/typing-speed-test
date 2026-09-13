@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 interface LogoProps {
   className?: string;
@@ -10,6 +10,13 @@ interface LogoProps {
   textClassName?: string;
 }
 
+/**
+ * The brand mark, and on most pages the way back to the landing page.
+ *
+ * When clickable this renders a real link rather than a div with an onClick,
+ * so it can be tabbed to, opened in a new tab, and middle-clicked — all of
+ * which people expect from a site logo.
+ */
 const Logo: React.FC<LogoProps> = ({
   className = '',
   size = 'medium',
@@ -19,7 +26,6 @@ const Logo: React.FC<LogoProps> = ({
   textClassName = ''
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const navigate = useNavigate();
 
   const sizeClasses = {
     small: 'h-6 w-6 sm:h-8 sm:w-8',
@@ -33,39 +39,22 @@ const Logo: React.FC<LogoProps> = ({
     large: 'text-2xl sm:text-3xl'
   };
 
-  const handleClick = () => {
-    if (clickable) {
-      navigate('/');
-    }
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
-
-  return (
-    <div 
-      className={`flex items-center gap-3 ${clickable ? 'cursor-pointer' : 'cursor-default'} ${className}`}
-      onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
+  const content = (
+    <>
       {/* Logo Image with Hover Effect */}
       <div className={`relative ${sizeClasses[size]} transition-all duration-200 ease-in-out`}>
         <img
           src="/assets/logounpress.png"
-          alt="TapTest Logo"
+          alt=""
+          aria-hidden="true"
           className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-200 ease-in-out ${
             isHovered ? 'opacity-0' : 'opacity-100'
           }`}
         />
         <img
           src="/assets/logopress.png"
-          alt="TapTest Logo Hover"
+          alt=""
+          aria-hidden="true"
           className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-200 ease-in-out ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`}
@@ -75,7 +64,7 @@ const Logo: React.FC<LogoProps> = ({
       {/* Brand Text */}
       {showText && (
         <div className="flex-shrink-0">
-          <div 
+          <div
             className={`font-bold text-foreground tracking-wide ${textSizeClasses[size]} ${textClassName} whitespace-nowrap`}
           >
             TapTest
@@ -87,7 +76,31 @@ const Logo: React.FC<LogoProps> = ({
           )}
         </div>
       )}
-    </div>
+    </>
+  );
+
+  const hoverHandlers = {
+    onMouseEnter: () => setIsHovered(true),
+    onMouseLeave: () => setIsHovered(false),
+  };
+
+  if (!clickable) {
+    return (
+      <div className={`flex items-center gap-3 cursor-default ${className}`} {...hoverHandlers}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      to="/"
+      aria-label="TapTest home"
+      className={`flex items-center gap-3 cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${className}`}
+      {...hoverHandlers}
+    >
+      {content}
+    </Link>
   );
 };
 

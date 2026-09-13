@@ -148,7 +148,7 @@ const SetupScreen = () => {
         {/* Header - Hidden on mobile since logo is in navbar */}
         <div className="text-center space-y-4 mt-4 sm:mt-8 hidden sm:block">
           <div className="flex items-center justify-center mb-6">
-            <Logo size="large" showTagline={true} clickable={false} />
+            <Logo size="large" showTagline={true} clickable />
           </div>
           {/* <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Choose your {currentStep === 'timer' ? 'time limit' : 'difficulty level'}.

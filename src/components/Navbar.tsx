@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, Moon, Sun, LogIn, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -108,18 +108,20 @@ const Navbar: React.FC<NavbarProps> = ({
               </Button>
             )}
             
-            <div className="flex items-center gap-3">
-              {/* Mobile logo */}
-              <div className="flex items-center gap-2 sm:hidden">
-                <img src="/assets/logounpress.png" alt="TapTest" className="h-6 w-6" />
-                <span className="font-bold text-foreground text-base">TapTest</span>
-              </div>
-              {/* Desktop logo */}
-              <div className="flex items-center gap-3 hidden sm:flex">
-                <img src="/assets/logounpress.png" alt="TapTest" className="h-10 w-10" />
-                <span className="font-bold text-foreground text-lg">TapTest</span>
-              </div>
-            </div>
+            {/* The mark is how people get home from anywhere in the app. */}
+            <Link
+              to="/"
+              aria-label="TapTest home"
+              className="flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <img
+                src="/assets/logounpress.png"
+                alt=""
+                aria-hidden="true"
+                className="h-6 w-6 sm:h-10 sm:w-10"
+              />
+              <span className="font-bold text-foreground text-base sm:text-lg">TapTest</span>
+            </Link>
           </div>
 
           {/* Right side: Profile/Login + Feedback + Theme Toggle */}
