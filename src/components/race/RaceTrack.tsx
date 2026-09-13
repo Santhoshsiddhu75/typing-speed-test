@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getRandomText } from '@/data/texts'
 import { cn } from '@/lib/utils'
 import { useTypingField } from '@/hooks/useTypingField'
-import type { RacePlayer, Room } from '@/hooks/useRace'
+import type { Room } from '@/hooks/useRace'
 
 interface RaceTrackProps {
   room: Room
@@ -13,6 +13,75 @@ interface RaceTrackProps {
 }
 
 const PROGRESS_EVERY_MS = 350
+
+/** Words lying between two positions in the passage — the lead, counted. */
+function wordsBetween(text: string, from: number, to: number): number {
+  if (to <= from) return 0
+  const slice = text.slice(from, to).trim()
+  return slice ? slice.split(/\s+/).length : 0
+}
+
+/**
+ * The passage is rendered in fixed-size chunks rather than as one list of
+ * spans. A one-minute passage is around 1,500 characters, and re-rendering
+ * every one of them on every keystroke measured at 70 chars/sec on a desktop
+ * — fast enough for a person, but the same work on a mid-range phone is not,
+ * and it starved the clock interval badly enough that it stopped ticking.
+ *
+ * A chunk only re-renders when its own slice of the state moves: the text it
+ * holds, what has been typed inside it, and whether the caret, the lead or
+ * the opponent marker fall within it. Typing advances one chunk at a time, so
+ * a keystroke now touches one or two of them instead of all twenty-six.
+ */
+const CHUNK = 60
+
+interface ChunkProps {
+  text: string
+  /** What the player has typed within this chunk, for the correct/incorrect marks. */
+  typedHere: string
+  /** Caret offset inside the chunk, or -1. */
+  caretAt: number
+  /** The lead, clamped to this chunk. Both -1 when it does not reach here. */
+  gapFrom: number
+  gapTo: number
+  /** True when the lead belongs to the player rather than the opponent. */
+  gapMine: boolean
+  /** Opponent marker offset inside the chunk, or -1. */
+  oppAt: number
+}
+
+const PassageChunk = memo(function PassageChunk({
+  text,
+  typedHere,
+  caretAt,
+  gapFrom,
+  gapTo,
+  gapMine,
+  oppAt,
+}: ChunkProps) {
+  return (
+    <>
+      {text.split('').map((char, i) => (
+        <span
+          key={i}
+          className={cn(
+            'typing-char',
+            i < typedHere.length &&
+              (typedHere[i] === char ? 'typing-char-correct' : 'typing-char-incorrect'),
+            i === caretAt && 'typing-char-current',
+            i > caretAt && caretAt >= 0 && 'typing-char-upcoming',
+            caretAt < 0 && i >= typedHere.length && 'typing-char-upcoming',
+            i >= gapFrom && i < gapTo && gapFrom >= 0 && 'tt-in-gap',
+            i >= gapFrom && i < gapTo && gapFrom >= 0 && (gapMine ? 'is-yours' : 'is-theirs'),
+            i === oppAt && 'tt-opp-here'
+          )}
+        >
+          {char}
+        </span>
+      ))}
+    </>
+  )
+})
 
 export const RaceTrack: React.FC<RaceTrackProps> = ({
   room,
@@ -27,12 +96,19 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
     [room.difficulty, room.timer, room.seed]
   )
 
+  const chunks = useMemo(() => {
+    const out: string[] = []
+    for (let i = 0; i < text.length; i += CHUNK) out.push(text.slice(i, i + CHUNK))
+    return out
+  }, [text])
+
   const trackRef = useRef<HTMLDivElement>(null)
   const lastSent = useRef(0)
   const finished = useRef(false)
 
   const [typed, setTyped] = useState('')
   const [secondsLeft, setSecondsLeft] = useState(room.timer * 60)
+  const [markerOffScreen, setMarkerOffScreen] = useState(false)
 
   // holdFocus is on here but not on the landing demo: mid-race a stray tap
   // that dismisses the keyboard would cost you the run while the clock runs on.
@@ -51,16 +127,7 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
   const wpm = minutes > 0 ? Math.round(correct / 5 / minutes) : 0
   const accuracy = typed.length > 0 ? Math.round((correct / typed.length) * 100) : 100
 
-  // Your own lane reads from local state, not from the room. The server only
-  // relays progress to the OTHER player, so waiting for it to come back would
-  // leave your own bar frozen at zero — and a round trip is a silly way to
-  // learn something this tab already knows.
-  const me = {
-    ...room.players[you],
-    progress: Math.min(1, typed.length / text.length),
-    wpm,
-    accuracy,
-  }
+  const me = room.players[you]
 
   const finish = useCallback(() => {
     if (finished.current) return
@@ -111,13 +178,76 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
     el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }, [typed.length])
 
+  // ---- where each of you is, and what sits between ----
+  const mine = typed.length
+  const theirs = opponent ? Math.round(opponent.progress * text.length) : 0
+  const theyAreHere = Boolean(opponent && opponent.connected && theirs !== mine)
+  const lo = Math.min(mine, theirs)
+  const hi = Math.max(mine, theirs)
+  const gapWords = theyAreHere ? wordsBetween(text, lo, hi) : 0
+  const iLead = mine > theirs
+  const gone = Boolean(opponent && !opponent.connected && !opponent.finished)
+
+  // Their marker can scroll out of the panel entirely when the gap is large.
+  useEffect(() => {
+    const panel = trackRef.current
+    const marker = panel?.querySelector('.tt-opp-here')
+    if (!panel || !marker) {
+      setMarkerOffScreen(false)
+      return
+    }
+    const panelBox = panel.getBoundingClientRect()
+    const markerBox = marker.getBoundingClientRect()
+    setMarkerOffScreen(markerBox.top > panelBox.bottom || markerBox.bottom < panelBox.top)
+  }, [mine, theirs, text])
+
   return (
-    <div className="mx-auto w-full max-w-[900px] px-4">
-      <RaceBars me={me} opponent={opponent} secondsLeft={secondsLeft} />
+    <div className="tt-stage">
+      <div className="tt-head">
+        <div className="tt-side-you">
+          <div className="tt-who">{me?.name ?? 'You'}</div>
+          <div className="tt-rate">
+            {wpm}
+            <em>WPM</em>
+          </div>
+        </div>
+
+        <div className="tt-race-clock">
+          {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
+          <small>Remaining</small>
+        </div>
+
+        <div className={cn('tt-side-them', gone && 'tt-gone')}>
+          <div className="tt-who">
+            {opponent?.name ?? 'Opponent'}
+            {gone && <em className="tt-gone-tag">left</em>}
+          </div>
+          <div className="tt-rate">
+            {opponent?.wpm ?? 0}
+            <em>WPM</em>
+          </div>
+        </div>
+      </div>
+
+      <div className="tt-standing">
+        {gapWords > 0 ? (
+          <span className={iLead ? 'is-ahead' : 'is-behind'}>
+            <i className="tt-dot" />
+            {iLead
+              ? `You are ${gapWords} ${gapWords === 1 ? 'word' : 'words'} ahead`
+              : `${opponent?.name ?? 'They'} is ${gapWords} ${gapWords === 1 ? 'word' : 'words'} ahead`}
+          </span>
+        ) : (
+          <span className="is-level">
+            <i className="tt-dot" />
+            Neck and neck
+          </span>
+        )}
+      </div>
 
       <div
         ref={trackRef}
-        className="tt-race-text relative mt-6 cursor-text"
+        className="tt-panel tt-race-text cursor-text"
         onClick={focusField}
       >
         <input
@@ -138,67 +268,27 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
           onBlur={focusHandlers.onBlur}
         />
         <p className="typing-text m-0">
-          {text.split('').map((char, index) => (
-            <span
-              key={index}
-              className={cn(
-                'typing-char',
-                index < typed.length &&
-                  (typed[index] === char ? 'typing-char-correct' : 'typing-char-incorrect'),
-                index === typed.length && 'typing-char-current',
-                index > typed.length && 'typing-char-upcoming'
-              )}
-            >
-              {char}
-            </span>
-          ))}
+          {chunks.map((slice, index) => {
+            const start = index * CHUNK
+            const end = start + slice.length
+            return (
+              <PassageChunk
+                key={index}
+                text={slice}
+                typedHere={typed.slice(start, end)}
+                caretAt={mine >= start && mine < end ? mine - start : -1}
+                gapFrom={theyAreHere && hi > start && lo < end ? Math.max(0, lo - start) : -1}
+                gapTo={theyAreHere && hi > start && lo < end ? Math.min(slice.length, hi - start) : -1}
+                gapMine={iLead}
+                oppAt={theyAreHere && theirs >= start && theirs < end ? theirs - start : -1}
+              />
+            )
+          })}
         </p>
-      </div>
-    </div>
-  )
-}
 
-const RaceBars: React.FC<{
-  me?: RacePlayer
-  opponent?: RacePlayer
-  secondsLeft: number
-}> = ({ me, opponent, secondsLeft }) => (
-  <div className="tt-race-bars">
-    <Lane player={me} label="You" mine />
-    <div className="tt-race-clock tabular-nums">
-      {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
-    </div>
-    <Lane player={opponent} label="Opponent" />
-  </div>
-)
-
-/** Seeing their marker pull ahead of yours is the entire point of a race. */
-const Lane: React.FC<{ player?: RacePlayer; label: string; mine?: boolean }> = ({
-  player,
-  label,
-  mine,
-}) => {
-  // The notice at the top fades after a few seconds. Without something on the
-  // lane itself, a bar that simply stopped moving would read as a bug for the
-  // rest of the race.
-  const gone = Boolean(player && !player.connected && !player.finished)
-
-  return (
-    <div className={cn('tt-lane', mine && 'is-mine', gone && 'is-gone')}>
-      <div className="tt-lane-head">
-        <span className="tt-lane-name">
-          {player?.name ?? label}
-          {gone && <em className="tt-lane-gone">left</em>}
-        </span>
-        <span className="tt-lane-wpm tabular-nums">
-          {player?.wpm ?? 0} <small>wpm</small>
-        </span>
-      </div>
-      <div className="tt-lane-track">
-        <div
-          className="tt-lane-fill"
-          style={{ width: `${Math.round((player?.progress ?? 0) * 100)}%` }}
-        />
+        {markerOffScreen && !iLead && (
+          <div className="tt-offscreen">{(opponent?.name ?? 'They').toUpperCase()} &darr;</div>
+        )}
       </div>
     </div>
   )

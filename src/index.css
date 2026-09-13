@@ -1380,16 +1380,108 @@ html, body {
    Race — head-to-head mode
    ========================================================================== */
 
+/* Two racers need two colours that never read as "correct" and "wrong", so the
+   opponent takes the amber already used for medium difficulty. */
+:root {
+  --race-them: rgb(245, 158, 11);
+  --race-them-deep: rgb(180, 83, 9);
+  --race-dim: rgb(107, 114, 128);
+  --race-you-edge: rgb(216, 239, 224);
+  --race-you-border: rgb(191, 232, 206);
+  --race-them-edge: rgb(246, 230, 196);
+  --race-them-border: rgb(242, 221, 180);
+  --race-hard: rgb(185, 28, 28);
+  --race-hard-edge: rgb(246, 217, 217);
+  --race-hard-border: rgb(243, 201, 201);
+  --race-rule: rgb(199, 213, 226);
+  --race-band-them: rgba(245, 158, 11, 0.09);
+  --race-band-you: rgba(34, 197, 94, 0.09);
+  --race-band-them-line: rgba(245, 158, 11, 0.85);
+  --race-band-you-line: rgba(34, 197, 94, 0.8);
+}
+.dark {
+  --race-them: rgb(251, 191, 36);
+  --race-them-deep: rgb(252, 211, 77);
+  --race-dim: rgb(148, 163, 184);
+  --race-you-edge: rgba(16, 84, 54, 0.9);
+  --race-you-border: rgba(52, 211, 153, 0.45);
+  --race-them-edge: rgba(96, 66, 12, 0.9);
+  --race-them-border: rgba(251, 191, 36, 0.42);
+  --race-hard: rgb(248, 113, 113);
+  --race-hard-edge: rgba(96, 26, 26, 0.9);
+  --race-hard-border: rgba(248, 113, 113, 0.4);
+  --race-rule: rgba(148, 163, 184, 0.3);
+  --race-band-them: rgba(251, 191, 36, 0.1);
+  --race-band-you: rgba(52, 211, 153, 0.1);
+  --race-band-them-line: rgba(251, 191, 36, 0.8);
+  --race-band-you-line: rgba(52, 211, 153, 0.75);
+}
+
 .tt-race {
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+/* While racing the viewport is the frame: the passage scrolls inside its own
+   panel rather than pushing the header and the nav off the top. */
+.tt-race.is-racing {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
+/* ================= the ground =================
+   The page sits on a keyboard. A faint staggered plate of key wells carries
+   the texture, the washes are the ones the landing page already uses, and
+   loose keycaps drift at depth. All of it recedes once the race is running. */
+.tt-atmos {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+.tt-atmos i { position: absolute; display: block; font-style: normal; }
+.tt-plate {
+  inset: 0; opacity: 0.105; background-size: 132px 132px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cg fill='none' stroke='%231F3349' stroke-opacity='.55' stroke-width='1'%3E%3Crect x='6' y='6' width='58' height='58' rx='12'/%3E%3Crect x='76' y='6' width='58' height='58' rx='12'/%3E%3Crect x='-29' y='76' width='58' height='58' rx='12'/%3E%3Crect x='41' y='76' width='58' height='58' rx='12'/%3E%3Crect x='111' y='76' width='58' height='58' rx='12'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image: radial-gradient(135% 105% at 50% 44%, #000 22%, transparent 78%);
+  mask-image: radial-gradient(135% 105% at 50% 44%, #000 22%, transparent 78%);
+}
+.dark .tt-plate {
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cg fill='none' stroke='%2394A3B8' stroke-opacity='.55' stroke-width='1'%3E%3Crect x='6' y='6' width='58' height='58' rx='12'/%3E%3Crect x='76' y='6' width='58' height='58' rx='12'/%3E%3Crect x='-29' y='76' width='58' height='58' rx='12'/%3E%3Crect x='41' y='76' width='58' height='58' rx='12'/%3E%3Crect x='111' y='76' width='58' height='58' rx='12'/%3E%3C/g%3E%3C/svg%3E");
+}
+.tt-wash-a {
+  left: -260px; top: -420px; width: 1000px; height: 1000px; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--landing-wash), transparent 72%);
+}
+.tt-wash-b {
+  right: -300px; bottom: -380px; width: 860px; height: 860px; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--landing-wash-2), transparent 72%);
+}
+.tt-wash-them {
+  right: -240px; top: -300px; width: 760px; height: 760px; border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--race-them) 14%, transparent), transparent 72%);
+}
+.tt-atmos.is-calm .tt-plate { opacity: 0.07; }
+.dark .tt-atmos.is-calm .tt-plate { opacity: 0.1; }
+
+.tt-fk {
+  display: flex; align-items: center; justify-content: center; border-radius: 13px;
+  background: linear-gradient(165deg, var(--keycap-a), var(--keycap-b));
+  border: 1px solid var(--keycap-border);
+  box-shadow: 0 4px 0 var(--keycap-edge), 0 16px 30px -12px var(--keycap-shadow);
+  font-family: var(--font-mono); font-weight: 500; color: var(--keycap-letter);
+}
+.tt-fk-mid { opacity: 0.72; }
+.tt-fk-far { opacity: 0.5; filter: blur(1.6px); }
+
+/* ================= shell ================= */
+.tt-race-bar, .tt-stage { position: relative; z-index: 1; }
 .tt-race-bar {
   display: flex; align-items: center; justify-content: space-between;
-  max-width: 1100px; margin: 0 auto; padding: 18px 24px;
+  padding: 18px 40px; flex: none;
 }
 .tt-race-back {
   display: inline-flex; align-items: center; gap: 7px;
@@ -1397,22 +1489,28 @@ html, body {
   background: none; border: none; cursor: pointer;
 }
 .tt-race-back:hover { color: var(--foreground); }
-
-.tt-race-setup, .tt-race-lobby, .tt-race-countdown {
-  max-width: 760px; margin: 0 auto; padding: 32px 24px 64px; text-align: center;
+.tt-race-meta {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.15em;
+  color: var(--race-dim); text-transform: uppercase;
 }
-.tt-race-setup h1 {
-  font-size: 40px; font-weight: 400; letter-spacing: -0.03em; margin: 0;
+.tt-stage {
+  flex: 1; min-height: 0; width: 100%;
+  max-width: 1240px; margin: 0 auto; padding: 0 40px 34px;
+  display: flex; flex-direction: column;
+}
+.tt-stage.is-mid { justify-content: center; }
+
+.tt-race-eyebrow {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.15em;
+  color: var(--race-dim); text-transform: uppercase; margin: 0;
+}
+.tt-race-setup h1, .tt-race-lobby h1 {
+  font-size: 52px; font-weight: 400; letter-spacing: -0.035em; line-height: 1.02; margin: 0;
 }
 .tt-race-sub { font-size: 16px; color: var(--muted-foreground); margin: 12px 0 0; }
-.tt-race-eyebrow {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
-  color: var(--muted-foreground); margin: 0 0 10px;
-}
-
 .tt-race-note {
-  display: inline-flex; align-items: center; gap: 9px;
-  margin-top: 20px; font-size: 14px; color: var(--muted-foreground);
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 15px; color: var(--muted-foreground);
 }
 .tt-race-error {
   margin-top: 14px; padding: 11px 16px; border-radius: 10px;
@@ -1420,57 +1518,279 @@ html, body {
   border: 1px solid color-mix(in srgb, var(--destructive) 40%, transparent);
   color: var(--destructive); font-size: 14px;
 }
-
-.tt-field { display: block; margin: 26px auto 0; max-width: 300px; text-align: left; }
-.tt-field span {
-  display: block; font-size: 13px; color: var(--muted-foreground); margin-bottom: 6px;
-}
-.tt-field input, .tt-code-input {
-  width: 100%; height: 46px; padding: 0 14px;
-  border-radius: 10px; border: 2px solid var(--border);
-  background: var(--card); color: var(--foreground);
-  font-family: inherit; font-size: 16px;
-}
-.tt-field input:focus, .tt-code-input:focus {
-  outline: none; border-color: var(--primary);
+.tt-panel {
+  background: var(--card); border-radius: 20px;
+  box-shadow: 0 3px 0 var(--keycap-edge), 0 26px 50px -32px var(--keycap-shadow);
 }
 
-.tt-race-columns {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
-  margin-top: 30px; text-align: left;
+/* ================= the three claims ================= */
+.tt-ticks { display: flex; flex-wrap: wrap; gap: 11px 28px; margin-top: 18px; }
+.tt-tick {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-size: 15.5px; color: var(--foreground);
 }
-.tt-race-panel {
-  padding: 22px; border-radius: 14px;
-  background: var(--card); border: 2px solid var(--border);
-  display: flex; flex-direction: column; gap: 14px;
-}
-.tt-race-panel h2 { font-size: 18px; font-weight: 600; margin: 0; }
-
-.tt-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.tt-chip-btn {
-  flex: 1; min-width: 72px; height: 38px; border-radius: 999px;
-  border: 2px solid var(--border); background: transparent;
-  color: var(--muted-foreground); font-family: inherit; font-size: 14px;
-  text-transform: capitalize; cursor: pointer; transition: all 0.15s ease;
-}
-.tt-chip-btn.is-on {
-  border-color: var(--primary); color: var(--primary-deep);
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
+.tt-tick svg {
+  width: 17px; height: 17px; flex: none; fill: none; stroke: var(--primary-deep);
+  stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
 }
 
+/* ================= the name key =================
+   Real keyboards carry word legends on their wide keys, so a name reads as
+   more keyboard-native than a single letter, and two players called Sam are
+   no longer the same tile. Names cap at 8 characters, which is what keeps the
+   key a key rather than a banner. */
+.tt-namekey {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  height: 54px; min-width: 120px; padding: 0 22px; border-radius: 13px;
+  background: linear-gradient(165deg, var(--keycap-a), var(--keycap-b));
+  border: 1px solid var(--keycap-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 0 var(--keycap-edge),
+    0 14px 26px -14px var(--keycap-shadow);
+  font-family: var(--font-mono); font-size: 17px; font-weight: 500;
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--foreground);
+  white-space: nowrap;
+}
+.tt-namekey.is-you {
+  color: var(--primary-deep); border-color: var(--race-you-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 0 var(--race-you-edge),
+    0 14px 26px -14px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+.tt-namekey.is-them {
+  color: var(--race-them-deep); border-color: var(--race-them-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 0 var(--race-them-edge),
+    0 14px 26px -14px color-mix(in srgb, var(--race-them) 40%, transparent);
+}
+.tt-namekey.is-open {
+  border-style: dashed; color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--card) 70%, var(--background));
+  box-shadow: 0 3px 0 var(--keycap-edge);
+}
+/* Only shown when both players chose the same name. */
+.tt-namekey em {
+  position: absolute; left: 10px; top: 7px; font-style: normal;
+  font-size: 9px; letter-spacing: 0.1em; opacity: 0.55;
+}
+.tt-namekey.is-big {
+  height: 136px; min-width: 304px; padding: 0 34px; border-radius: 24px;
+  font-size: 46px; letter-spacing: 0.04em;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.95), 0 13px 0 var(--keycap-edge),
+    0 40px 62px -26px var(--keycap-shadow);
+}
+/* The winning key is pressed: it drops and its edge collapses under it. */
+.tt-namekey.is-big.is-won {
+  transform: translateY(11px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.95), 0 2px 0 var(--race-you-edge),
+    0 16px 26px -18px var(--keycap-shadow);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease;
+}
+
+/* ================= setting keys =================
+   Length and level are the same control, pressed the same way. The level keys
+   carry the zap / brain / flame the solo setup screen uses, and the selected
+   one takes that level colour, so the page shows one accent at a time. */
+.tt-keyrow { display: flex; gap: 10px; }
+.tt-setkey {
+  flex: 1; height: 56px; border-radius: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-family: var(--font-mono); font-size: 14px; font-weight: 500; letter-spacing: 0.03em;
+  color: var(--muted-foreground);
+  background: linear-gradient(165deg, var(--keycap-a), var(--keycap-b));
+  border: 1px solid var(--keycap-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 3px 0 var(--keycap-edge);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.tt-setkey svg {
+  width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.6;
+  stroke-linecap: round; stroke-linejoin: round; opacity: 0.5;
+}
+.tt-setkey.is-on svg { opacity: 1; }
+.tt-setkey.is-on {
+  color: var(--primary-deep); border-color: var(--race-you-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 3px 0 var(--race-you-edge);
+}
+.tt-setkey.is-on.is-medium {
+  color: var(--race-them-deep); border-color: var(--race-them-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 3px 0 var(--race-them-edge);
+}
+.tt-setkey.is-on.is-hard {
+  color: var(--race-hard); border-color: var(--race-hard-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 3px 0 var(--race-hard-edge);
+}
+
+.tt-set { margin-top: 26px; }
+.tt-ticks + .tt-set { margin-top: 32px; }
+.tt-set > label { display: block; font-size: 13px; color: var(--muted-foreground); margin-bottom: 9px; }
+.tt-namefield {
+  width: 270px; height: 50px; padding: 0 14px; border-radius: 10px;
+  background: var(--card); border: 1.5px solid var(--primary);
+  font-family: inherit; font-size: 17px; color: var(--foreground);
+}
+.tt-namefield:focus { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent); }
+
+/* ================= create or join =================
+   Two routes into a race, and only one of them is yours to start. */
+.tt-fork {
+  display: grid; grid-template-columns: auto auto 1fr; align-items: stretch;
+  gap: 24px; margin-top: 30px; min-height: 132px;
+}
+.tt-fork-side { display: flex; flex-direction: column; justify-content: center; gap: 11px; }
+.tt-fork-lab { font-size: 13px; color: var(--muted-foreground); }
+.tt-fork-or { display: flex; flex-direction: column; align-items: center; gap: 12px; height: 100%; }
+.tt-fork-rule { flex: 1; width: 1px; min-height: 18px; background: var(--race-rule); }
+.tt-fork-or b {
+  width: 38px; height: 38px; border-radius: 999px; background: var(--card);
+  border: 1px solid var(--race-rule); display: flex; align-items: center;
+  justify-content: center; font-weight: 400; font-size: 14px;
+  color: var(--muted-foreground); flex: none;
+  box-shadow: 0 2px 6px -3px var(--keycap-shadow);
+}
+.tt-join { display: flex; align-items: center; gap: 10px; }
 .tt-code-input {
-  font-family: var(--font-mono); font-size: 26px;
-  letter-spacing: 0.3em; text-align: center; height: 58px;
+  width: 146px; height: 48px; padding: 0 0 0 12px; border-radius: 10px;
+  border: 2px solid var(--border); background: var(--card); color: var(--foreground);
+  font-family: var(--font-mono); font-size: 18px; letter-spacing: 0.32em; text-align: center;
+}
+.tt-code-input:focus { outline: none; border-color: var(--primary); }
+/* Stacked variant, used on phones where three columns will not fit. */
+.tt-or-row { display: flex; align-items: center; gap: 14px; margin: 16px 0 14px; }
+.tt-or-row span { flex: 1; height: 1px; background: var(--race-rule); }
+.tt-or-row b {
+  width: 36px; height: 36px; border-radius: 999px; background: var(--card);
+  border: 1px solid var(--race-rule); display: flex; align-items: center;
+  justify-content: center; font-weight: 400; font-size: 14px; color: var(--muted-foreground);
+  box-shadow: 0 2px 6px -3px var(--keycap-shadow);
 }
 
-/* ---- Lobby ---- */
-.tt-race-code {
-  font-family: var(--font-mono); font-size: 56px; font-weight: 600;
-  letter-spacing: 0.14em; color: var(--primary-deep); line-height: 1;
+/* ================= lobby ================= */
+.tt-code-keys { display: flex; justify-content: center; gap: 12px; }
+.tt-code-key {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 92px; height: 108px; border-radius: 16px;
+  background: linear-gradient(165deg, var(--keycap-a), var(--keycap-b));
+  border: 1px solid var(--keycap-border);
+  box-shadow: 0 6px 0 var(--keycap-edge), 0 26px 44px -20px var(--keycap-shadow);
+  font-family: var(--font-mono); font-size: 46px; font-weight: 500; color: var(--foreground);
+}
+.tt-copy {
+  display: inline-flex; align-items: center; gap: 9px; height: 42px; padding: 0 20px;
+  border-radius: 11px; background: var(--card); font-family: inherit; font-size: 14px;
+  color: var(--muted-foreground); border: none; cursor: pointer;
+  box-shadow: 0 2px 0 var(--keycap-edge), 0 8px 18px -10px var(--keycap-shadow);
+}
+.tt-copy:hover { color: var(--foreground); }
+.tt-pulse {
+  width: 9px; height: 9px; border-radius: 999px; background: var(--race-them);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--race-them) 18%, transparent);
+}
+.tt-roster { width: 100%; max-width: 640px; align-self: center; padding: 6px 26px; }
+.tt-seat {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px; height: 92px;
+}
+.tt-seat + .tt-seat { border-top: 1px dashed var(--border); }
+.tt-seat-left { display: flex; align-items: center; gap: 14px; }
+.tt-seat-mine { font-size: 13px; color: var(--race-dim); }
+.tt-state {
+  display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 14px;
+  border-radius: 999px; font-family: var(--font-mono); font-size: 10.5px;
+  font-weight: 500; letter-spacing: 0.12em;
+}
+.tt-state.is-ready {
+  background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary-deep);
+}
+.tt-state.is-waiting {
+  background: color-mix(in srgb, var(--muted-foreground) 10%, transparent); color: var(--race-dim);
+}
+.tt-dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
+
+/* ================= racing ================= */
+.tt-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 24px; }
+.tt-side-them { text-align: right; }
+.tt-who { font-size: 22px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tt-rate {
+  font-family: var(--font-mono); font-size: 15px; font-weight: 500; margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.tt-side-you .tt-rate { color: var(--primary-deep); }
+.tt-side-them .tt-rate { color: var(--race-them-deep); }
+.tt-rate em { font-style: normal; font-size: 9.5px; color: var(--race-dim); margin-left: 4px; }
+.tt-race-clock {
+  font-family: var(--font-mono); font-size: 46px; font-weight: 500; letter-spacing: -0.03em;
+  line-height: 1; text-align: center; font-variant-numeric: tabular-nums;
+}
+.tt-race-clock small {
+  display: block; font-size: 10px; letter-spacing: 0.15em; color: var(--race-dim);
+  margin-top: 7px; text-transform: uppercase;
+}
+/* The one sentence that says where the race stands. */
+.tt-standing { display: flex; justify-content: center; margin-top: 20px; }
+.tt-standing span {
+  display: inline-flex; align-items: center; gap: 9px; height: 32px; padding: 0 16px;
+  border-radius: 999px; font-family: var(--font-mono); font-size: 11.5px;
+  font-weight: 500; letter-spacing: 0.07em;
+}
+.tt-standing .is-behind {
+  background: color-mix(in srgb, var(--race-them) 14%, transparent); color: var(--race-them-deep);
+}
+.tt-standing .is-ahead {
+  background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary-deep);
+}
+.tt-standing .is-level {
+  background: color-mix(in srgb, var(--muted-foreground) 10%, transparent); color: var(--race-dim);
 }
 
-/* ---- Countdown ---- */
-.tt-race-countdown { padding-top: 90px; }
+.tt-race-text {
+  flex: 1; min-height: 0; margin-top: 22px; padding: 30px 36px;
+  overflow-y: auto; position: relative;
+}
+.tt-capture-race {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; border: none; background: transparent;
+  color: transparent; caret-color: transparent; cursor: text; z-index: 2; padding: 0; margin: 0;
+}
+.tt-capture-race:focus { outline: none; }
+.tt-race-text .typing-text {
+  font-family: var(--font-mono); font-size: 19px; line-height: 2.2; letter-spacing: -0.01em;
+}
+/* Legibility: the shared rule paints already-typed characters --secondary,
+   which on the light theme is a near-white blue. */
+.tt-race .typing-char-correct,
+.dark .tt-race .typing-char-correct { color: var(--ch-done); }
+.tt-race .typing-char-upcoming,
+.dark .tt-race .typing-char-upcoming { color: var(--ch-upcoming); }
+.tt-race .typing-char-incorrect {
+  color: var(--ch-bad); background: var(--ch-bad-bg); border-radius: 3px;
+}
+.tt-race .typing-char-current {
+  background: none; color: var(--ch-done);
+  box-shadow: inset 0 -2px 0 var(--primary); animation: none;
+}
+
+/* The lead, drawn onto the words that make it up. Underlined rather than
+   filled: a wash is fine over nine words and overwhelming over forty. */
+.tt-in-gap {
+  text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px;
+}
+.tt-in-gap.is-theirs { background: var(--race-band-them); text-decoration-color: var(--race-band-them-line); }
+.tt-in-gap.is-yours { background: var(--race-band-you); text-decoration-color: var(--race-band-you-line); }
+
+/* Where the opponent has reached. A bar, and only a bar: a name tag floated
+   into the line above and covered words still to be typed, and the standing
+   pill already says who is ahead and by how much. */
+.tt-opp-here { position: relative; }
+.tt-opp-here::before {
+  content: ''; position: absolute; left: -1.5px; top: -6px; bottom: -4px; width: 3px;
+  border-radius: 3px; background: var(--race-them); z-index: 2;
+}
+/* When they are so far ahead their marker has scrolled out of the panel. */
+.tt-offscreen {
+  position: absolute; right: 26px; bottom: 22px; display: inline-flex; align-items: center;
+  gap: 9px; height: 34px; padding: 0 15px; border-radius: 999px;
+  background: var(--race-them-deep); color: var(--card);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+  box-shadow: 0 10px 24px -10px var(--keycap-shadow);
+}
+
+/* ================= countdown ================= */
 .tt-countdown-number {
   font-size: 128px; font-weight: 400; line-height: 1; color: var(--primary);
   animation: tt-count-pop 0.9s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1481,114 +1801,133 @@ html, body {
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* ---- The track ---- */
-.tt-race-bars {
-  display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center;
-  padding: 16px 18px; border-radius: 14px;
-  background: var(--card); border: 1px solid var(--border);
+/* ================= result ================= */
+.tt-podium {
+  display: flex; justify-content: center; align-items: flex-start; gap: 76px; margin-top: 34px;
 }
-.tt-race-clock {
-  font-family: var(--font-mono); font-size: 26px; font-weight: 600;
-  color: var(--foreground);
+.tt-stand { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.tt-crown {
+  height: 16px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.15em;
+  color: var(--primary-deep); display: flex; align-items: center;
 }
-.tt-lane-head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-  margin-bottom: 7px;
+.tt-score-big {
+  font-family: var(--font-mono); font-size: 64px; font-weight: 500; line-height: 1;
+  letter-spacing: -0.05em; font-variant-numeric: tabular-nums;
 }
-.tt-lane-name {
-  font-size: 14px; font-weight: 600;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.tt-stand-you .tt-score-big { color: var(--primary-deep); }
+.tt-stand-them .tt-score-big { color: var(--race-them-deep); }
+.tt-score-foot {
+  font-family: var(--font-mono); font-size: 11px; color: var(--race-dim); margin-top: -6px;
 }
-.tt-lane-wpm { font-family: var(--font-mono); font-size: 15px; color: var(--muted-foreground); }
-.tt-lane-wpm small { font-size: 10px; }
-.tt-lane-track {
-  height: 8px; border-radius: 999px; overflow: hidden;
-  background: color-mix(in srgb, var(--muted-foreground) 22%, transparent);
-}
-.tt-lane-fill {
-  height: 100%; border-radius: 999px;
-  background: var(--muted-foreground);
-  transition: width 0.25s linear;
-}
-.tt-lane.is-mine .tt-lane-fill { background: var(--primary); }
-.tt-lane.is-mine .tt-lane-wpm { color: var(--primary-deep); }
-
-.tt-race-text {
-  padding: 22px; border-radius: 14px;
-  background: var(--card); border: 1px solid var(--border);
-  max-height: 44vh; overflow-y: auto;
-}
-.tt-capture-race {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  opacity: 0; border: none; background: transparent;
-  color: transparent; caret-color: transparent;
-  cursor: text; z-index: 2; padding: 0; margin: 0;
-}
-.tt-capture-race:focus { outline: none; }
-
-/* ---- Result ---- */
-.tt-result { max-width: 760px; margin: 0 auto; padding: 48px 24px 72px; text-align: center; }
-.tt-result-eyebrow {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
-  color: var(--muted-foreground); margin: 0 0 26px;
-}
-.tt-result-grid {
-  display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center;
-}
-.tt-result-versus { font-size: 15px; color: var(--muted-foreground); }
-.tt-result-card {
-  padding: 26px 18px; border-radius: 16px;
-  background: var(--card); border: 2px solid var(--border);
-  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
-}
-.tt-result-card.is-winner {
-  border-color: var(--primary);
-  box-shadow: 0 16px 40px -16px var(--primary);
-  transform: translateY(-4px);
-}
-.tt-result-name {
-  font-size: 15px; font-weight: 600; margin-bottom: 12px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.tt-result-wpm {
-  font-family: var(--font-mono); font-size: 64px; font-weight: 600;
-  line-height: 1; letter-spacing: -0.04em;
-}
-.tt-result-card.is-mine .tt-result-wpm { color: var(--primary-deep); }
-.tt-result-unit {
-  font-family: var(--font-mono); font-size: 10.5px;
-  color: var(--muted-foreground); margin-top: 8px;
-}
-.tt-result-accuracy { font-size: 13px; color: var(--muted-foreground); margin-top: 12px; }
-
 .tt-verdict {
-  margin-top: 34px; font-size: 30px; letter-spacing: -0.02em;
+  font-size: 48px; letter-spacing: -0.03em; margin-top: 40px;
   opacity: 0; transform: translateY(8px);
   transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tt-verdict.is-in { opacity: 1; transform: translateY(0); }
-
-.tt-result-actions {
-  display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap;
+.tt-margin { font-size: 15px; color: var(--muted-foreground); margin-top: 10px; }
+.tt-result-actions { display: flex; gap: 14px; justify-content: center; margin-top: 28px; flex-wrap: wrap; }
+/* An abandoned seat. Their score still stands; it just stopped moving. */
+.tt-gone { opacity: 0.55; }
+.tt-gone-tag {
+  font-style: normal; font-size: 11px; font-weight: 400;
+  color: var(--muted-foreground); margin-left: 7px;
 }
 
-@media (max-width: 767px) {
-  .tt-race-setup h1 { font-size: 30px; }
-  .tt-race-columns { grid-template-columns: 1fr; }
-  .tt-race-code { font-size: 42px; }
+/* ================= setup layout =================
+   You type on the left and your key mints on the right. A centred stack gave
+   five blocks of identical weight and no hierarchy. */
+.tt-split { display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 56px; align-items: center; }
+.tt-showcase { position: relative; }
+.tt-ghost {
+  position: absolute; left: 30px; right: -14px; top: 20px; bottom: -20px;
+  border-radius: 20px; background: color-mix(in srgb, var(--card) 55%, transparent);
+  border: 1px solid var(--border); transform: rotate(2.8deg);
+}
+.tt-stage-card { position: relative; padding: 30px 32px 28px; transform: rotate(-1.4deg); }
+.tt-cap-note { font-size: 13px; color: var(--muted-foreground); margin-bottom: 16px; }
+.tt-stage-card .tt-namekey.is-big { width: 100%; min-width: 0; height: 118px; font-size: 40px; }
+.tt-hr { height: 1px; background: var(--border); margin: 26px 0 22px; }
+.tt-mini .typing-text { font-family: var(--font-mono); font-size: 14px; line-height: 3.2; }
+.tt-mini .tt-opp-here::after { top: -35px; font-size: 9.5px; height: 19px; padding: 0 7px; }
+.tt-mykey { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+.tt-mykey > span:first-child { font-size: 13px; color: var(--muted-foreground); }
+
+/* ================= phone =================
+   Most of the traffic lands here, so this is not a shrunk desktop: the split
+   becomes one column, every row goes full width, and nothing relies on two
+   things sitting side by side. Hit targets stay at or above 48px. */
+@media (max-width: 860px) {
+  .tt-race-bar { padding: 13px 16px; }
+  /* The site-wide coffee button is fixed at bottom-right, 48px plus a 16px
+     margin. Without this the Join key sat underneath it. */
+  .tt-stage { padding: 0 16px 84px; }
+  /* A form with a text field belongs at the top of a phone screen: centring it
+     makes the whole page jump when the soft keyboard opens, and it left the
+     Join key pinned in the corner the coffee button occupies. */
+  .tt-race-setup.is-mid { justify-content: flex-start; }
+  .tt-race-setup h1, .tt-race-lobby h1 { font-size: 32px; letter-spacing: -0.03em; }
+  .tt-race-sub { font-size: 14.5px; margin-top: 10px; }
+  .tt-race-back { font-size: 13px; }
+
+  .tt-split { display: block; }
+  .tt-showcase { display: none; }
+  .tt-ticks { flex-direction: column; gap: 9px; margin-top: 15px; }
+  .tt-tick { font-size: 14.5px; }
+  .tt-tick svg { width: 16px; height: 16px; }
+  .tt-ticks + .tt-set { margin-top: 22px; }
+
+  .tt-set { margin-top: 20px; }
+  .tt-namefield { width: 100%; height: 52px; }
+  .tt-setkey { height: 54px; font-size: 13px; gap: 7px; }
+  .tt-setkey svg { width: 17px; height: 17px; }
+
+  .tt-fork { display: block; min-height: 0; margin-top: 24px; }
+  .tt-fork .tt-btn-primary, .tt-fork .tt-btn-full { width: 100%; }
+  .tt-join { gap: 10px; }
+  .tt-code-input { flex: 1; width: auto; height: 50px; }
+
+  .tt-code-key { width: 52px; height: 64px; font-size: 26px; border-radius: 12px;
+    box-shadow: 0 4px 0 var(--keycap-edge), 0 14px 24px -14px var(--keycap-shadow); }
+  .tt-code-keys { gap: 7px; }
+  .tt-roster { padding: 6px 16px; }
+  .tt-seat { height: 76px; }
+  .tt-namekey { height: 48px; min-width: 104px; padding: 0 16px; font-size: 15px; }
+
+  .tt-head { gap: 10px; }
+  .tt-who { font-size: 16px; }
+  .tt-rate { font-size: 13px; margin-top: 3px; }
+  .tt-race-clock { font-size: 34px; }
+  .tt-race-clock small { font-size: 9px; margin-top: 5px; }
+  .tt-standing { margin-top: 14px; }
+  .tt-standing span { height: 29px; padding: 0 13px; font-size: 10.5px; }
+  .tt-race-text { margin-top: 16px; padding: 18px; }
+  .tt-race-text .typing-text { font-size: 15px; line-height: 2.35; }
+
+  /* Name and score share a row, in one grid so both keys land in the same
+     column and come out equal width whatever the two names are. */
+  .tt-podium {
+    display: grid; grid-template-columns: auto 1fr; column-gap: 16px; row-gap: 18px;
+    align-items: center; margin-top: 22px;
+  }
+  .tt-stand { display: contents; }
+  .tt-namekey.is-big {
+    width: auto; min-width: 132px; max-width: 208px; height: 92px;
+    font-size: 25px; padding: 0 12px; border-radius: 18px;
+  }
+  .tt-namekey.is-big.is-won { transform: translateY(7px); }
+  .tt-score { min-width: 0; text-align: right; }
+  .tt-score .tt-crown { height: 14px; justify-content: flex-end; }
+  .tt-score-big { font-size: 46px; }
+  .tt-score-foot { font-size: 9.5px; margin-top: 5px; line-height: 1.55; }
   .tt-countdown-number { font-size: 86px; }
-  .tt-race-bars { grid-template-columns: 1fr; gap: 14px; }
-  .tt-race-clock { order: -1; text-align: center; }
-  .tt-result-grid { grid-template-columns: 1fr; }
-  .tt-result-versus { display: none; }
-  .tt-result-wpm { font-size: 50px; }
-  .tt-verdict { font-size: 24px; }
-  .tt-race-text { max-height: 38vh; padding: 16px; }
+  .tt-verdict { font-size: 34px; margin-top: 26px; }
+  .tt-margin { font-size: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .tt-countdown-number { animation: none; }
-  .tt-result-card, .tt-verdict { transition-duration: 0.01ms; }
+  .tt-verdict, .tt-namekey.is-big.is-won { transition-duration: 0.01ms; }
 }
 
 /* A notice, not an interruption. It announces itself, holds long enough to
@@ -1634,26 +1973,4 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-}
-
-/* An abandoned lane. Dimmed and hatched rather than hidden — the opponent's
-   score still stands, it just stopped moving, and a plain frozen bar would
-   read as a broken one once the notice at the top has faded. */
-.tt-lane.is-gone { opacity: 0.55; }
-
-.tt-lane.is-gone .tt-lane-fill {
-  background: repeating-linear-gradient(
-    -45deg,
-    var(--muted-foreground) 0 4px,
-    transparent 4px 8px
-  );
-  transition: none;
-}
-
-.tt-lane-gone {
-  font-style: normal;
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--muted-foreground);
-  margin-left: 7px;
 }

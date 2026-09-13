@@ -21,6 +21,8 @@ export interface Player {
   accuracy: number
   finished: boolean
   connected: boolean
+  /** Armed for the next race. Both seats must say yes before a countdown. */
+  ready: boolean
 }
 
 export interface Room {
@@ -71,7 +73,10 @@ export function createRoom(
     seed: Math.floor(Math.random() * 2 ** 31),
     status: 'waiting',
     players: {
-      [hostId]: { id: hostId, name, progress: 0, wpm: 0, accuracy: 100, finished: false, connected: true },
+      [hostId]: {
+        id: hostId, name, progress: 0, wpm: 0, accuracy: 100,
+        finished: false, connected: true, ready: false,
+      },
     },
     startAt: null,
     endAt: null,
@@ -104,13 +109,31 @@ export function joinRoom(code: string, playerId: string, name: string): JoinResu
     accuracy: 100,
     finished: false,
     connected: true,
+    ready: false,
   }
 
   return { ok: true, room }
 }
 
 /**
- * Both seats filled, so lock the room and put a start time on the clock.
+ * Arming, not starting. Filling the second seat used to drop both players
+ * straight into a countdown they were not looking at; now each says yes and
+ * the race begins only when both have.
+ *
+ * Returns true when that press was the one that completed the pair.
+ */
+export function setReady(room: Room, playerId: string, ready: boolean): boolean {
+  const player = room.players[playerId]
+  if (!player || room.status !== 'waiting') return false
+
+  player.ready = ready
+
+  const everyone = Object.values(room.players)
+  return everyone.length === 2 && everyone.every((p) => p.ready && p.connected)
+}
+
+/**
+ * Both seats armed, so lock the room and put a start time on the clock.
  * The countdown is a server timestamp rather than a duration: a client that
  * takes 400ms to receive it still starts at the same instant as the other.
  */
@@ -134,8 +157,11 @@ export type RematchResult =
  * Run it back without re-sharing the code. Same room, same players, fresh seed
  * so the text differs — a rematch on identical text would be a memory test.
  *
+ * This returns the room to the ready gate rather than starting a countdown:
+ * the same rule that begins a first race begins a rematch.
+ *
  * Idempotent on purpose: both players will press the button, and the second
- * press must not restart a countdown that is already running.
+ * press must not disturb a countdown that is already running.
  */
 export function requestRematch(code: string): RematchResult {
   const room = rooms.get(code)
@@ -149,15 +175,16 @@ export function requestRematch(code: string): RematchResult {
   if (present.length < 2) return { ok: false, reason: 'opponent-left' }
 
   room.seed = Math.floor(Math.random() * 2 ** 31)
-  room.status = 'countdown'
-  room.startAt = Date.now() + COUNTDOWN_MS
-  room.endAt = room.startAt + room.timer * 60_000
+  room.status = 'waiting'
+  room.startAt = null
+  room.endAt = null
 
   for (const player of Object.values(room.players)) {
     player.progress = 0
     player.wpm = 0
     player.accuracy = 100
     player.finished = false
+    player.ready = false
   }
 
   return { ok: true, room }
@@ -211,6 +238,8 @@ export function removePlayer(playerId: string): Room | undefined {
 
     if (room.status === 'waiting' || room.status === 'finished') {
       delete room.players[playerId]
+      // Whoever is left has nothing to be ready for any more.
+      for (const other of Object.values(room.players)) other.ready = false
     } else {
       room.players[playerId].connected = false
       const live = Object.values(room.players).filter((p) => p.connected && !p.finished)

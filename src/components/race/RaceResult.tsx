@@ -67,23 +67,39 @@ export const RaceResult: React.FC<RaceResultProps> = ({ room, you, onRematch, on
   const iWon = (me?.wpm ?? 0) > (them?.wpm ?? 0)
   const drew = (me?.wpm ?? 0) === (them?.wpm ?? 0)
   const theyQuit = them && !them.connected && !them.finished
+  const margin = Math.abs((me?.wpm ?? 0) - (them?.wpm ?? 0))
+
+  // Both names sit on keys, so a shared name needs a player number to tell
+  // them apart. It only appears when there actually is a clash.
+  const sameName = Boolean(
+    me && them && me.name.trim().toLowerCase() === them.name.trim().toLowerCase()
+  )
 
   return (
-    <div className="tt-result">
-      <p className="tt-result-eyebrow">Race complete</p>
+    <div className="tt-stage is-mid tt-result">
+      <p className="tt-race-eyebrow text-center">
+        Race complete &middot; {room.timer} min &middot; {room.difficulty}
+      </p>
 
-      <div className="tt-result-grid">
-        <ResultCard player={me} label="You" wpm={myWpm} winner={verdict && iWon && !drew} mine />
-        <div className="tt-result-versus">vs</div>
-        <ResultCard
+      <div className="tt-podium">
+        <Stand
+          player={me}
+          label="You"
+          wpm={myWpm}
+          mine
+          won={verdict && iWon && !drew}
+          seat={sameName ? 'P1' : undefined}
+        />
+        <Stand
           player={them}
           label="Opponent"
           wpm={theirWpm}
-          winner={verdict && !iWon && !drew && !theyQuit}
+          won={verdict && !iWon && !drew && !theyQuit}
+          seat={sameName ? 'P2' : undefined}
         />
       </div>
 
-      <div className={cn('tt-verdict', verdict && 'is-in')}>
+      <div className={cn('tt-verdict text-center', verdict && 'is-in')}>
         {theyQuit
           ? 'Your opponent left the race.'
           : drew
@@ -92,6 +108,12 @@ export const RaceResult: React.FC<RaceResultProps> = ({ room, you, onRematch, on
               ? 'You win.'
               : 'You lost this one.'}
       </div>
+
+      {!theyQuit && !drew && margin > 0 && (
+        <p className="tt-margin text-center">
+          {iWon ? 'Ahead by' : 'Behind by'} {margin} words per minute
+        </p>
+      )}
 
       {rematchError && <div className="tt-race-error tt-result-error">{rematchError}</div>}
 
@@ -107,19 +129,34 @@ export const RaceResult: React.FC<RaceResultProps> = ({ room, you, onRematch, on
   )
 }
 
-const ResultCard: React.FC<{
+/** The winning key is pressed: it drops and its edge collapses under it. */
+const Stand: React.FC<{
   player?: RacePlayer
   label: string
   wpm: number
-  winner: boolean
+  won: boolean
   mine?: boolean
-}> = ({ player, label, wpm, winner, mine }) => (
-  <div className={cn('tt-result-card', mine && 'is-mine', winner && 'is-winner')}>
-    <div className="tt-result-name">{player?.name ?? label}</div>
-    <div className="tt-result-wpm tabular-nums">{wpm}</div>
-    <div className="tt-result-unit">words per minute</div>
-    <div className="tt-result-accuracy tabular-nums">{player?.accuracy ?? 0}% accuracy</div>
-  </div>
-)
+  seat?: string
+}> = ({ player, label, wpm, won, mine, seat }) => {
+  const gone = Boolean(player && !player.connected && !player.finished)
+
+  return (
+    <div className={cn('tt-stand', mine ? 'tt-stand-you' : 'tt-stand-them', gone && 'tt-gone')}>
+      <div className={cn('tt-namekey is-big', mine ? 'is-you' : 'is-them', won && 'is-won')}>
+        {seat && <em>{seat}</em>}
+        {player?.name ?? label}
+      </div>
+
+      <div className="tt-score">
+        <div className="tt-crown">{won ? 'WINNER' : ''}</div>
+        <div className="tt-score-big">{wpm}</div>
+        <div className="tt-score-foot">
+          WORDS PER MINUTE &middot; {player?.accuracy ?? 0}% ACCURATE
+          {gone && <em className="tt-gone-tag">left</em>}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default RaceResult

@@ -13,6 +13,8 @@ export interface RacePlayer {
   accuracy: number
   finished: boolean
   connected: boolean
+  /** Armed for the next race. Both seats must say yes before a countdown. */
+  ready: boolean
 }
 
 export interface Room {
@@ -155,8 +157,9 @@ export function useRace() {
     socketRef.current?.emit('race:finish', { code, wpm, accuracy })
   }, [])
 
-  /** Same room, same players, fresh text. Both will press it; the server
-   *  ignores the second press rather than restarting the countdown. */
+  /** Same room, same players, fresh text. This returns the room to the ready
+   *  gate rather than starting a countdown, so a rematch begins the same way
+   *  a first race does. */
   const requestRematch = useCallback(
     (code: string) =>
       new Promise<string | null>((resolve) => {
@@ -166,6 +169,14 @@ export function useRace() {
       }),
     []
   )
+
+  /**
+   * Arming yourself, not starting the race. The server runs the clock only
+   * once both seats have said yes.
+   */
+  const sendReady = useCallback((code: string, ready: boolean) => {
+    socketRef.current?.emit('race:ready', { code, ready })
+  }, [])
 
   const leave = useCallback(() => {
     socketRef.current?.emit('race:leave')
@@ -183,6 +194,7 @@ export function useRace() {
     joinRoom,
     sendProgress,
     sendFinish,
+    sendReady,
     requestRematch,
     leave,
   }

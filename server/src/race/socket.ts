@@ -9,6 +9,7 @@ import {
   markRacing,
   removePlayer,
   requestRematch,
+  setReady,
   sweepStaleRooms,
   updateProgress,
   type Difficulty,
@@ -28,7 +29,7 @@ const ALLOWED_ORIGINS = [
 const SWEEP_EVERY_MS = 10 * 60 * 1000
 
 function cleanName(value: unknown): string {
-  const name = typeof value === 'string' ? value.trim().slice(0, 16) : ''
+  const name = typeof value === 'string' ? value.trim().slice(0, 8) : ''
   return name || 'Player'
 }
 
@@ -60,6 +61,22 @@ export function attachRaceSocket(httpServer: HttpServer): Server {
 
   const broadcast = (room: Room) => {
     io.to(room.code).emit('race:state', room)
+  }
+
+  /**
+   * The countdown is a server timestamp rather than a duration, so both
+   * screens hit zero together however long the message took to arrive.
+   */
+  const startCountdown = (room: Room) => {
+    beginCountdown(room)
+    const startsIn = (room.startAt ?? Date.now()) - Date.now()
+    setTimeout(() => {
+      const live = getRoom(room.code)
+      if (live && live.status === 'countdown') {
+        markRacing(live)
+        broadcast(live)
+      }
+    }, Math.max(0, startsIn))
   }
 
   io.on('connection', (socket: Socket) => {
@@ -96,20 +113,23 @@ export function attachRaceSocket(httpServer: HttpServer): Server {
       socket.join(code)
       if (typeof ack === 'function') ack({ ok: true, room: result.room, you: socket.id })
 
-      // Both seats filled, so start the clock.
-      if (Object.keys(result.room.players).length === 2) {
-        beginCountdown(result.room)
-        const startsIn = (result.room.startAt ?? Date.now()) - Date.now()
-        setTimeout(() => {
-          const live = getRoom(code)
-          if (live) {
-            markRacing(live)
-            broadcast(live)
-          }
-        }, Math.max(0, startsIn))
+      // Filling the seat no longer starts anything. Both players arm
+      // themselves with race:ready, and that is what runs the clock.
+      broadcast(result.room)
+    })
+
+    socket.on('race:ready', (payload, ack) => {
+      const room = getRoom(String(payload?.code ?? ''))
+      if (!room) {
+        if (typeof ack === 'function') ack({ ok: false })
+        return
       }
 
-      broadcast(result.room)
+      const bothArmed = setReady(room, socket.id, payload?.ready !== false)
+      if (typeof ack === 'function') ack({ ok: true })
+
+      if (bothArmed) startCountdown(room)
+      broadcast(room)
     })
 
     socket.on('race:progress', (payload) => {
@@ -153,15 +173,6 @@ export function attachRaceSocket(httpServer: HttpServer): Server {
 
       if (typeof ack === 'function') ack({ ok: true })
       broadcast(result.room)
-
-      const startsIn = (result.room.startAt ?? Date.now()) - Date.now()
-      setTimeout(() => {
-        const live = getRoom(code)
-        if (live) {
-          markRacing(live)
-          broadcast(live)
-        }
-      }, Math.max(0, startsIn))
     })
 
     socket.on('race:leave', () => {
