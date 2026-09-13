@@ -4,12 +4,9 @@ import DocPage, { DocSection, Rows } from '@/components/legal/DocPage'
 /** Fixed, not `new Date()`. See the note in PrivacyPolicy.tsx. */
 const LAST_UPDATED = '12 September 2026'
 
-/**
- * The previous version shipped the literal string "[Your Jurisdiction]" to
- * production. This keeps it visible as a placeholder rather than guessing a
- * legal fact — replace it and delete this comment.
- */
-const JURISDICTION = '[JURISDICTION]'
+/** The previous version shipped the literal string "[Your Jurisdiction]" live. */
+const GOVERNING_LAW = 'India'
+const COURTS = 'Hyderabad'
 
 const sections: DocSection[] = [
   {
@@ -143,8 +140,12 @@ const sections: DocSection[] = [
     body: (
       <>
         <p>
-          These terms are governed by the laws of {JURISDICTION}. Disputes should first be raised
-          with us directly and settled in good faith; failing that, through binding arbitration.
+          These terms are governed by the laws of {GOVERNING_LAW}, and the courts of {COURTS} have
+          exclusive jurisdiction over any dispute arising from them.
+        </p>
+        <p className="tt-quiet">
+          Before it comes to that, please just email us. Almost everything is easier to settle
+          directly and in good faith than through a court.
         </p>
         <p className="tt-quiet">
           We may revise these terms. The current version always lives on this page, and the date at
@@ -167,7 +168,7 @@ const TermsOfService = () => (
   <DocPage
     title="Terms of Service"
     standfirst="The short version: practise as much as you like, do not cheat the scores, and we make no promises about uptime."
-    meta={[`Last updated ${LAST_UPDATED}`, `Governed by ${JURISDICTION}`, 'taptest321@gmail.com']}
+    meta={[`Last updated ${LAST_UPDATED}`, `Governed by the laws of ${GOVERNING_LAW}`, 'taptest321@gmail.com']}
     sections={sections}
   />
 )
