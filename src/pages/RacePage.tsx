@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import Logo from '@/components/Logo'
@@ -38,6 +38,28 @@ const RacePage = () => {
   const [busy, setBusy] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const [rematchError, setRematchError] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const wasConnected = useRef<Record<string, boolean>>({})
+
+  // A disconnect is worth telling the other player about, but not worth
+   // stopping their race for — the clock keeps running and so do they.
+  useEffect(() => {
+    if (!room || !you) return
+
+    const snapshot: Record<string, boolean> = {}
+    for (const player of Object.values(room.players)) {
+      snapshot[player.id] = player.connected
+      const dropped = wasConnected.current[player.id] === true && !player.connected
+      if (player.id !== you && dropped) setToast(`${player.name} disconnected`)
+    }
+    wasConnected.current = snapshot
+  }, [room, you])
+
+  useEffect(() => {
+    if (!toast) return
+    const id = window.setTimeout(() => setToast(null), 3000)
+    return () => window.clearTimeout(id)
+  }, [toast])
 
   // Driven off the server's start time rather than a local timer, so both
   // screens hit zero together.
@@ -88,6 +110,12 @@ const RacePage = () => {
 
   return (
     <div className="tt-race">
+      {toast && (
+        <div className="tt-race-toast" role="status" aria-live="polite">
+          {toast}
+        </div>
+      )}
+
       <header className="tt-race-bar">
         <Logo size="small" showTagline={false} clickable />
         <div className="flex items-center gap-4">

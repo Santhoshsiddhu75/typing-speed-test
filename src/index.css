@@ -1590,3 +1590,48 @@ html, body {
   .tt-countdown-number { animation: none; }
   .tt-result-card, .tt-verdict { transition-duration: 0.01ms; }
 }
+
+/* A notice, not an interruption. It announces itself, holds long enough to
+   read, and leaves — the race behind it never stops. */
+.tt-race-toast {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  z-index: 60;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--foreground);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: tt-toast-life 3s ease forwards;
+}
+
+@keyframes tt-toast-life {
+  0% { opacity: 0; transform: translate(-50%, -12px); }
+  10% { opacity: 1; transform: translate(-50%, 0); }
+  75% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-race-toast { animation: tt-toast-fade 3s linear forwards; }
+  @keyframes tt-toast-fade {
+    0%, 85% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, 0); }
+  }
+}
+
+@media (max-width: 767px) {
+  .tt-race-toast {
+    font-size: 13px;
+    padding: 9px 16px;
+    max-width: calc(100vw - 32px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
