@@ -5,6 +5,7 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import ErrorBoundary from '@/components/ErrorBoundary'
 const LandingPage = lazy(() => import('@/pages/LandingPage'))
 const SetupScreen = lazy(() => import('@/pages/SetupScreen'))
+const RacePage = lazy(() => import('@/pages/RacePage'))
 const TypingTestScreen = lazy(() => import('@/pages/TypingTestScreen'))
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
@@ -34,16 +35,18 @@ function AppContent() {
   const isProfilePage = location.pathname === '/profile';
   const isLandingPage = location.pathname === '/';
   const isSetupPage = location.pathname === '/start';
+  const isRacePage = location.pathname === '/race';
   const isLegalPage = location.pathname === '/privacy' || location.pathname === '/terms' || location.pathname === '/about';
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-      {!isAuthPage && !isTestPage && !isProfilePage && !isLandingPage && !isSetupPage && !isLegalPage && <ThemeToggle />}
+      {!isAuthPage && !isTestPage && !isProfilePage && !isLandingPage && !isSetupPage && !isRacePage && !isLegalPage && <ThemeToggle />}
       <BuyMeCoffeeFloatingButton />
       <Suspense fallback={<RouteLoadingSpinner />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/start" element={<SetupScreen />} />
+          <Route path="/race" element={<RacePage />} />
           <Route path="/test" element={<TypingTestScreen />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

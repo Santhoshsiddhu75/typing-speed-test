@@ -62,6 +62,16 @@ export function attachRaceSocket(httpServer: HttpServer): Server {
   }
 
   io.on('connection', (socket: Socket) => {
+    /**
+     * Clock sync. Every timestamp the server sends is its own epoch, and
+     * browser clocks routinely sit seconds away from it. The client pings
+     * this, halves the round trip, and works out its offset — without it the
+     * countdown ends at visibly different moments on the two screens.
+     */
+    socket.on('race:sync', (_payload, ack) => {
+      if (typeof ack === 'function') ack({ serverNow: Date.now() })
+    })
+
     socket.on('race:create', (payload, ack) => {
       const difficulty = isDifficulty(payload?.difficulty) ? payload.difficulty : 'medium'
       const timer = isTimer(payload?.timer) ? payload.timer : 1
