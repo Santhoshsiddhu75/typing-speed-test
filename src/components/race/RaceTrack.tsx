@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getRandomText } from '@/data/texts'
 import { cn } from '@/lib/utils'
+import { useTypingField } from '@/hooks/useTypingField'
 import type { RacePlayer, Room } from '@/hooks/useRace'
 
 interface RaceTrackProps {
@@ -26,13 +27,17 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
     [room.difficulty, room.timer, room.seed]
   )
 
-  const inputRef = useRef<HTMLInputElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const lastSent = useRef(0)
   const finished = useRef(false)
 
   const [typed, setTyped] = useState('')
   const [secondsLeft, setSecondsLeft] = useState(room.timer * 60)
+
+  // holdFocus is on here but not on the landing demo: mid-race a stray tap
+  // that dismisses the keyboard would cost you the run while the clock runs on.
+  const { inputRef, isMobile, focusField, blurField, scrollFieldIntoView, focusHandlers } =
+    useTypingField({ scrollTargetRef: trackRef, enabled: true, holdFocus: true })
 
   const opponent = Object.values(room.players).find((p) => p.id !== you)
 
@@ -60,8 +65,9 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
   const finish = useCallback(() => {
     if (finished.current) return
     finished.current = true
+    if (isMobile) blurField()
     onFinish(wpm, accuracy)
-  }, [onFinish, wpm, accuracy])
+  }, [onFinish, wpm, accuracy, isMobile, blurField])
 
   // The race ends on the server's clock, not on however long this tab has
   // been open, so both players stop at the same instant.
@@ -80,8 +86,9 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
   }, [room.endAt, serverNow, finish])
 
   useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+    focusField()
+    scrollFieldIntoView()
+  }, [focusField, scrollFieldIntoView])
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (finished.current) return
@@ -111,7 +118,7 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
       <div
         ref={trackRef}
         className="tt-race-text relative mt-6 cursor-text"
-        onClick={() => inputRef.current?.focus()}
+        onClick={focusField}
       >
         <input
           ref={inputRef}
@@ -124,6 +131,11 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
           spellCheck={false}
           aria-label="Type the text shown"
           className="tt-capture-race"
+          onFocus={() => {
+            focusHandlers.onFocus()
+            scrollFieldIntoView()
+          }}
+          onBlur={focusHandlers.onBlur}
         />
         <p className="typing-text m-0">
           {text.split('').map((char, index) => (

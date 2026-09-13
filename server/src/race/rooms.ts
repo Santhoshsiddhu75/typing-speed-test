@@ -126,6 +126,43 @@ export function markRacing(room: Room): Room {
   return room
 }
 
+export type RematchResult =
+  | { ok: true; room: Room }
+  | { ok: false; reason: 'not-found' | 'not-finished' | 'opponent-left' | 'already-starting' }
+
+/**
+ * Run it back without re-sharing the code. Same room, same players, fresh seed
+ * so the text differs — a rematch on identical text would be a memory test.
+ *
+ * Idempotent on purpose: both players will press the button, and the second
+ * press must not restart a countdown that is already running.
+ */
+export function requestRematch(code: string): RematchResult {
+  const room = rooms.get(code)
+  if (!room) return { ok: false, reason: 'not-found' }
+  if (room.status === 'countdown' || room.status === 'racing') {
+    return { ok: false, reason: 'already-starting' }
+  }
+  if (room.status !== 'finished') return { ok: false, reason: 'not-finished' }
+
+  const present = Object.values(room.players).filter((p) => p.connected)
+  if (present.length < 2) return { ok: false, reason: 'opponent-left' }
+
+  room.seed = Math.floor(Math.random() * 2 ** 31)
+  room.status = 'countdown'
+  room.startAt = Date.now() + COUNTDOWN_MS
+  room.endAt = room.startAt + room.timer * 60_000
+
+  for (const player of Object.values(room.players)) {
+    player.progress = 0
+    player.wpm = 0
+    player.accuracy = 100
+    player.finished = false
+  }
+
+  return { ok: true, room }
+}
+
 export function updateProgress(
   room: Room,
   playerId: string,

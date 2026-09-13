@@ -58,6 +58,16 @@ const LandingPage = () => {
               </button>
             </div>
 
+            <p className="mt-3 text-center text-[13px] sm:text-left">
+              <button
+                type="button"
+                onClick={() => navigate('/race')}
+                className="text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+              >
+                Or race a friend head to head &rarr;
+              </button>
+            </p>
+
             <p className="mt-3.5 text-center text-[13px] text-muted-foreground sm:mt-4 sm:text-left">
               <span className="sm:hidden">No account needed.</span>
               <span className="hidden sm:inline">

@@ -155,13 +155,37 @@ export function useRace() {
     socketRef.current?.emit('race:finish', { code, wpm, accuracy })
   }, [])
 
+  /** Same room, same players, fresh text. Both will press it; the server
+   *  ignores the second press rather than restarting the countdown. */
+  const requestRematch = useCallback(
+    (code: string) =>
+      new Promise<string | null>((resolve) => {
+        socketRef.current?.emit('race:rematch', { code }, (reply: { ok: boolean; reason?: string }) => {
+          resolve(reply?.ok ? null : (reply?.reason ?? 'failed'))
+        })
+      }),
+    []
+  )
+
   const leave = useCallback(() => {
     socketRef.current?.emit('race:leave')
     setRoom(null)
     setYou(null)
   }, [])
 
-  return { connected, room, you, error, serverNow, createRoom, joinRoom, sendProgress, sendFinish, leave }
+  return {
+    connected,
+    room,
+    you,
+    error,
+    serverNow,
+    createRoom,
+    joinRoom,
+    sendProgress,
+    sendFinish,
+    requestRematch,
+    leave,
+  }
 }
 
 export default useRace

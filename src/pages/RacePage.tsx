@@ -16,8 +16,19 @@ const JOIN_MESSAGES: Record<JoinFailure, string> = {
 
 const RacePage = () => {
   const navigate = useNavigate()
-  const { connected, room, you, error, serverNow, createRoom, joinRoom, sendProgress, sendFinish, leave } =
-    useRace()
+  const {
+    connected,
+    room,
+    you,
+    error,
+    serverNow,
+    createRoom,
+    joinRoom,
+    sendProgress,
+    sendFinish,
+    requestRematch,
+    leave,
+  } = useRace()
 
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
@@ -26,6 +37,7 @@ const RacePage = () => {
   const [joinError, setJoinError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
+  const [rematchError, setRematchError] = useState<string | null>(null)
 
   // Driven off the server's start time rather than a local timer, so both
   // screens hit zero together.
@@ -56,10 +68,20 @@ const RacePage = () => {
     setBusy(false)
   }
 
-  const handleRematch = useCallback(() => {
+  // Stays in the room: nobody wants to re-share a code to play again.
+  const handleRematch = useCallback(async () => {
+    if (!room) return
+    setRematchError(null)
+    const failure = await requestRematch(room.code)
+    if (failure === 'opponent-left') setRematchError('Your opponent has left the room.')
+    else if (failure && failure !== 'already-starting') setRematchError('Could not start a rematch.')
+  }, [room, requestRematch])
+
+  const handleLeave = useCallback(() => {
     leave()
     setCode('')
     setJoinError(null)
+    setRematchError(null)
   }, [leave])
 
   const phase = room?.status ?? 'setup'
@@ -176,7 +198,7 @@ const RacePage = () => {
             <Loader2 className="h-4 w-4 animate-spin" />
             Waiting for someone to join…
           </div>
-          <button type="button" className="tt-btn tt-btn-quiet" onClick={handleRematch}>
+          <button type="button" className="tt-btn tt-btn-quiet" onClick={handleLeave}>
             Cancel
           </button>
         </div>
@@ -208,10 +230,8 @@ const RacePage = () => {
           room={room}
           you={you}
           onRematch={handleRematch}
-          onLeave={() => {
-            leave()
-            navigate('/')
-          }}
+          rematchError={rematchError}
+          onLeave={handleLeave}
         />
       )}
     </div>

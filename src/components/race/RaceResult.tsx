@@ -7,6 +7,8 @@ interface RaceResultProps {
   you: string
   onRematch: () => void
   onLeave: () => void
+  /** Set when a rematch cannot start, e.g. the opponent has gone. */
+  rematchError?: string | null
 }
 
 /** Counts up rather than landing on the number, so the result arrives slowly. */
@@ -42,7 +44,7 @@ function useClimb(target: number, active: boolean) {
   return value
 }
 
-export const RaceResult: React.FC<RaceResultProps> = ({ room, you, onRematch, onLeave }) => {
+export const RaceResult: React.FC<RaceResultProps> = ({ room, you, onRematch, onLeave, rematchError }) => {
   const players = Object.values(room.players)
   const me = room.players[you]
   const them = players.find((p) => p.id !== you)
@@ -91,12 +93,14 @@ export const RaceResult: React.FC<RaceResultProps> = ({ room, you, onRematch, on
               : 'You lost this one.'}
       </div>
 
+      {rematchError && <div className="tt-race-error tt-result-error">{rematchError}</div>}
+
       <div className="tt-result-actions">
-        <button type="button" className="tt-btn tt-btn-primary" onClick={onRematch}>
-          New race
+        <button type="button" className="tt-btn tt-btn-primary" onClick={onRematch} disabled={!!theyQuit}>
+          Rematch
         </button>
         <button type="button" className="tt-btn tt-btn-quiet" onClick={onLeave}>
-          Done
+          Leave
         </button>
       </div>
     </div>

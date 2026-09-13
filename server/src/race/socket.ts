@@ -8,6 +8,7 @@ import {
   joinRoom,
   markRacing,
   removePlayer,
+  requestRematch,
   sweepStaleRooms,
   updateProgress,
   type Difficulty,
@@ -139,6 +140,28 @@ export function attachRaceSocket(httpServer: HttpServer): Server {
 
       finishPlayer(room, socket.id, Number(payload?.wpm) || 0, Number(payload?.accuracy) || 0)
       broadcast(room)
+    })
+
+    socket.on('race:rematch', (payload, ack) => {
+      const code = String(payload?.code ?? '')
+      const result = requestRematch(code)
+
+      if (!result.ok) {
+        if (typeof ack === 'function') ack({ ok: false, reason: result.reason })
+        return
+      }
+
+      if (typeof ack === 'function') ack({ ok: true })
+      broadcast(result.room)
+
+      const startsIn = (result.room.startAt ?? Date.now()) - Date.now()
+      setTimeout(() => {
+        const live = getRoom(code)
+        if (live) {
+          markRacing(live)
+          broadcast(live)
+        }
+      }, Math.max(0, startsIn))
     })
 
     socket.on('race:leave', () => {

@@ -350,6 +350,17 @@ const SetupScreen = () => {
           )}
         </div>
 
+        {/* Race mode lives beside the solo flow rather than inside it. */}
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => navigate('/race')}
+            className="text-sm text-muted-foreground transition-colors hover:text-primary"
+          >
+            Or race a friend &rarr;
+          </button>
+        </div>
+
         {/* Advertisement Banner - Always visible for maximum viewability */}
         <div className="pt-6 pb-6" id="ad-section">
           <AdBanner 
