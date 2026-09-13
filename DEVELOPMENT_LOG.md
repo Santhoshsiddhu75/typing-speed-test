@@ -666,6 +666,49 @@ everything looked fine. `vite.config.ts` now excludes `dist`, test artefacts and
 - **`sitemap.xml`** does not list `/start` and still assumes `/` is the test picker.
 - **Logo PNGs are 1.5 MB each** and both load on every page for the hover swap.
 
+## Race UI, built (14 September 2026)
+
+The design was settled on a canvas first
+(https://claude.ai/code/artifact/7ec5b689-cd2b-4a5f-947b-06cf87566263), then
+built. Two structural changes and one that is easy to miss.
+
+**No finish line.** A 60 wpm typist covers 27% of a one-minute passage; 110 wpm
+reaches 50%. The passage is deliberately oversized so nobody runs out of words,
+which means any design with an endpoint is lying. Both players type the same
+text, so the opponent is marked inside the prose: a bar at their position, and
+the words between the two carets underlined in whoever holds that ground.
+
+**Ready up.** `race:join` no longer starts anything. Each player sends
+`race:ready`; `setReady` returns true on the press that completes the pair, and
+only then does `startCountdown` run. A rematch resets to `waiting` with both
+seats unready rather than starting itself.
+
+**Names are keys.** `.tt-namekey` carries the whole name, capped at 8
+characters in three places — `RacePage.tsx`, its `maxLength`, and `cleanName`
+in `server/src/race/socket.ts`, because a client can send anything. A `P1`/`P2`
+legend appears only when both players chose the same name.
+
+### Traps this turned up
+
+- **Rendering 1,500 spans per keystroke starves timers.** The clock stopped
+  ticking on the player who was typing while the other player's ran on
+  normally. The passage renders in memoised 60-character chunks now
+  (`PassageChunk`); a keystroke touches one or two. Measured at one keystroke
+  per frame, roughly four times the fastest human.
+- **A floating label cannot fit in a line box.** The opponent name tag was
+  positioned `top: -34px` and landed on the line above, covering words still to
+  be typed. Leading above the glyphs is about 8px, so no tag height clears it.
+  The marker is a bare bar; the standing pill names who leads.
+- **`#root` is the scroll container, not the document.** Measuring
+  `document.documentElement.scrollHeight` to check whether the phone layout
+  scrolled returned the viewport height every time and made a fixed-position
+  collision look unfixable. Measure `#root`.
+- **The coffee button is fixed at bottom-right** and covered the Join key at
+  390px. `.tt-stage` clears 84px at phone width.
+- **`.typing-char-correct` is `@apply text-secondary`**, a near-white blue on
+  the light theme. Overridden under `.tt-race`. **The solo test still has this
+  bug.**
+
 ## How to run
 
 ```
@@ -677,5 +720,5 @@ Race socket path is `/race-socket` on the API server.
 
 ---
 
-*Last Updated: 13 September 2026*
+*Last Updated: 14 September 2026*
 *Status: Production live. Multiplayer backend on branch `multiplayer-race`, client pending.*
