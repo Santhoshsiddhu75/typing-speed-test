@@ -57,7 +57,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
       {/* Top Navigation Bar */}
       <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 md:p-6">
         <div>
-          <Logo size="small" clickable={false} />
+          <Logo size="small" clickable />
         </div>
         <ThemeOnlyToggle />
       </div>
@@ -92,7 +92,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
           <div className="w-full max-w-md space-y-6">
             {/* TapTest Logo and Name */}
             <div className="flex flex-col items-center space-y-4 mb-8">
-              <Logo size="large" clickable={false} />
+              <Logo size="large" clickable />
             </div>
             <div className="text-center space-y-2">
               <h1 className="text-3xl font-bold text-foreground">{title}</h1>
@@ -146,7 +146,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
           <div className="w-full max-w-sm space-y-6">
             {/* TapTest Logo and Name */}
             <div className="flex flex-col items-center space-y-4 mb-6">
-              <Logo size="medium" clickable={false} />
+              <Logo size="medium" clickable />
             </div>
             {children}
           </div>
