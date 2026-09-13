@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Rows } from '@/components/legal/DocPage'
+import DocHeader from '@/components/legal/DocHeader'
 
 /**
  * Measured, not claimed. These are the figures `npm run check:passages`
@@ -30,19 +31,7 @@ const AboutPage = () => {
 
   return (
     <div className="tt-doc">
-      <div className="tt-doc-bar">
-        <Link to="/" className="tt-doc-brand" aria-label="TapTest home">
-          <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true">
-            <rect x="8" y="14" width="48" height="40" rx="9" fill="var(--primary-deep)" />
-            <rect x="8" y="9" width="48" height="40" rx="9" fill="var(--primary)" />
-            <rect x="17" y="17" width="30" height="23" rx="5" fill="var(--background)" />
-          </svg>
-          <span className="tt-doc-brand-name">TapTest</span>
-        </Link>
-        <Link to="/start" className="tt-doc-back">
-          Back to the test
-        </Link>
-      </div>
+      <DocHeader />
 
       <div className="tt-doc-masthead tt-about-masthead">
         <h1>

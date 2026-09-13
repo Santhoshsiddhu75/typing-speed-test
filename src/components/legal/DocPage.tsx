@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import DocHeader from './DocHeader'
 
 export interface DocSection {
   id: string
@@ -14,22 +14,6 @@ interface DocPageProps {
   meta: string[]
   sections: DocSection[]
 }
-
-const Brand = () => (
-  <div className="tt-doc-bar">
-    <Link to="/" className="tt-doc-brand" aria-label="TapTest home">
-      <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true">
-        <rect x="8" y="14" width="48" height="40" rx="9" fill="var(--primary-deep)" />
-        <rect x="8" y="9" width="48" height="40" rx="9" fill="var(--primary)" />
-        <rect x="17" y="17" width="30" height="23" rx="5" fill="var(--background)" />
-      </svg>
-      <span className="tt-doc-brand-name">TapTest</span>
-    </Link>
-    <Link to="/start" className="tt-doc-back">
-      Back to the test
-    </Link>
-  </div>
-)
 
 /**
  * A legal document, set as one editorial column rather than a stack of cards.
@@ -72,7 +56,7 @@ export const DocPage: React.FC<DocPageProps> = ({ title, standfirst, meta, secti
 
   return (
     <div className="tt-doc">
-      <Brand />
+      <DocHeader />
 
       <div className="tt-doc-masthead">
         <h1>{title}</h1>
