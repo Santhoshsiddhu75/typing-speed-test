@@ -565,6 +565,110 @@ TapTest has evolved from a concept to a **fully operational web application** se
 
 ---
 
-*Last Updated: August 19, 2025*  
-*Status: Production Live - Ready for Users*  
-*Deployment: Railway (Backend) + Vercel (Frontend)*
+# Session Log — 12–13 September 2026
+
+## Shipped to `main`
+
+**Setup screen (`5efe9d6`)** — The three rectangular timer boxes became analog clock
+dials; difficulty became segmented medallions. Dials run one turn in 10s / 15s / 20s
+and keep turning; the green arc closes once on load and stays closed. New components:
+`TimerClock.tsx`, `DifficultyMedallion.tsx`.
+
+**Test text (`38a63e3`)** — Replaced the Mad-Libs template generator, which produced
+grammatical wreckage like *"the bee sit in the car when it gets first"*. Now 120
+hand-written passages, 40 per difficulty, stitched in random order. Difficulty is
+**measured, not asserted**: 3.8 / 5.9 / 8.0 average characters per word, enforced by
+`npm run check:passages`. Word targets raised to 220/400/900 — the old 70/120/300
+silently capped a one-minute result at 70 WPM because input stops at the end of the text.
+
+**Landing page (`5f2c69f`)** — `/` is now a landing page; the timer/difficulty picker
+moved to `/start`. Hero carries a self-playing demo of a real test. Navbar splits into
+two floating capsules on scroll. **20 Playwright navigation calls were updated** from
+`goto('/')` to `goto('/#/start')`.
+
+**Privacy / Terms / About (`1cbb97f`)** — Rebuilt as editorial documents rather than
+card stacks. Went from 940 lines to 456. Set in Alegreya (the serif that was already in
+the tokens, unused). Off-brand colours went from **47 to 0**.
+
+## In progress — branch `multiplayer-race`
+
+Head-to-head racing. Backend is done and verified (`f089040`); the client is not built.
+
+Decisions taken, with the reasoning:
+
+- **Room codes only**, no random matchmaking — a queue is useless without traffic.
+- **Results kept separate** from solo history, so a race needs no account.
+- **No anti-cheat.** Races are between people who swapped a code. WPM stays
+  client-calculated; validating keystrokes would cost more than it protects.
+- **Rooms live in a `Map`, not the database.** A room is worthless once the race ends,
+  and a restart dropping them is the correct outcome.
+- **The socket only opens on `/race`** and closes on leave. An open WebSocket keeps the
+  Railway container awake, and Railway bills by usage — idle connections would quietly
+  burn credit around the clock.
+
+The clever bit: **the server sends a seed, not the text.** `getRandomText(difficulty,
+timer, seed?)` runs a mulberry32 generator when seeded, so both browsers build
+byte-identical text from the library they already have. Four bytes instead of 1,549
+characters. Solo play passes no seed and stays random.
+
+The countdown is broadcast as a **server timestamp, not a duration**, so a client whose
+connection lags by 400ms still starts on the same instant.
+
+## Traps in this codebase — read this before debugging any UI
+
+These each cost real time. They are not obvious from the code.
+
+**1. `#root` is the scroll container, not `window`.**
+`index.css` pins `html, body { position: fixed; overflow: hidden }` and gives `#root`
+`overflow: auto`. So `window.scrollY` is permanently `0`, and scroll events **do not
+bubble** from `#root` to `window`. Any scroll listener or `IntersectionObserver` must
+target `#root`. This silently killed an entire navbar animation — the code was correct
+and simply never ran.
+
+**2. Tailwind opacity modifiers on the colour tokens render fully transparent.**
+`bg-card/80` computes to `rgba(0,0,0,0)`. The tokens are complete `rgb(...)` strings
+rather than bare channels, so Tailwind composes `rgb(rgb(255,255,255) / 0.8)`, which is
+invalid and gets dropped. Borders are unaffected — they just ignore the opacity.
+**Still live** on `Navbar.tsx:85`, `AuthButton`, `AuthLayout`, `AdBanner`. The real fix
+is converting tokens to channel format (`--card: 255 255 255`) and updating
+`tailwind.config.js`, which touches every colour in the app.
+
+**3. Custom CSS appended to `index.css` outranks Tailwind utilities.**
+Same specificity, later in the file, so source order wins. A `.tt-island { padding: 0 }`
+rule silently overrode a `py-1.5` class on the element and collapsed a navbar capsule
+onto its button. Keep bespoke rules off properties Tailwind also sets on the same element.
+
+**4. Do not run `npm run build` while the dev server is up — fixed, but know why.**
+Vite was watching `dist/`, so a build rewrote files the watcher held open and threw
+`EBUSY`, killing the dev server silently. The browser then served stale code while
+everything looked fine. `vite.config.ts` now excludes `dist`, test artefacts and
+`scratch` from the watcher.
+
+## Outstanding
+
+- **Vercel Attack Challenge Mode** — the live site returned `403` with
+  `X-Vercel-Mitigated: challenge` to non-browser clients, including a Googlebot user
+  agent. If still on, the site cannot be crawled. Check the project's Firewall settings.
+- **The `bg-*/80` token bug** above — still live.
+- **Playwright suite is stale.** `setup.spec.ts` expects an `<h1>` reading "Setup Your
+  Test" that has not existed for a long time; 10 tests fail and were already failing
+  before this session. The suite currently provides no safety net.
+- **AdSense is not actually running** — commented out in `index.html` with a placeholder
+  client ID `ca-pub-XXXXXXXXXXXXXXXXX`. The privacy disclosure is deliberately kept,
+  because Google requires it *before* approval.
+- **`sitemap.xml`** does not list `/start` and still assumes `/` is the test picker.
+- **Logo PNGs are 1.5 MB each** and both load on every page for the hover swap.
+
+## How to run
+
+```
+npm run dev:fullstack     # client on 5173 + API and race socket on 3003
+npm run check:passages    # enforces the difficulty word-length bands
+```
+
+Race socket path is `/race-socket` on the API server.
+
+---
+
+*Last Updated: 13 September 2026*
+*Status: Production live. Multiplayer backend on branch `multiplayer-race`, client pending.*
