@@ -12,6 +12,10 @@ export default defineConfig({
     },
   },
   server: {
+    // Listen on the Wi-Fi as well as localhost, so a phone on the same network
+    // can open the dev site at this machine's LAN address. Without it Vite
+    // answers only on localhost and the phone's request goes nowhere.
+    host: true,
     // Build output and test artefacts are not source. Watching them means a
     // `npm run build` while the dev server is up rewrites files the watcher
     // holds open, which on Windows throws EBUSY and kills the server — the

@@ -5,7 +5,13 @@ import Logo from '@/components/Logo'
 import { ThemeOnlyToggle } from '@/components/ThemeOnlyToggle'
 import RaceTrack from '@/components/race/RaceTrack'
 import RaceResult from '@/components/race/RaceResult'
-import useRace, { type Difficulty, type JoinFailure, type TimerOption } from '@/hooks/useRace'
+import useRace, {
+  type Difficulty,
+  type JoinFailure,
+  type Room,
+  type RoomPreview,
+  type TimerOption,
+} from '@/hooks/useRace'
 import { cn } from '@/lib/utils'
 
 const JOIN_MESSAGES: Record<JoinFailure, string> = {
@@ -38,6 +44,7 @@ const RacePage = () => {
     error,
     serverNow,
     createRoom,
+    peekRoom,
     joinRoom,
     sendProgress,
     sendFinish,
@@ -50,26 +57,43 @@ const RacePage = () => {
   const [code, setCode] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [timer, setTimer] = useState<TimerOption>(1)
+  // Set when someone tries to open a room without saying who they are.
+  const [nameMissing, setNameMissing] = useState(false)
+  const nameRef = useRef<HTMLInputElement>(null)
+  // A code that checked out, waiting on the joiner's name.
+  const [invite, setInvite] = useState<RoomPreview | null>(null)
   const [joinError, setJoinError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const [rematchError, setRematchError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-  const wasConnected = useRef<Record<string, boolean>>({})
+  // The last finished race. Kept for whoever is still reading it after the
+  // other player has pressed Rematch, which resets the room underneath them.
+  const [lastResult, setLastResult] = useState<Room | null>(null)
+  const opponentWasConnected = useRef<boolean | null>(null)
+
+  useEffect(() => {
+    if (!room) setLastResult(null)
+    else if (room.status === 'finished') setLastResult(room)
+    else if (room.status === 'countdown') setLastResult(null)
+  }, [room])
 
   // A disconnect is worth telling the other player about, but not worth
   // stopping their race for — the clock keeps running and so do they.
+  //
+  // Tracked as "whoever is not you" rather than by socket id: a player who
+  // reconnects comes back under a new id, and that is a return, not a stranger.
   useEffect(() => {
-    if (!room || !you) return
-
-    const snapshot: Record<string, boolean> = {}
-    for (const player of Object.values(room.players)) {
-      snapshot[player.id] = player.connected
-      const dropped = wasConnected.current[player.id] === true && !player.connected
-      if (player.id !== you && dropped) setToast(`${player.name} disconnected`)
+    if (!room || !you) {
+      opponentWasConnected.current = null
+      return
     }
-    wasConnected.current = snapshot
+    const opponent = Object.values(room.players).find((p) => p.id !== you)
+    const was = opponentWasConnected.current
+    if (opponent && was === true && !opponent.connected) setToast(`${opponent.name} disconnected`)
+    if (opponent && was === false && opponent.connected) setToast(`${opponent.name} is back`)
+    opponentWasConnected.current = opponent ? opponent.connected : null
   }, [room, you])
 
   useEffect(() => {
@@ -93,33 +117,62 @@ const RacePage = () => {
   }, [room?.status, room?.startAt, serverNow])
 
   const handleCreate = async () => {
+    // Both players race under a name they chose. A blank one used to become
+    // "Player", which tells the other side nothing.
+    if (!name.trim()) {
+      setNameMissing(true)
+      nameRef.current?.focus()
+      return
+    }
     setBusy(true)
     setJoinError(null)
     await createRoom(name, difficulty, timer)
     setBusy(false)
   }
 
-  const handleJoin = async () => {
+  // The code is checked before anything else is asked, so a mistyped one fails
+  // at once. Only then is the joiner asked who they are.
+  const handleCheckCode = async () => {
     setBusy(true)
     setJoinError(null)
-    const failure = await joinRoom(code.trim(), name)
-    if (failure) setJoinError(JOIN_MESSAGES[failure])
+    const answer = await peekRoom(code.trim())
     setBusy(false)
+    if (typeof answer === 'string') setJoinError(JOIN_MESSAGES[answer])
+    else setInvite(answer)
   }
 
-  // Stays in the room: nobody wants to re-share a code to play again. It lands
-  // back on the ready gate rather than starting a countdown.
+  const handleJoin = async () => {
+    if (!invite) return
+    setBusy(true)
+    setJoinError(null)
+    const failure = await joinRoom(invite.code, name)
+    setBusy(false)
+    if (failure) setJoinError(JOIN_MESSAGES[failure])
+    else setInvite(null)
+  }
+
+  const handleBackToCode = () => {
+    setInvite(null)
+    setJoinError(null)
+  }
+
+  // Stays in the room: nobody wants to re-share a code to play again. It takes
+  // this player back to the ready gate; the other follows when they press it.
   const handleRematch = useCallback(async () => {
     if (!room) return
     setRematchError(null)
     const failure = await requestRematch(room.code)
     if (failure === 'opponent-left') setRematchError('Your opponent has left the room.')
-    else if (failure && failure !== 'already-starting') setRematchError('Could not start a rematch.')
+    // Pressed twice, or pressed just as the room moved on — nothing to report.
+    else if (failure && failure !== 'already-starting' && failure !== 'not-finished') {
+      setRematchError('Could not start a rematch.')
+    }
   }, [room, requestRematch])
 
   const handleLeave = useCallback(() => {
     leave()
     setCode('')
+    setInvite(null)
     setJoinError(null)
     setRematchError(null)
   }, [leave])
@@ -141,8 +194,21 @@ const RacePage = () => {
   const seated = room ? Object.values(room.players) : []
   const me = you && room ? room.players[you] : undefined
   const them = seated.find((p) => p.id !== you)
-  // Two seats filled but not started: that is the ready gate.
-  const atGate = phase === 'waiting' && seated.length === 2
+
+  // A player stays on the result until they press Rematch themselves, even
+  // once the other player has reset the room and gone back to the lobby.
+  const onResult =
+    phase === 'finished' || (phase === 'waiting' && Boolean(me && !me.inLobby && lastResult))
+  const resultRoom = phase === 'finished' ? room : lastResult
+  // The opponent reset the room for a rematch and then walked away from it.
+  const opponentWalked = phase === 'waiting' && onResult && (!them || !them.connected)
+  // Two seats filled, both back, not started: that is the ready gate.
+  const atGate = phase === 'waiting' && seated.length === 2 && !onResult
+
+  // An error from one result screen must not greet the player on the next.
+  useEffect(() => {
+    if (!onResult) setRematchError(null)
+  }, [onResult])
 
   const sameName = Boolean(
     me && them && me.name.trim().toLowerCase() === them.name.trim().toLowerCase()
@@ -186,10 +252,16 @@ const RacePage = () => {
     <div className={cn('tt-race', phase === 'racing' && 'is-racing')}>
       {atmosphere}
 
-      {toast && (
-        <div className="tt-race-toast" role="status" aria-live="polite">
-          {toast}
+      {room && !connected ? (
+        <div className="tt-race-toast is-sticky" role="status" aria-live="polite">
+          Reconnecting&hellip;
         </div>
+      ) : (
+        toast && (
+          <div className="tt-race-toast" role="status" aria-live="polite">
+            {toast}
+          </div>
+        )
       )}
 
       <header className="tt-race-bar">
@@ -208,9 +280,9 @@ const RacePage = () => {
       </header>
 
       {/* ---------------- setup ---------------- */}
-      {!room && (
+      {!room && !invite && (
         <div className="tt-stage is-mid tt-race-setup">
-          <div className="tt-split">
+          <div className="tt-race-split">
             <div>
               <h1>Race someone.</h1>
 
@@ -235,17 +307,34 @@ const RacePage = () => {
                 <label htmlFor="race-name">Your name</label>
                 <input
                   id="race-name"
-                  className="tt-namefield"
+                  ref={nameRef}
+                  className={cn('tt-namefield', nameMissing && 'is-missing')}
                   value={name}
-                  onChange={(e) => setName(e.target.value.slice(0, NAME_MAX))}
-                  placeholder="Ada"
+                  onChange={(e) => {
+                    setName(e.target.value.slice(0, NAME_MAX))
+                    setNameMissing(false)
+                  }}
+                  placeholder="Ramu"
                   maxLength={NAME_MAX}
+                  autoComplete="off"
+                  aria-invalid={nameMissing}
+                  aria-describedby={nameMissing ? 'race-name-note' : undefined}
                 />
+                {nameMissing && (
+                  <p id="race-name-note" className="tt-field-note">
+                    Add your name to create a room.
+                  </p>
+                )}
               </div>
 
               <div className="tt-set">
                 <label>How long</label>
-                <div className="tt-keyrow">
+                {/* One tray per setting, with a plate that slides to the chosen key. */}
+                <div
+                  className="tt-keyrow"
+                  style={{ '--i': [1, 2, 5].indexOf(timer) } as React.CSSProperties}
+                >
+                  <i className="tt-keyplate" aria-hidden="true" />
                   {([1, 2, 5] as TimerOption[]).map((t) => (
                     <button
                       key={t}
@@ -262,7 +351,11 @@ const RacePage = () => {
 
               <div className="tt-set">
                 <label>How hard</label>
-                <div className="tt-keyrow">
+                <div
+                  className="tt-keyrow"
+                  style={{ '--i': LEVELS.findIndex((level) => level.id === difficulty) } as React.CSSProperties}
+                >
+                  <i className="tt-keyplate" aria-hidden="true" />
                   {LEVELS.map(({ id, Icon }) => (
                     <button
                       key={id}
@@ -300,24 +393,32 @@ const RacePage = () => {
 
                 <div className="tt-fork-side">
                   <p className="tt-fork-lab">A friend sent you six digits</p>
-                  <div className="tt-join">
+                  {/* A form, so Enter in the code field joins like the button does. */}
+                  <form
+                    className="tt-join"
+                    onSubmit={(event) => {
+                      event.preventDefault()
+                      if (connected && !busy && code.length === 6) void handleCheckCode()
+                    }}
+                  >
                     <input
                       className="tt-code-input"
                       value={code}
                       onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="000000"
                       inputMode="numeric"
+                      enterKeyHint="go"
+                      autoComplete="off"
                       aria-label="Room code"
                     />
                     <button
-                      type="button"
+                      type="submit"
                       className="tt-btn tt-btn-quiet"
                       disabled={!connected || busy || code.length < 6}
-                      onClick={handleJoin}
                     >
                       Join
                     </button>
-                  </div>
+                  </form>
                 </div>
               </div>
 
@@ -336,12 +437,9 @@ const RacePage = () => {
                   <p className="typing-text m-0">
                     <span className="typing-char-correct">on delta</span>
                     <span className="typing-char-current">s</span>
-                    <span className="tt-in-gap is-theirs typing-char-upcoming">
-                      {' '}
-                      have always accepted
-                    </span>
-                    <span className="tt-opp-here typing-char-upcoming" data-who="Grace" />
-                    <span className="typing-char-upcoming"> periodic destruction in exchange</span>
+                    <span className="tt-in-gap is-theirs typing-char-upcoming"> have always accepted </span>
+                    <span className="tt-opp-here typing-char-upcoming">p</span>
+                    <span className="typing-char-upcoming">eriodic destruction in exchange</span>
                   </p>
                 </div>
               </div>
@@ -350,9 +448,72 @@ const RacePage = () => {
         </div>
       )}
 
+      {/* ---------------- joining: the code checked out, now who are you ---------------- */}
+      {!room && invite && (
+        <div className="tt-stage is-mid tt-race-setup">
+          <form
+            className="tt-invite"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (connected && !busy && name.trim()) void handleJoin()
+            }}
+          >
+            <div className="tt-step-top">
+              <button type="button" className="tt-step-back" onClick={handleBackToCode}>
+                <ArrowLeft aria-hidden="true" />
+                Back
+              </button>
+            </div>
+
+            <p className="tt-race-eyebrow">
+              Room {invite.code} &middot; {invite.timer} min &middot; {invite.difficulty}
+            </p>
+            <h1 className="mt-3.5">{invite.opponent} is waiting.</h1>
+
+            <div className="tt-invite-keys" aria-hidden="true">
+              <span className="tt-namekey is-them">{invite.opponent}</span>
+              <span className="tt-invite-vs">vs</span>
+              <span className="tt-namekey is-you">{name.trim() || 'You'}</span>
+            </div>
+
+            <div className="tt-set">
+              <label htmlFor="race-join-name">Your name</label>
+              <input
+                id="race-join-name"
+                className="tt-namefield"
+                value={name}
+                onChange={(e) => setName(e.target.value.slice(0, NAME_MAX))}
+                placeholder="Ramu"
+                maxLength={NAME_MAX}
+                autoComplete="off"
+                enterKeyHint="go"
+                autoFocus
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="tt-btn tt-btn-primary tt-invite-go"
+              disabled={!connected || busy || !name.trim()}
+            >
+              Join the race
+            </button>
+
+            {joinError && <div className="tt-race-error">{joinError}</div>}
+          </form>
+        </div>
+      )}
+
       {/* ---------------- waiting for a second player ---------------- */}
-      {room && phase === 'waiting' && !atGate && (
+      {room && phase === 'waiting' && !atGate && !onResult && (
         <div className="tt-stage is-mid tt-race-lobby text-center">
+          {/* The header's Leave does the same, but up there it is easy to miss. */}
+          <div className="tt-step-top">
+            <button type="button" className="tt-step-back" onClick={handleLeave}>
+              <ArrowLeft aria-hidden="true" />
+              Back
+            </button>
+          </div>
           <p className="tt-race-eyebrow">
             Room open &middot; {room.timer} min &middot; {room.difficulty}
           </p>
@@ -416,9 +577,24 @@ const RacePage = () => {
                     </span>
                     {index === 0 && <span className="tt-seat-mine">you</span>}
                   </div>
-                  <span className={cn('tt-state', player.ready ? 'is-ready' : 'is-waiting')}>
-                    {player.ready && <i className="tt-dot" />}
-                    {player.ready ? 'READY' : 'NOT READY'}
+                  <span
+                    className={cn(
+                      'tt-state',
+                      !player.connected || !player.inLobby
+                        ? 'is-away'
+                        : player.ready
+                          ? 'is-ready'
+                          : 'is-waiting'
+                    )}
+                  >
+                    {player.connected && player.inLobby && player.ready && <i className="tt-dot" />}
+                    {!player.connected
+                      ? 'AWAY'
+                      : !player.inLobby
+                        ? 'NOT BACK YET'
+                        : player.ready
+                          ? 'READY'
+                          : 'NOT READY'}
                   </span>
                 </div>
               ) : null
@@ -426,9 +602,13 @@ const RacePage = () => {
           </div>
 
           <p className="tt-race-sub">
-            {me?.ready
-              ? `Waiting for ${them?.name ?? 'them'}. The countdown starts when you are both ready.`
-              : 'The countdown starts when you are both ready.'}
+            {them && !them.connected
+              ? `${them.name} dropped out. Their seat is held for two minutes in case they come back.`
+              : them && !them.inLobby
+                ? `${them.name} is still looking at the results. The countdown starts when you are both ready.`
+                : me?.ready
+                  ? `Waiting for ${them?.name ?? 'them'}. The countdown starts when you are both ready.`
+                  : 'The countdown starts when you are both ready.'}
           </p>
 
           <div className="tt-result-actions">
@@ -438,6 +618,9 @@ const RacePage = () => {
               onClick={() => sendReady(room.code, !me?.ready)}
             >
               {me?.ready ? 'Cancel ready' : 'Ready'}
+            </button>
+            <button type="button" className="tt-btn tt-btn-quiet" onClick={handleLeave}>
+              Leave
             </button>
           </div>
         </div>
@@ -465,12 +648,16 @@ const RacePage = () => {
         />
       )}
 
-      {room && you && phase === 'finished' && (
+      {/* One slot for the result, whether the room is still finished or has
+          been reset by the other player, so it is not torn down and replayed. */}
+      {room && you && onResult && resultRoom && (
         <RaceResult
-          room={room}
+          room={resultRoom}
           you={you}
           onRematch={handleRematch}
-          rematchError={rematchError}
+          rematchError={rematchError ?? (opponentWalked ? 'Your opponent has left the room.' : null)}
+          rematchFrom={phase === 'waiting' && them?.inLobby ? them.name : null}
+          rematchDisabled={opponentWalked}
           onLeave={handleLeave}
         />
       )}

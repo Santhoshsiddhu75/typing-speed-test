@@ -709,6 +709,237 @@ legend appears only when both players chose the same name.
   the light theme. Overridden under `.tt-race`. **The solo test still has this
   bug.**
 
+## Race hardening: a full test pass (14 September 2026)
+
+Asked to test everything before anything reaches production. The pass found
+eleven real bugs; each is fixed and now has a test that fails without the fix.
+
+### How to run it
+
+```
+npm run test:race                            # protocol once, then UI + regression on chromium, webkit, firefox
+npm run test:race -- --project=server        # socket protocol only, no browser
+npm run test:race -- --project=webkit ui     # one engine, one suite
+(cd server && npm test)                      # room state machine, node:test, no sockets
+RACE_SERVER_URL=http://localhost:3055 npm run test:race -- --project=server
+                                             # the same protocol guarantees against a compiled build
+```
+
+`playwright.race.config.ts` is separate from the older `playwright.config.ts`,
+whose suite points at port 5175 and was already failing before this work. It
+runs serially — every test shares one race server, and two browsers racing
+each other are timing-sensitive — and starts both servers if they are down.
+
+### What was broken
+
+1. **A dropped connection stranded the player.** Seats were keyed by socket id,
+   and every reconnect gets a new one. A player whose network blipped came back
+   holding no seat, stopped hearing the race, and never saw a result. Worse, a
+   host alone in the lobby who switched apps to send the code — exactly when a
+   phone suspends the page — lost the whole room, so the friend got "no race
+   with that code". **Fix:** a per-tab seat key, kept server-side in a map and
+   never in the broadcast room state (an opponent could otherwise claim it), and
+   a `race:resume` event. A *dropped* seat is held for `SEAT_GRACE_MS` (two
+   minutes); a seat someone *left* is freed at once. The client resumes on
+   reconnect and after a reload (sessionStorage), shows "Reconnecting…", and the
+   opponent sees "is back".
+2. **No server deadline.** A frozen or throttled tab never reports its finish,
+   and the other player waited on a result forever. **Fix:** `endRace` at
+   `endAt + 1.5s`, guarded by the race's `startAt` so a timer left over from an
+   earlier race cannot end a rematch.
+3. **State machine gaps.** Progress and finish were accepted outside a running
+   race; two `race:finish` messages at the ready gate ended a race that never
+   started; and finish snapped progress to 1, throwing the opponent marker to
+   the end of the passage for whoever was still racing. **Fix:** status guards,
+   and a finish keeps the position actually reached.
+4. **Membership was not enforced.** Anyone with the six digits could reset
+   someone else's finished room with `race:rematch`, or relay progress into a
+   room they were not in. **Fix:** every event that changes a room requires a
+   seat in it.
+5. **One socket could hold seats in two rooms**, and disconnect cleaned up only
+   the first it found. **Fix:** one seat per connection; joining gives up the
+   old seat only once the new one is certain.
+6. **The idle sweep ran from `createdAt`,** so two friends rematching for over
+   an hour had their room deleted mid-race. **Fix:** idleness is measured from
+   the last activity.
+7. **The progress throttle dropped the last keystroke before a pause.** Sends
+   were limited to one per 350ms by discarding, so the opponent saw a position a
+   few characters stale until the player typed again. **Fix:** a trailing send;
+   finishing flushes any send still held back.
+8. **A stale rematch error.** Both players press Rematch together; the second
+   press finds the room already reset and got "Could not start a rematch." — set
+   after that player had left the result screen, so it greeted them on the
+   *next* result. **Fix:** `not-finished` is treated as already handled, and the
+   error clears whenever the phase changes.
+9. **`.tt-split` collided with the Terms page,** which uses the same class for
+   its permitted / not-permitted columns. The race rule re-laid them out at
+   1.08fr / 0.92fr with a 56px gap. **Fix:** renamed to `.tt-race-split`. A
+   script compared every selector in the race block against the rest of
+   index.css; that was the only real collision.
+10. **In Firefox, Join fell off a phone screen.** An input keeps an intrinsic
+   width of about twenty characters, and Gecko will not shrink a flex item below
+   it, so at 390px the code field pushed Join 60px past the edge and the page
+   scrolled sideways. Chromium and WebKit shrink it, which is why this only
+   showed up once the suite ran on all three engines. **Fix:** `min-width: 0`
+   on `.tt-code-input`.
+11. **Getting back in after a dropped connection took twenty seconds.** A
+   socket.io attempt that starts while the signal is gone waits out its full
+   20-second timeout after the signal returns. Measured in Chromium and WebKit,
+   a four-second cut took about 20 seconds to recover from, a third of a
+   one-minute race. It showed up as an intermittent WebKit failure in the
+   reconnect test. **Fix:** an 8-second attempt timeout and at most 2 seconds
+   between attempts, and the same cut recovers in 4 to 5 seconds. When the
+   browser says it is back (`online`, or the page shown again), a disconnected
+   socket retries at once, and a connected one must answer `race:sync` within
+   four seconds or be replaced: a suspended page or a network switch can leave
+   a socket that says it is connected and reaches nothing.
+
+### Traps found while testing
+
+- **socket.io clears `socket.id` on disconnect.** Read it before calling
+  `disconnect()` if a later check needs it.
+- **The solo test's `.typing-text` is not the passage.** It holds a hidden
+  measuring span containing `abcde`, so `textContent` starts with five
+  characters nobody can see. The real characters are `[data-testid="char-N"]`,
+  and a space renders as a non-breaking space.
+- **A page left open leaks into the next test's failure screenshot.** Tests
+  that call `browser.newPage()` must close their contexts, or the artifact for a
+  failure shows some other page entirely.
+- **Accept-then-close is not "server down".** A WebSocket route that accepts and
+  closes never produces `connect_error`; one that is never answered does, after
+  socket.io's 20-second timeout.
+- **StrictMode is on.** The dev console shows "WebSocket is closed before the
+  connection is established" on the race page, from the double mount. It does
+  not appear in the production bundle.
+- **Firefox cannot emulate a phone.** `isMobile` throws there, so the phone
+  tests run in Firefox with the 390px viewport and iPhone user agent but without
+  the flag. WebKit — the engine behind iPhone Safari — gets full emulation.
+- **`SetupScreen` has no heading at all** — not a race regression, it is the
+  same on main, but it is why a readiness check waiting on `h1` never passes
+  there.
+- **Clarity runs on localhost too.** `index.html` loads it unconditionally, so
+  every test browser was sending its session to the real Clarity project (one
+  probe page sent four `collect` batches in eight seconds). It also failed a
+  WebKit reload test: WebKit reports the aborted in-flight request as a page
+  error, "…k.clarity.ms/collect due to access control checks". Both specs now
+  answer `*.clarity.ms` with an empty script in every context.
+- **The solo passage vanishes for a moment after it appears.** It renders as
+  `char-N` spans, a 1.5-second entrance animation (`SplitText`) swaps them out,
+  and then they return. WebKit can show `char-0` before the swap, so a test
+  that reads the passage once can find nothing and type an empty string. The
+  old solo test failed 5 runs in 10 on WebKit that way. Poll until the passage
+  is there.
+
+### What the automated tests cannot cover
+
+- A real phone's soft keyboard (`useTypingField`'s visualViewport handling and
+  hold-focus behaviour). Emulated viewports and user agents do not open one.
+- Real mobile networks and app switching. Tests cut the socket to emulate it.
+- The Railway deployment itself — the race server is still not deployed. The
+  production origins in `ALLOWED_ORIGINS` were checked by reading them.
+
+## Race UI: four fixes after a look on localhost (14 September 2026)
+
+1. **The chosen setting was hard to see.** The selected length and level key
+   only changed its text colour. It is now pressed in: it drops 3px, loses its
+   edge, and takes a tint and a 2px border in its own colour.
+2. **No obvious way back from the lobby.** Leave sat in the header corner and
+   went unnoticed. The lobby now has a Back button above the code; like Leave,
+   it closes the room.
+3. **The opponent marker looked like a second caret.** It was an amber bar
+   beside the letter, next to your own green underline. It is now a small amber
+   arrow in the line gap, pointing down at the letter they are on. The lead
+   band is unchanged.
+4. **A joiner was never asked for a name.** The only name field sits at the
+   top of setup, above the host's settings, and nothing prompted a joiner to
+   fill it, so they raced as "Player". Join now checks the code first with
+   `race:peek`, which takes no seat, so a wrong, full or started code fails at
+   once. Then it shows who is waiting and the room's length and level, and asks
+   for a name before seating them; Join the race stays disabled until there is
+   one. Creating a room still accepts a blank name as "Player".
+
+Tests: `peekRoom` unit tests, `race:peek` protocol tests, and UI tests for the
+pressed keys, the lobby Back, the name step (Back, Enter, disabled while
+blank), the arrow, and the name step at 390px.
+
+## Race UI: one line, and a second round of fixes (15 September 2026)
+
+- **The race text is one line.** The passage used to fill a tall panel. On a
+  phone with the keyboard up only about eight lines stayed visible, and the
+  panel scrolled only once the caret reached its bottom edge, which was under
+  the keyboard. It is now the solo test's line: your caret holds the middle and
+  the text slides under it, and a wider screen simply shows more of it. When
+  the opponent is past either end, their name stands at that edge, pointing the
+  way. The clock, the lead and the line sit together under the header, and that
+  stack is what a phone scrolls to when the keyboard opens.
+- **On phones (640px and narrower) the arrow alone marks the opponent.** The
+  tinted, underlined run of letters between the two of you did not explain
+  itself at that size. Tablets and wider keep it.
+- **Setting keys slide instead of sinking.** One tray per setting, with a white
+  plate that slides to the chosen key and neutral text on it; the level icon is
+  the only colour. This replaces the pressed-in keys from the first round.
+- **Leave on the ready gate**, next to Ready.
+- **A name before a room.** Create a room without one focuses the name field
+  and says "Add your name to create a room." The server still turns a blank
+  name into "Player" for any client that sends one.
+- **Enter in the code field joins.** An iPhone's number pad has no Enter key,
+  so there Join is still the way in.
+
+### Trap
+
+- **`.tt-plate` was already taken.** The sliding key plate first went in under
+  that name, which is also the keyboard texture behind the whole race page. The
+  new rules hid the texture and left the plate nearly invisible. It is
+  `.tt-keyplate` now, and every other new class name was checked against
+  `index.css`.
+
+## Race UI: a centred caret, rematch one at a time, a fuller race screen (15 September 2026)
+
+- **On phones the caret crept left until the current word slid off screen.**
+  The line was positioned as characters × a width measured from a hidden
+  probe. Two older rules shared with the solo test force `.typing-text` to
+  `16px !important`, one under `max-width: 768px` and one under
+  `@supports (-webkit-touch-callout: none)`, and neither reached the probe,
+  which stayed at 18px. Every character was placed a pixel too far along. A
+  phone test measured the caret 176px off centre after 150 characters, while
+  desktop stayed centred, which is why the desktop-only test had passed.
+  **Fix:** the line is placed from where the caret character actually renders,
+  read relative to the line so the slide already applied cancels out. The test
+  now types 150, 600 and 1,000 characters on a desktop and on a phone, and it
+  failed against the old code.
+- **Rematch takes only the player who pressed it.** Each seat carries
+  `inLobby`. The first press resets the room and puts only that player in the
+  lobby. The other stays on their result, kept exactly as it was, with "Ada is
+  ready for a rematch" above the Rematch button; the presser sees them as NOT
+  BACK YET. A player still on the result cannot arm, so nothing starts without
+  them.
+- **The race screen.** Only the clock sits above the line now. The lead and
+  both players' names and speeds moved underneath it, where the screen stood
+  empty, and on a phone the whole block stays above the keyboard.
+
+## Race UI: phone layout, a hardened line, Ramu (15 September 2026)
+
+- **Placeholder names are Ramu.** Most traffic is expected from India.
+- **The caret drift was reported again from a phone, and could not be
+  reproduced.** `scratch/diag/caret-drift.mjs` types a 2-minute race with real
+  keystrokes, both players at once, one making a mistake and backspacing in
+  every other stretch, and measures the caret's distance from the middle of the
+  line every 50 characters. Desktop Chromium, an iPhone in WebKit, a Pixel 7 in
+  Chromium and Firefox at 390px all held at 0px (1px at worst, in Firefox) over
+  600 to 1,000 characters, and no clipped box was ever scrolled sideways. The
+  dev server was confirmed to serve the new code at the LAN address. That
+  leaves a real-device behaviour emulation does not show, or a phone tab still
+  running the code from before the fix. Against the first, the line's boxes
+  now use `overflow: clip`, which is not a scroll container, so a browser
+  cannot scroll them sideways to reveal a text caret; and any sideways scroll
+  is reset before the line is placed, for browsers without `clip`.
+- **On a phone the race sits lower.** It is centred in the top 60% of the
+  screen, the part a keyboard leaves free. Measured with
+  `scratch/diag/phone-layout.mjs`: 93px below the header on a 390x844 phone
+  with 115px to spare above a typical keyboard; 40px and 67px on a 375x667
+  iPhone SE; 115px and 129px on a Pixel 7. The layout test checks both iPhone
+  sizes.
+
 ## How to run
 
 ```
@@ -721,4 +952,5 @@ Race socket path is `/race-socket` on the API server.
 ---
 
 *Last Updated: 14 September 2026*
-*Status: Production live. Multiplayer backend on branch `multiplayer-race`, client pending.*
+*Status: Production live. Multiplayer race built, redesigned and tested on branch
+`multiplayer-race`; not merged, and the race server is not deployed.*

@@ -1588,33 +1588,43 @@ html, body {
    Length and level are the same control, pressed the same way. The level keys
    carry the zap / brain / flame the solo setup screen uses, and the selected
    one takes that level colour, so the page shows one accent at a time. */
-.tt-keyrow { display: flex; gap: 10px; }
-.tt-setkey {
-  flex: 1; height: 56px; border-radius: 12px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 9px;
-  font-family: var(--font-mono); font-size: 14px; font-weight: 500; letter-spacing: 0.03em;
-  color: var(--muted-foreground);
+.tt-keyrow {
+  position: relative; display: flex; gap: 4px; padding: 4px; border-radius: 14px;
+  background: color-mix(in srgb, var(--race-rule) 42%, transparent);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--keycap-shadow) 45%, transparent);
+}
+/* The plate under the chosen key. It slides there rather than the key sinking,
+   and the text on it stays neutral: a filled, coloured key read as too loud.
+   Not .tt-plate: that is the keyboard texture behind the whole page. */
+.tt-keyplate {
+  position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 16px) / 3);
+  border-radius: 10px; pointer-events: none;
   background: linear-gradient(165deg, var(--keycap-a), var(--keycap-b));
   border: 1px solid var(--keycap-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 3px 0 var(--keycap-edge);
-  transition: color 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 2px 0 var(--keycap-edge), 0 8px 16px -10px var(--keycap-shadow);
+  transform: translateX(calc(var(--i, 0) * (100% + 4px)));
+  transition: transform 0.28s cubic-bezier(0.3, 0.8, 0.25, 1);
+}
+.tt-setkey {
+  position: relative; z-index: 1; flex: 1; height: 50px; border-radius: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-family: var(--font-mono); font-size: 14px; font-weight: 500; letter-spacing: 0.03em;
+  color: var(--race-dim); background: transparent; border: 0;
+  transition: color 0.15s ease;
 }
 .tt-setkey svg {
   width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.6;
   stroke-linecap: round; stroke-linejoin: round; opacity: 0.5;
+  transition: opacity 0.15s ease, color 0.15s ease;
 }
-.tt-setkey.is-on svg { opacity: 1; }
-.tt-setkey.is-on {
-  color: var(--primary-deep); border-color: var(--race-you-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 3px 0 var(--race-you-edge);
-}
-.tt-setkey.is-on.is-medium {
-  color: var(--race-them-deep); border-color: var(--race-them-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 3px 0 var(--race-them-edge);
-}
-.tt-setkey.is-on.is-hard {
-  color: var(--race-hard); border-color: var(--race-hard-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 3px 0 var(--race-hard-edge);
+.tt-setkey:hover, .tt-setkey.is-on { color: var(--foreground); }
+.tt-setkey:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+/* The level icon is the only colour left on a chosen key. */
+.tt-setkey.is-on svg { opacity: 1; color: var(--primary-deep); }
+.tt-setkey.is-on.is-medium svg { color: var(--race-them-deep); }
+.tt-setkey.is-on.is-hard svg { color: var(--race-hard); }
+@media (prefers-reduced-motion: reduce) {
+  .tt-keyplate { transition: none; }
 }
 
 .tt-set { margin-top: 26px; }
@@ -1626,6 +1636,10 @@ html, body {
   font-family: inherit; font-size: 17px; color: var(--foreground);
 }
 .tt-namefield:focus { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent); }
+/* Asked for when someone tries to open a room without a name. */
+.tt-namefield.is-missing { border-color: var(--race-hard); }
+.tt-namefield.is-missing:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--race-hard) 18%, transparent); }
+.tt-field-note { margin-top: 8px; font-size: 13px; color: var(--race-hard); }
 
 /* ================= create or join =================
    Two routes into a race, and only one of them is yours to start. */
@@ -1645,7 +1659,10 @@ html, body {
   box-shadow: 0 2px 6px -3px var(--keycap-shadow);
 }
 .tt-join { display: flex; align-items: center; gap: 10px; }
+/* An input keeps an intrinsic width of about twenty characters, and Firefox
+   will not shrink a flex item below it. At 390px that pushed Join off screen. */
 .tt-code-input {
+  min-width: 0;
   width: 146px; height: 48px; padding: 0 0 0 12px; border-radius: 10px;
   border: 2px solid var(--border); background: var(--card); color: var(--foreground);
   font-family: var(--font-mono); font-size: 18px; letter-spacing: 0.32em; text-align: center;
@@ -1678,6 +1695,30 @@ html, body {
   box-shadow: 0 2px 0 var(--keycap-edge), 0 8px 18px -10px var(--keycap-shadow);
 }
 .tt-copy:hover { color: var(--foreground); }
+
+/* A way back that cannot be missed. The header's Leave does the same job, but
+   up in the corner people did not find it. */
+.tt-step-top { width: 100%; max-width: 640px; align-self: center; display: flex; margin-bottom: 22px; }
+.tt-step-back {
+  display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px 0 13px;
+  border-radius: 999px; background: var(--card); border: 1px solid var(--border);
+  font-family: inherit; font-size: 14px; color: var(--foreground); cursor: pointer;
+  box-shadow: 0 2px 0 var(--keycap-edge), 0 8px 18px -12px var(--keycap-shadow);
+  transition: border-color 0.15s ease;
+}
+.tt-step-back svg { width: 16px; height: 16px; }
+.tt-step-back:hover { border-color: var(--primary); }
+
+/* ================= joining =================
+   The code checked out. The joiner sees who is waiting and names themselves. */
+.tt-invite { width: 100%; max-width: 480px; margin: 0 auto; }
+.tt-invite .tt-step-top { max-width: none; }
+.tt-invite-keys { display: flex; align-items: center; gap: 14px; margin-top: 26px; }
+.tt-invite-vs {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; color: var(--race-dim);
+}
+.tt-invite .tt-namefield { width: 100%; }
+.tt-invite-go { width: 100%; margin-top: 22px; }
 .tt-pulse {
   width: 9px; height: 9px; border-radius: 999px; background: var(--race-them);
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--race-them) 18%, transparent);
@@ -1700,10 +1741,20 @@ html, body {
 .tt-state.is-waiting {
   background: color-mix(in srgb, var(--muted-foreground) 10%, transparent); color: var(--race-dim);
 }
+/* A seat whose connection dropped, held for its player to come back. */
+.tt-state.is-away {
+  background: color-mix(in srgb, var(--race-them) 14%, transparent); color: var(--race-them-deep);
+}
 .tt-dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
 
 /* ================= racing ================= */
-.tt-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 24px; }
+/* Both players, under the line and the lead: you on the left, them on the right.
+   Up beside the clock they left the rest of the screen standing empty. */
+.tt-players {
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;
+  margin-top: 18px; padding: 0 6px;
+}
+.tt-players > div { min-width: 0; }
 .tt-side-them { text-align: right; }
 .tt-who { font-size: 22px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tt-rate {
@@ -1738,18 +1789,42 @@ html, body {
   background: color-mix(in srgb, var(--muted-foreground) 10%, transparent); color: var(--race-dim);
 }
 
+/* ================= the line =================
+   One line of the passage, as on the solo test: your caret holds the middle
+   and the text slides under it. A tall panel of text let the caret run down
+   under a phone's keyboard. A wider screen simply shows more of the line. */
+.tt-race-stage { justify-content: center; padding-bottom: 10vh; }
+/* Clipped with overflow: clip, not hidden alone. A box with overflow: hidden is
+   still a scroll container, and a phone browser can scroll it sideways on its
+   own (to keep a text caret in view, say), dragging the line off centre with no
+   transform changing. clip is not a scroll container, so that cannot happen;
+   hidden stays as the fallback for browsers without clip. */
 .tt-race-text {
-  flex: 1; min-height: 0; margin-top: 22px; padding: 30px 36px;
-  overflow-y: auto; position: relative;
+  --lane-font: 26px; position: relative; flex: none; margin-top: 26px; padding: 0 28px;
+  overflow: hidden; overflow: clip;
 }
+.tt-lane-window { position: relative; height: 128px; overflow: hidden; overflow: clip; }
+.tt-lane-window::before, .tt-lane-window::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 36px; z-index: 1; pointer-events: none;
+}
+.tt-lane-window::before { left: 0; background: linear-gradient(90deg, var(--card), transparent); }
+.tt-lane-window::after { right: 0; background: linear-gradient(270deg, var(--card), transparent); }
 .tt-capture-race {
   position: absolute; inset: 0; width: 100%; height: 100%;
   opacity: 0; border: none; background: transparent;
-  color: transparent; caret-color: transparent; cursor: text; z-index: 2; padding: 0; margin: 0;
+  color: transparent; caret-color: transparent; cursor: text; z-index: 3; padding: 0; margin: 0;
 }
 .tt-capture-race:focus { outline: none; }
+.tt-race-text .typing-text, .tt-lane-probe {
+  font-family: var(--font-mono); font-size: var(--lane-font); letter-spacing: -0.01em; white-space: pre;
+}
 .tt-race-text .typing-text {
-  font-family: var(--font-mono); font-size: 19px; line-height: 2.2; letter-spacing: -0.01em;
+  position: absolute; left: 12px; top: calc(50% - 0.5em); margin: 0; width: max-content; line-height: 1;
+  transition: transform 0.15s ease-out;
+}
+.tt-lane-probe { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  .tt-race-text .typing-text { transition: none; }
 }
 /* Legibility: the shared rule paints already-typed characters --secondary,
    which on the light theme is a near-white blue. */
@@ -1773,21 +1848,33 @@ html, body {
 .tt-in-gap.is-theirs { background: var(--race-band-them); text-decoration-color: var(--race-band-them-line); }
 .tt-in-gap.is-yours { background: var(--race-band-you); text-decoration-color: var(--race-band-you-line); }
 
-/* Where the opponent has reached. A bar, and only a bar: a name tag floated
-   into the line above and covered words still to be typed, and the standing
-   pill already says who is ahead and by how much. */
+/* Where the opponent has reached: a small arrow over the letter they are on.
+   Not a second caret. Yours underlines the letter, and a bar that differed
+   from it only in colour read as another cursor. No name tag either: one
+   floated into the line above covered words still to be typed. */
 .tt-opp-here { position: relative; }
 .tt-opp-here::before {
-  content: ''; position: absolute; left: -1.5px; top: -6px; bottom: -4px; width: 3px;
-  border-radius: 3px; background: var(--race-them); z-index: 2;
+  content: ''; position: absolute; left: 50%; top: -8px; z-index: 2;
+  width: 12px; height: 9px; transform: translateX(-50%);
+  background: var(--race-them); clip-path: polygon(0 0, 100% 0, 50% 100%);
+  pointer-events: none;
 }
-/* When they are so far ahead their marker has scrolled out of the panel. */
-.tt-offscreen {
-  position: absolute; right: 26px; bottom: 22px; display: inline-flex; align-items: center;
-  gap: 9px; height: 34px; padding: 0 15px; border-radius: 999px;
-  background: var(--race-them-deep); color: var(--card);
-  font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
-  box-shadow: 0 10px 24px -10px var(--keycap-shadow);
+/* The opponent is past the end of the line: their name, pointing their way. */
+.tt-edge {
+  position: absolute; top: 50%; z-index: 2; transform: translateY(-50%);
+  display: inline-flex; align-items: center; height: 28px; padding: 0 11px; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--race-band-them-line); color: var(--race-them-deep);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  pointer-events: none;
+}
+/* A soft card-coloured glow on the inner side, so the line fades into the tag
+   instead of being cut off mid-letter. */
+.tt-edge.is-right { right: 4px; box-shadow: -18px 0 14px 2px var(--card); }
+.tt-edge.is-left { left: 4px; box-shadow: 18px 0 14px 2px var(--card); }
+/* On a phone the arrow alone marks the opponent. A tinted, underlined run of
+   letters at that size did not explain itself. Tablets and up keep it. */
+@media (max-width: 640px) {
+  .tt-race-text .tt-in-gap { background: none; text-decoration: none; }
 }
 
 /* ================= countdown ================= */
@@ -1827,6 +1914,22 @@ html, body {
 .tt-verdict.is-in { opacity: 1; transform: translateY(0); }
 .tt-margin { font-size: 15px; color: var(--muted-foreground); margin-top: 10px; }
 .tt-result-actions { display: flex; gap: 14px; justify-content: center; margin-top: 28px; flex-wrap: wrap; }
+/* The other player has pressed Rematch and gone back to the lobby. */
+.tt-rematch-note { display: flex; justify-content: center; margin-top: 26px; }
+.tt-rematch-note span {
+  display: inline-flex; align-items: center; gap: 12px; min-height: 40px; padding: 8px 18px;
+  border-radius: 999px; font-size: 15px; color: var(--race-them-deep);
+  background: color-mix(in srgb, var(--race-them) 14%, transparent);
+  animation: tt-note-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tt-rematch-note + .tt-result-actions { margin-top: 16px; }
+@keyframes tt-note-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tt-rematch-note span { animation: none; }
+}
 /* An abandoned seat. Their score still stands; it just stopped moving. */
 .tt-gone { opacity: 0.55; }
 .tt-gone-tag {
@@ -1837,7 +1940,7 @@ html, body {
 /* ================= setup layout =================
    You type on the left and your key mints on the right. A centred stack gave
    five blocks of identical weight and no hierarchy. */
-.tt-split { display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 56px; align-items: center; }
+.tt-race-split { display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 56px; align-items: center; }
 .tt-showcase { position: relative; }
 .tt-ghost {
   position: absolute; left: 30px; right: -14px; top: 20px; bottom: -20px;
@@ -1849,7 +1952,6 @@ html, body {
 .tt-stage-card .tt-namekey.is-big { width: 100%; min-width: 0; height: 118px; font-size: 40px; }
 .tt-hr { height: 1px; background: var(--border); margin: 26px 0 22px; }
 .tt-mini .typing-text { font-family: var(--font-mono); font-size: 14px; line-height: 3.2; }
-.tt-mini .tt-opp-here::after { top: -35px; font-size: 9.5px; height: 19px; padding: 0 7px; }
 .tt-mykey { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
 .tt-mykey > span:first-child { font-size: 13px; color: var(--muted-foreground); }
 
@@ -1870,7 +1972,7 @@ html, body {
   .tt-race-sub { font-size: 14.5px; margin-top: 10px; }
   .tt-race-back { font-size: 13px; }
 
-  .tt-split { display: block; }
+  .tt-race-split { display: block; }
   .tt-showcase { display: none; }
   .tt-ticks { flex-direction: column; gap: 9px; margin-top: 15px; }
   .tt-tick { font-size: 14.5px; }
@@ -1879,7 +1981,7 @@ html, body {
 
   .tt-set { margin-top: 20px; }
   .tt-namefield { width: 100%; height: 52px; }
-  .tt-setkey { height: 54px; font-size: 13px; gap: 7px; }
+  .tt-setkey { height: 50px; font-size: 13px; gap: 7px; }
   .tt-setkey svg { width: 17px; height: 17px; }
 
   .tt-fork { display: block; min-height: 0; margin-top: 24px; }
@@ -1894,15 +1996,26 @@ html, body {
   .tt-seat { height: 76px; }
   .tt-namekey { height: 48px; min-width: 104px; padding: 0 16px; font-size: 15px; }
 
-  .tt-head { gap: 10px; }
+  .tt-players { margin-top: 12px; padding: 0 2px; }
   .tt-who { font-size: 16px; }
   .tt-rate { font-size: 13px; margin-top: 3px; }
   .tt-race-clock { font-size: 34px; }
   .tt-race-clock small { font-size: 9px; margin-top: 5px; }
   .tt-standing { margin-top: 14px; }
   .tt-standing span { height: 29px; padding: 0 13px; font-size: 10.5px; }
-  .tt-race-text { margin-top: 16px; padding: 18px; }
-  .tt-race-text .typing-text { font-size: 15px; line-height: 2.35; }
+  /* Down from the header, as on a desktop, but centred in the part of the
+     screen a phone keyboard leaves free (roughly the top 60%), so the clock,
+     the line, the lead and both players all stay above it. 320px is the
+     header plus that block. */
+  .tt-race-stage {
+    justify-content: flex-start;
+    padding-top: max(8px, calc((60vh - 320px) / 2));
+    padding-top: max(8px, calc((60dvh - 320px) / 2));
+  }
+  .tt-race-text { --lane-font: 18px; margin-top: 16px; padding: 0 14px; }
+  .tt-lane-window { height: 84px; }
+  .tt-lane-window::before, .tt-lane-window::after { width: 22px; }
+  .tt-edge { height: 24px; padding: 0 9px; font-size: 10px; }
 
   /* Name and score share a row, in one grid so both keys land in the same
      column and come out equal width whatever the two names are. */
@@ -1973,4 +2086,11 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+}
+
+/* Reconnecting stays up for as long as it is true, rather than fading out. */
+.tt-race-toast.is-sticky {
+  animation: none;
+  opacity: 1;
+  transform: translate(-50%, 0);
 }

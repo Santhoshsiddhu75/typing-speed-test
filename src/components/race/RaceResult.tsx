@@ -9,6 +9,10 @@ interface RaceResultProps {
   onLeave: () => void
   /** Set when a rematch cannot start, e.g. the opponent has gone. */
   rematchError?: string | null
+  /** The opponent's name once they have pressed Rematch and gone back to the lobby. */
+  rematchFrom?: string | null
+  /** No rematch to be had: the opponent walked away after the race. */
+  rematchDisabled?: boolean
 }
 
 /** Counts up rather than landing on the number, so the result arrives slowly. */
@@ -44,7 +48,15 @@ function useClimb(target: number, active: boolean) {
   return value
 }
 
-export const RaceResult: React.FC<RaceResultProps> = ({ room, you, onRematch, onLeave, rematchError }) => {
+export const RaceResult: React.FC<RaceResultProps> = ({
+  room,
+  you,
+  onRematch,
+  onLeave,
+  rematchError,
+  rematchFrom,
+  rematchDisabled,
+}) => {
   const players = Object.values(room.players)
   const me = room.players[you]
   const them = players.find((p) => p.id !== you)
@@ -117,8 +129,23 @@ export const RaceResult: React.FC<RaceResultProps> = ({ room, you, onRematch, on
 
       {rematchError && <div className="tt-race-error tt-result-error">{rematchError}</div>}
 
+      {/* The other player has already gone back for another race. */}
+      {rematchFrom && !rematchError && (
+        <div className="tt-rematch-note" role="status">
+          <span>
+            <i className="tt-pulse" />
+            {rematchFrom} is ready for a rematch
+          </span>
+        </div>
+      )}
+
       <div className="tt-result-actions">
-        <button type="button" className="tt-btn tt-btn-primary" onClick={onRematch} disabled={!!theyQuit}>
+        <button
+          type="button"
+          className="tt-btn tt-btn-primary"
+          onClick={onRematch}
+          disabled={Boolean(theyQuit) || Boolean(rematchDisabled)}
+        >
           Rematch
         </button>
         <button type="button" className="tt-btn tt-btn-quiet" onClick={onLeave}>

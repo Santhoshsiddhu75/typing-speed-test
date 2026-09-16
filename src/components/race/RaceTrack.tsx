@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { getRandomText } from '@/data/texts'
 import { cn } from '@/lib/utils'
 import { useTypingField } from '@/hooks/useTypingField'
@@ -102,18 +102,32 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
     return out
   }, [text])
 
-  const trackRef = useRef<HTMLDivElement>(null)
+  const blockRef = useRef<HTMLDivElement>(null)
+  const windowRef = useRef<HTMLDivElement>(null)
+  const lineRef = useRef<HTMLParagraphElement>(null)
+  const shift = useRef(0)
   const lastSent = useRef(0)
+  // A progress send held back by the throttle, and what it should carry.
+  const pendingSend = useRef<number | null>(null)
+  const latestSent = useRef({ length: 0, wpm: 0, accuracy: 100 })
   const finished = useRef(false)
+  // What this player finished on, and which seat id already reported it.
+  const finalRef = useRef<{ wpm: number; accuracy: number } | null>(null)
+  const reportedAs = useRef<string | null>(null)
 
   const [typed, setTyped] = useState('')
   const [secondsLeft, setSecondsLeft] = useState(room.timer * 60)
-  const [markerOffScreen, setMarkerOffScreen] = useState(false)
+  // Which end of the line the opponent has run past, if either.
+  const [edge, setEdge] = useState<'left' | 'right' | null>(null)
+  // Bumped when the screen or the font changes, so the line is placed again.
+  const [layoutPass, setLayoutPass] = useState(0)
 
-  // holdFocus is on here but not on the landing demo: mid-race a stray tap
-  // that dismisses the keyboard would cost you the run while the clock runs on.
+  // The clock, the line, the lead and both names sit together under the
+  // header, so on a phone that block is what gets scrolled to the top once the
+  // keyboard opens. holdFocus is on here but not on the landing demo: mid-race
+  // a stray tap that dismisses the keyboard would cost you the run.
   const { inputRef, isMobile, focusField, blurField, scrollFieldIntoView, focusHandlers } =
-    useTypingField({ scrollTargetRef: trackRef, enabled: true, holdFocus: true })
+    useTypingField({ scrollTargetRef: blockRef, enabled: true, holdFocus: true })
 
   const opponent = Object.values(room.players).find((p) => p.id !== you)
 
@@ -129,12 +143,43 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
 
   const me = room.players[you]
 
+  // ---- where each of you is, and what sits between ----
+  const mine = typed.length
+  const theirs = opponent ? Math.round(opponent.progress * text.length) : 0
+  const theyAreHere = Boolean(opponent && opponent.connected && theirs !== mine)
+  const lo = Math.min(mine, theirs)
+  const hi = Math.max(mine, theirs)
+  const gapWords = theyAreHere ? wordsBetween(text, lo, hi) : 0
+  const iLead = mine > theirs
+  const gone = Boolean(opponent && !opponent.connected && !opponent.finished)
+  const theirName = (opponent?.name ?? 'Them').toUpperCase()
+
   const finish = useCallback(() => {
     if (finished.current) return
     finished.current = true
+    finalRef.current = { wpm, accuracy }
+    reportedAs.current = you
+    // Land the final position before the final numbers.
+    if (pendingSend.current !== null) {
+      window.clearTimeout(pendingSend.current)
+      pendingSend.current = null
+      const latest = latestSent.current
+      onProgress(Math.min(1, latest.length / text.length), latest.wpm, latest.accuracy)
+    }
     if (isMobile) blurField()
     onFinish(wpm, accuracy)
-  }, [onFinish, wpm, accuracy, isMobile, blurField])
+  }, [onFinish, onProgress, text, wpm, accuracy, isMobile, blurField, you])
+
+  // A finish sent while the connection was down went out under the old socket
+  // and was ignored. Once the seat is reclaimed under a new id, report it again.
+  useEffect(() => {
+    const final = finalRef.current
+    if (!final || reportedAs.current === you) return
+    const seat = room.players[you]
+    if (room.status !== 'racing' || !seat || seat.finished) return
+    reportedAs.current = you
+    onFinish(final.wpm, final.accuracy)
+  }, [you, room, onFinish])
 
   // The race ends on the server's clock, not on however long this tab has
   // been open, so both players stop at the same instant.
@@ -157,138 +202,187 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
     scrollFieldIntoView()
   }, [focusField, scrollFieldIntoView])
 
+  useEffect(() => {
+    let live = true
+    const again = () => {
+      if (live) setLayoutPass((n) => n + 1)
+    }
+    document.fonts?.ready.then(again)
+    window.addEventListener('resize', again)
+    return () => {
+      live = false
+      window.removeEventListener('resize', again)
+    }
+  }, [])
+
+  // The line is placed from where the caret character actually is on the page,
+  // not from characters × a measured width. On phones the passage font is
+  // forced to 16px by !important rules shared with the solo test, so a width
+  // measured anywhere else came out about a pixel too wide per character, and
+  // the caret crept left until the word being typed slid off the screen.
+  // Positions are taken relative to the line itself, so the slide already
+  // applied, or halfway through its transition, cancels out.
+  useLayoutEffect(() => {
+    const line = lineRef.current
+    const view = windowRef.current
+    if (!line || !view) return
+
+    // Where overflow: clip is unsupported the clipped boxes can still be
+    // scrolled sideways by the browser; undo that before placing the line.
+    view.scrollLeft = 0
+    if (view.parentElement) view.parentElement.scrollLeft = 0
+
+    const lineLeft = line.getBoundingClientRect().left
+    const width = view.clientWidth
+    const inset = line.offsetLeft
+    const place = (el: Element | null) => {
+      if (!el) return null
+      const box = el.getBoundingClientRect()
+      return { left: box.left - lineLeft, width: box.width }
+    }
+
+    // Your caret holds the middle. Until it gets there the text starts at the
+    // left, as on the solo test. Past the last character it stays put.
+    const caret = place(line.querySelector('.typing-char-current'))
+    if (caret) shift.current = Math.min(0, width / 2 - inset - (caret.left + caret.width / 2))
+    line.style.transform = `translateX(${shift.current}px)`
+
+    // Their arrow can sit past either end of the line. Then their name stands
+    // at that edge, pointing the way.
+    const marker = theyAreHere ? place(line.querySelector('.tt-opp-here')) : null
+    const at = marker ? inset + marker.left + shift.current : 0
+    setEdge(!marker ? null : at + marker.width > width ? 'right' : at < 0 ? 'left' : null)
+  }, [mine, theirs, theyAreHere, text, layoutPass])
+
+  // Progress goes out at most every PROGRESS_EVERY_MS, but a keystroke that
+  // lands inside that window is sent when the window closes rather than
+  // dropped. Otherwise a player who pauses leaves the opponent looking at a
+  // position a few characters out of date until they type again.
+  const sendProgressNow = () => {
+    if (pendingSend.current !== null) {
+      window.clearTimeout(pendingSend.current)
+      pendingSend.current = null
+    }
+    lastSent.current = Date.now()
+    const latest = latestSent.current
+    onProgress(Math.min(1, latest.length / text.length), latest.wpm, latest.accuracy)
+  }
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (finished.current) return
 
     const value = event.target.value.slice(0, text.length)
     setTyped(value)
+    latestSent.current = { length: value.length, wpm, accuracy }
 
-    const now = Date.now()
-    if (now - lastSent.current > PROGRESS_EVERY_MS) {
-      lastSent.current = now
-      onProgress(Math.min(1, value.length / text.length), wpm, accuracy)
+    const since = Date.now() - lastSent.current
+    if (since > PROGRESS_EVERY_MS) sendProgressNow()
+    else if (pendingSend.current === null) {
+      pendingSend.current = window.setTimeout(sendProgressNow, PROGRESS_EVERY_MS - since)
     }
 
     if (value.length >= text.length) finish()
   }
 
-  // Keep the caret roughly in view as the text scrolls past.
-  useEffect(() => {
-    const el = trackRef.current?.querySelector('.typing-char-current')
-    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-  }, [typed.length])
-
-  // ---- where each of you is, and what sits between ----
-  const mine = typed.length
-  const theirs = opponent ? Math.round(opponent.progress * text.length) : 0
-  const theyAreHere = Boolean(opponent && opponent.connected && theirs !== mine)
-  const lo = Math.min(mine, theirs)
-  const hi = Math.max(mine, theirs)
-  const gapWords = theyAreHere ? wordsBetween(text, lo, hi) : 0
-  const iLead = mine > theirs
-  const gone = Boolean(opponent && !opponent.connected && !opponent.finished)
-
-  // Their marker can scroll out of the panel entirely when the gap is large.
-  useEffect(() => {
-    const panel = trackRef.current
-    const marker = panel?.querySelector('.tt-opp-here')
-    if (!panel || !marker) {
-      setMarkerOffScreen(false)
-      return
-    }
-    const panelBox = panel.getBoundingClientRect()
-    const markerBox = marker.getBoundingClientRect()
-    setMarkerOffScreen(markerBox.top > panelBox.bottom || markerBox.bottom < panelBox.top)
-  }, [mine, theirs, text])
+  useEffect(
+    () => () => {
+      if (pendingSend.current !== null) window.clearTimeout(pendingSend.current)
+    },
+    []
+  )
 
   return (
-    <div className="tt-stage">
-      <div className="tt-head">
-        <div className="tt-side-you">
-          <div className="tt-who">{me?.name ?? 'You'}</div>
-          <div className="tt-rate">
-            {wpm}
-            <em>WPM</em>
-          </div>
-        </div>
-
+    <div className="tt-stage tt-race-stage">
+      {/* The clock above the line; the lead and both players under it, where
+          the screen used to stand empty. */}
+      <div ref={blockRef}>
         <div className="tt-race-clock">
           {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
           <small>Remaining</small>
         </div>
 
-        <div className={cn('tt-side-them', gone && 'tt-gone')}>
-          <div className="tt-who">
-            {opponent?.name ?? 'Opponent'}
-            {gone && <em className="tt-gone-tag">left</em>}
-          </div>
-          <div className="tt-rate">
-            {opponent?.wpm ?? 0}
-            <em>WPM</em>
+        <div className="tt-panel tt-race-text cursor-text" onClick={focusField}>
+          <input
+            ref={inputRef}
+            type="text"
+            value={typed}
+            onChange={handleChange}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            aria-label="Type the text shown"
+            className="tt-capture-race"
+            onFocus={() => {
+              focusHandlers.onFocus()
+              scrollFieldIntoView()
+            }}
+            onBlur={focusHandlers.onBlur}
+          />
+          <div ref={windowRef} className="tt-lane-window">
+            <p ref={lineRef} className="typing-text">
+              {chunks.map((slice, index) => {
+                const start = index * CHUNK
+                const end = start + slice.length
+                return (
+                  <PassageChunk
+                    key={index}
+                    text={slice}
+                    typedHere={typed.slice(start, end)}
+                    caretAt={mine >= start && mine < end ? mine - start : -1}
+                    gapFrom={theyAreHere && hi > start && lo < end ? Math.max(0, lo - start) : -1}
+                    gapTo={theyAreHere && hi > start && lo < end ? Math.min(slice.length, hi - start) : -1}
+                    gapMine={iLead}
+                    oppAt={theyAreHere && theirs >= start && theirs < end ? theirs - start : -1}
+                  />
+                )
+              })}
+            </p>
+
+            {edge && (
+              <span className={cn('tt-edge', `is-${edge}`)}>
+                {edge === 'left' ? `‹ ${theirName}` : `${theirName} ›`}
+              </span>
+            )}
           </div>
         </div>
-      </div>
 
-      <div className="tt-standing">
-        {gapWords > 0 ? (
-          <span className={iLead ? 'is-ahead' : 'is-behind'}>
-            <i className="tt-dot" />
-            {iLead
-              ? `You are ${gapWords} ${gapWords === 1 ? 'word' : 'words'} ahead`
-              : `${opponent?.name ?? 'They'} is ${gapWords} ${gapWords === 1 ? 'word' : 'words'} ahead`}
-          </span>
-        ) : (
-          <span className="is-level">
-            <i className="tt-dot" />
-            Neck and neck
-          </span>
-        )}
-      </div>
+        <div className="tt-standing">
+          {gapWords > 0 ? (
+            <span className={iLead ? 'is-ahead' : 'is-behind'}>
+              <i className="tt-dot" />
+              {iLead
+                ? `You are ${gapWords} ${gapWords === 1 ? 'word' : 'words'} ahead`
+                : `${opponent?.name ?? 'They'} is ${gapWords} ${gapWords === 1 ? 'word' : 'words'} ahead`}
+            </span>
+          ) : (
+            <span className="is-level">
+              <i className="tt-dot" />
+              Neck and neck
+            </span>
+          )}
+        </div>
 
-      <div
-        ref={trackRef}
-        className="tt-panel tt-race-text cursor-text"
-        onClick={focusField}
-      >
-        <input
-          ref={inputRef}
-          type="text"
-          value={typed}
-          onChange={handleChange}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          aria-label="Type the text shown"
-          className="tt-capture-race"
-          onFocus={() => {
-            focusHandlers.onFocus()
-            scrollFieldIntoView()
-          }}
-          onBlur={focusHandlers.onBlur}
-        />
-        <p className="typing-text m-0">
-          {chunks.map((slice, index) => {
-            const start = index * CHUNK
-            const end = start + slice.length
-            return (
-              <PassageChunk
-                key={index}
-                text={slice}
-                typedHere={typed.slice(start, end)}
-                caretAt={mine >= start && mine < end ? mine - start : -1}
-                gapFrom={theyAreHere && hi > start && lo < end ? Math.max(0, lo - start) : -1}
-                gapTo={theyAreHere && hi > start && lo < end ? Math.min(slice.length, hi - start) : -1}
-                gapMine={iLead}
-                oppAt={theyAreHere && theirs >= start && theirs < end ? theirs - start : -1}
-              />
-            )
-          })}
-        </p>
+        <div className="tt-players">
+          <div className="tt-side-you">
+            <div className="tt-who">{me?.name ?? 'You'}</div>
+            <div className="tt-rate">
+              {wpm}
+              <em>WPM</em>
+            </div>
+          </div>
 
-        {markerOffScreen && !iLead && (
-          <div className="tt-offscreen">{(opponent?.name ?? 'They').toUpperCase()} &darr;</div>
-        )}
+          <div className={cn('tt-side-them', gone && 'tt-gone')}>
+            <div className="tt-who">
+              {opponent?.name ?? 'Opponent'}
+              {gone && <em className="tt-gone-tag">left</em>}
+            </div>
+            <div className="tt-rate">
+              {opponent?.wpm ?? 0}
+              <em>WPM</em>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
