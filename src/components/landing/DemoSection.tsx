@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import FloatingKeys, { DEMO_KEYS } from '@/components/landing/FloatingKeys'
 
 /** Real text from the passage library — the opening of the libraries passage. */
 const DEMO_TEXT =
@@ -136,6 +137,7 @@ export const DemoSection = forwardRef<DemoHandle>((_props, ref) => {
   return (
     <section ref={sectionRef} className="tt-try relative overflow-hidden py-14 sm:py-[68px]">
       <div className="tt-try-glow" aria-hidden="true" />
+      <FloatingKeys keys={DEMO_KEYS} />
 
       <div className="relative z-10 mx-auto max-w-[880px] px-5 text-center sm:px-10">
         <p className="tt-kicker mb-3">How it works</p>

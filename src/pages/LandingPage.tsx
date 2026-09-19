@@ -1,10 +1,11 @@
 import { useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Users } from 'lucide-react'
 import LandingNav from '@/components/landing/LandingNav'
 import FloatingKeys from '@/components/landing/FloatingKeys'
 import HeroDemo from '@/components/landing/HeroDemo'
 import DemoSection, { DemoHandle } from '@/components/landing/DemoSection'
+import RaceSection from '@/components/landing/RaceSection'
 import Footer from '@/components/Footer'
 
 const LandingPage = () => {
@@ -27,7 +28,14 @@ const LandingPage = () => {
     <div className="tt-landing min-h-screen">
       <LandingNav onSeeDemo={scrollToDemo} />
 
-      <section className="relative overflow-hidden pt-[92px] sm:pt-[122px]">
+      {/* One ground under every section above the footer, so the washes and
+          the keycaps carry on down the page instead of stopping at the
+          hero's edge. It clips what spills off the sides. */}
+      <div className="tt-ground">
+        <div className="tt-wash-mid" aria-hidden="true" />
+        <div className="tt-wash-low" aria-hidden="true" />
+
+      <section className="relative pt-[92px] sm:pt-[122px]">
         <div className="tt-wash" aria-hidden="true" />
         <div className="tt-wash-2" aria-hidden="true" />
         <FloatingKeys />
@@ -53,18 +61,21 @@ const LandingPage = () => {
                 Start a 1-minute test
                 <ArrowRight className="h-4 w-4" />
               </button>
-              <button type="button" onClick={scrollToDemo} className="tt-btn tt-btn-quiet">
-                Watch a full test
+              {/* The race gets a real button rather than a footnote: a grey line
+                  under the main button was easy to read straight past. */}
+              <button type="button" onClick={() => navigate('/race')} className="tt-btn tt-btn-quiet">
+                <Users className="h-[17px] w-[17px]" aria-hidden="true" />
+                Race a friend
               </button>
             </div>
 
             <p className="mt-3 text-center text-[13px] sm:text-left">
               <button
                 type="button"
-                onClick={() => navigate('/race')}
+                onClick={scrollToDemo}
                 className="text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
               >
-                Or race a friend head to head &rarr;
+                Or watch a full test first &rarr;
               </button>
             </p>
 
@@ -87,7 +98,10 @@ const LandingPage = () => {
         <div className="h-12 sm:h-[72px]" />
       </section>
 
+      <RaceSection />
+
       <DemoSection ref={demoRef} />
+      </div>
 
       <Footer />
     </div>

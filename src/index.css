@@ -968,6 +968,25 @@ html, body {
   .tt-wash-2 { right: -220px; bottom: -300px; width: 560px; height: 560px; }
 }
 
+/* The ground under the whole page above the footer. The hero keeps its own
+   two washes; these two carry the glow on past it, one left in the middle
+   and one right at the bottom, so no section sits on a flat ground. */
+.tt-ground { position: relative; overflow: hidden; }
+.tt-wash-mid,
+.tt-wash-low { position: absolute; border-radius: 50%; pointer-events: none; }
+.tt-wash-mid {
+  left: -340px; top: 38%; width: 920px; height: 920px;
+  background: radial-gradient(closest-side, var(--landing-wash-2), transparent 72%);
+}
+.tt-wash-low {
+  right: -320px; bottom: -260px; width: 960px; height: 960px;
+  background: radial-gradient(closest-side, var(--landing-wash), transparent 72%);
+}
+@media (max-width: 767px) {
+  .tt-wash-mid { left: -260px; width: 600px; height: 600px; }
+  .tt-wash-low { right: -240px; bottom: -200px; width: 620px; height: 620px; }
+}
+
 /* ---- Floating keycaps ---- */
 
 .tt-key {
@@ -995,6 +1014,9 @@ html, body {
 
 @media (max-width: 767px) {
   .tt-key-wide-only { display: none; }
+}
+@media (min-width: 768px) {
+  .tt-key-phone-only { display: none; }
 }
 
 /* ---- Shared landing bits ---- */
@@ -1139,6 +1161,116 @@ html, body {
   .tt-ch-cursor::before { animation: none; }
   .tt-btn:hover { transform: none; }
 }
+
+/* ---- Race promo: the head-to-head mode, introduced under the hero ----
+   The preview draws the race the way the race screen does: the same caret in
+   the middle of one line, the same amber arrow over the opponent's letter, and
+   the tinted lead only on screens wider than a phone. */
+
+.tt-lr { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
+@media (min-width: 640px) { .tt-lr { padding: 0 56px 88px; } }
+
+.tt-lr-card {
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "text" "show" "cta";
+  row-gap: 22px; padding: 24px 20px; border-radius: 22px;
+  background: var(--card); border: 1px solid var(--border);
+  box-shadow: 0 30px 60px -40px var(--card-shadow);
+}
+.tt-lr-text { grid-area: text; }
+.tt-lr-show { grid-area: show; min-width: 0; }
+.tt-lr-cta { grid-area: cta; }
+@media (min-width: 768px) {
+  .tt-lr-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 500px);
+    grid-template-areas: "text show" "cta show";
+    column-gap: 56px; row-gap: 32px; padding: 56px; border-radius: 24px;
+  }
+  .tt-lr-text { align-self: end; }
+  .tt-lr-cta { align-self: start; }
+  .tt-lr-show { align-self: center; }
+}
+
+.tt-lr h2 { margin: 0; font-size: 32px; font-weight: 400; line-height: 1.08; letter-spacing: -0.03em; }
+@media (min-width: 640px) { .tt-lr h2 { font-size: 44px; } }
+
+.tt-lr-ticks { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+@media (min-width: 640px) { .tt-lr-ticks { gap: 12px; margin-top: 22px; } }
+.tt-lr-tick { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+@media (min-width: 640px) { .tt-lr-tick { font-size: 17px; } }
+.tt-lr-tick svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--primary-deep); stroke-width: 2.4; }
+
+.tt-lr-cta .tt-btn { width: 100%; }
+@media (min-width: 768px) { .tt-lr-cta .tt-btn { width: auto; } }
+.tt-lr-note { margin: 12px 0 0; font-size: 13px; color: var(--muted-foreground); text-align: center; }
+@media (min-width: 768px) { .tt-lr-note { margin-top: 14px; text-align: left; } }
+
+.tt-lr-race {
+  display: flex; flex-direction: column; gap: 12px; padding: 18px 14px;
+  border-radius: 18px; background: var(--background);
+}
+@media (min-width: 640px) { .tt-lr-race { gap: 16px; padding: 26px 24px; } }
+
+.tt-lr-clock {
+  text-align: center; font-family: var(--font-mono); font-size: 30px; font-weight: 500;
+  line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+}
+@media (min-width: 640px) { .tt-lr-clock { font-size: 34px; } }
+.tt-lr-clock small {
+  display: block; margin-top: 6px; font-size: 9px; font-weight: 400;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted-foreground);
+}
+
+.tt-lr-lane {
+  position: relative; display: flex; align-items: center; height: 64px; overflow: hidden;
+  border-radius: 16px; background: var(--card); box-shadow: 0 12px 30px -20px var(--card-shadow);
+  font-family: var(--font-mono); font-size: 16px; white-space: pre;
+}
+@media (min-width: 640px) { .tt-lr-lane { height: 76px; font-size: 19px; } }
+.tt-lr-lane::before, .tt-lr-lane::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 28px; z-index: 1; pointer-events: none;
+}
+.tt-lr-lane::before { left: 0; background: linear-gradient(90deg, var(--card), transparent); }
+.tt-lr-lane::after { right: 0; background: linear-gradient(270deg, var(--card), transparent); }
+
+/* Two halves meeting at the caret, so it sits in the middle by construction. */
+.tt-lr-typed { flex: 1; min-width: 0; display: flex; justify-content: flex-end; align-self: stretch; align-items: center; overflow: hidden; color: var(--ch-done); }
+.tt-lr-next { flex: 1; min-width: 0; display: flex; align-self: stretch; align-items: center; overflow: hidden; color: var(--ch-upcoming); }
+.tt-lr-caret { color: var(--ch-done); box-shadow: inset 0 -2px 0 var(--primary); }
+
+.tt-lr-gap { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
+.tt-lr-gap.is-theirs { background: var(--race-band-them); text-decoration-color: var(--race-band-them-line); }
+.tt-lr-gap.is-yours { background: var(--race-band-you); text-decoration-color: var(--race-band-you-line); }
+@media (max-width: 640px) {
+  .tt-lr-gap.is-theirs, .tt-lr-gap.is-yours { background: none; text-decoration: none; }
+}
+.tt-lr-opp { position: relative; }
+.tt-lr-opp::before {
+  content: ''; position: absolute; left: 50%; top: -8px; width: 12px; height: 9px;
+  transform: translateX(-50%); background: var(--race-them);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.tt-lr-standing { display: flex; justify-content: center; }
+.tt-lr-standing span {
+  display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 13px;
+  border-radius: 999px; font-family: var(--font-mono); font-size: 10.5px;
+  font-weight: 500; letter-spacing: 0.06em;
+}
+.tt-lr-standing i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.tt-lr-standing .is-behind { background: color-mix(in srgb, var(--race-them) 14%, transparent); color: var(--race-them-deep); }
+.tt-lr-standing .is-ahead { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary-deep); }
+.tt-lr-standing .is-level { background: color-mix(in srgb, var(--muted-foreground) 10%, transparent); color: var(--muted-foreground); }
+
+.tt-lr-players { display: flex; align-items: flex-end; justify-content: space-between; padding: 0 4px; }
+.tt-lr-who { font-size: 16px; }
+.tt-lr-rate {
+  margin-top: 3px; font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.tt-lr-rate.is-you { color: var(--primary-deep); }
+.tt-lr-rate.is-them { color: var(--race-them-deep); }
+.tt-lr-rate em { font-style: normal; font-size: 9.5px; font-weight: 400; color: var(--muted-foreground); margin-left: 4px; }
 
 /* ---- Landing navbar ---- */
 
