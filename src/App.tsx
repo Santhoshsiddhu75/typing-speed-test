@@ -3,7 +3,10 @@ import { Suspense, lazy } from 'react'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import ErrorBoundary from '@/components/ErrorBoundary'
-const LandingPage = lazy(() => import('@/pages/LandingPage'))
+// The homepage is where most visits start, so it ships in the first bundle
+// rather than as a second download the first paint has to wait for.
+import LandingPage from '@/pages/LandingPage'
+import WithGoogleSignIn from '@/components/GoogleSignIn'
 const SetupScreen = lazy(() => import('@/pages/SetupScreen'))
 const RacePage = lazy(() => import('@/pages/RacePage'))
 const TypingTestScreen = lazy(() => import('@/pages/TypingTestScreen'))
@@ -48,8 +51,8 @@ function AppContent() {
           <Route path="/start" element={<SetupScreen />} />
           <Route path="/race" element={<RacePage />} />
           <Route path="/test" element={<TypingTestScreen />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<WithGoogleSignIn><LoginPage /></WithGoogleSignIn>} />
+          <Route path="/register" element={<WithGoogleSignIn><RegisterPage /></WithGoogleSignIn>} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />

@@ -115,7 +115,7 @@ const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <img
-                src="/assets/logounpress.png"
+                src="/assets/logounpress-192.webp"
                 alt=""
                 aria-hidden="true"
                 className="h-6 w-6 sm:h-10 sm:w-10"

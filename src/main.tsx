@@ -1,9 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { GoogleOAuthProvider } from '@react-oauth/google'
 import App from './App.tsx'
-
-const GOOGLE_CLIENT_ID = '1087194439568-iago6f9biafj9f0e0glgo7pfuga0mg0k.apps.googleusercontent.com';
 
 // Global error monitoring for production stability
 window.addEventListener('error', (event) => {
@@ -14,10 +11,10 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
 });
 
+// Google sign-in is provided around the login and register routes only (see
+// components/GoogleSignIn.tsx), so its script stays off every other page.
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <App />
-    </GoogleOAuthProvider>
+    <App />
   </React.StrictMode>,
 )

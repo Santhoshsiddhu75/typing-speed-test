@@ -44,7 +44,7 @@ const Logo: React.FC<LogoProps> = ({
       {/* Logo Image with Hover Effect */}
       <div className={`relative ${sizeClasses[size]} transition-all duration-200 ease-in-out`}>
         <img
-          src="/assets/logounpress.png"
+          src="/assets/logounpress-192.webp"
           alt=""
           aria-hidden="true"
           className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-200 ease-in-out ${
@@ -52,7 +52,7 @@ const Logo: React.FC<LogoProps> = ({
           }`}
         />
         <img
-          src="/assets/logopress.png"
+          src="/assets/logopress-192.webp"
           alt=""
           aria-hidden="true"
           className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-200 ease-in-out ${
