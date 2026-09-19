@@ -940,6 +940,86 @@ blank), the arrow, and the name step at 390px.
   iPhone SE; 115px and 129px on a Pixel 7. The layout test checks both iPhone
   sizes.
 
+## Homepage: the race gets a front door (18 September 2026)
+
+Chosen from a design canvas of three options (a hero button, a NEW tag with a
+nav link, a section under the hero); the hero button and the section went in
+together.
+
+- **A real button in the hero.** "Race a friend" sits beside "Start a 1-minute
+  test" in the quiet outline style, with a two-person icon. The grey "Or race
+  a friend head to head" line under the buttons was easy to read straight
+  past; "Watch a full test" moves into that line instead.
+- **A race section under the hero** (`src/components/landing/RaceSection.tsx`):
+  "Race a friend." with the race page's three promises, a button, and a
+  preview of the race screen that runs itself. A real minute counts from 1:00
+  to 0:00, holds a beat on 0:00, and starts again. Ramesh (green) and Suresh
+  (amber) type two real medium passages at about 70 WPM; Suresh leads early
+  and Ramesh overtakes near the end, so the arrow, the lead count and its
+  colour change hands once a loop. It follows the race's own rules: the caret
+  in the middle of one line, the arrow over the opponent's letter, and the
+  tinted lead only on screens wider than 640px.
+- It runs only while it is on screen, and people who ask for less motion get
+  one still frame at 0:12.
+- **One ground down the whole page.** The green washes and floating keycaps
+  used to stop at the hero, clipped by its section. They now sit on a single
+  layer under the hero, the race section and How it works, down to the
+  footer: two more washes lower down, and keycaps of their own behind the race
+  card (R, A, C, E) and the demo (W, P, M), placed relative to each section so
+  they land in the same spots at any width. Phones keep one key per section,
+  at the edge; a key placed for a phone is hidden on wider screens.
+
+### Trap
+
+- **Playwright's clock does not reach this page's timers in WebKit on
+  Windows.** A test that walks the preview's minute with `page.clock.runFor`
+  passes in Chromium and Firefox; in WebKit the preview kept moving at about
+  half the rate the test clock was moved, whether it timed itself with
+  `performance.now` or `Date.now`. The walked minute (lead at 0:30, the
+  overtake by 0:02, 0:00, the restart) runs in Chromium and Firefox and skips
+  WebKit; a real-time check that the clock and the text move runs in all
+  three. The preview now times itself with `Date.now`, clamped so a
+  throttled tab or a clock set backwards cannot move the race.
+
+## Homepage first load (19 September 2026)
+
+Measured with `scratch/diag/perf-home.mjs` on the production build (`npm run
+build`, `vite preview`), as a Pixel 7 over slow 4G: 150 ms round trips,
+1.6 Mbps down, the CPU slowed four times, the cache off, three runs each.
+
+| | Before | After |
+|---|---|---|
+| Headline painted | 2.35 to 2.6 s | 2.0 to 2.3 s |
+| Load finished | about 18 s | 3.6 to 3.9 s |
+| Downloaded | 3.3 MB | 225 KB |
+| Requests | 20 | 11 |
+
+- **The logo was 2.97 MB of the 3.3 MB.** `Logo` loads two images, one for
+  hover, and both were the 1024x1024 PNG originals, about 1.5 MB each, shown
+  at 40 to 64 px. They are now 192 px WebP, 10 KB and 8 KB (192 covers 64 px
+  on a 3x screen). The tab icon pointed at the same 1.5 MB file; it is now a
+  5 KB 64 px PNG, with a 180 px apple-touch-icon beside it. The originals stay
+  in `public/assets/`, unused.
+- **Google sign-in loaded on every page.** `GoogleOAuthProvider` wrapped the
+  whole app in `main.tsx`, and it injects Google's 100 KB script the moment it
+  mounts. Only the login and register forms use it, so it now wraps just
+  those two routes (`components/GoogleSignIn.tsx`).
+- **The homepage was a second download.** Every route was lazy, so the first
+  paint waited for the main bundle and then for the landing chunk. The
+  landing page is now in the main bundle (75 KB compressed, up from 69), which
+  also means the loading spinner no longer paints first.
+- **Two useless prefetches removed** from `index.html`: `/test` and `/login`
+  are hash routes, so those requests only fetched the page's own HTML again.
+
+Left alone: the Google Fonts stylesheet still blocks the first paint for a
+round trip or two, but making it non-blocking would swap the headline's font
+in after it appears and shift the layout. Fonts come to about 100 KB, and
+browsers only download the styles a page uses.
+
+Guarded by two regression tests: the homepage requests no Google sign-in
+script and no full-size logo, and the login and register pages still load
+Google sign-in.
+
 ## How to run
 
 ```

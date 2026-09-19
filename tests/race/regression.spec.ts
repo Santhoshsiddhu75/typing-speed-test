@@ -120,7 +120,8 @@ test('Terms keeps its own two equal columns on desktop and one column on a phone
 
 test('the landing page and the solo setup both lead to the race', async ({ browser }) => {
   const landing = await open(browser, '/#/')
-  await landing.page.getByRole('button', { name: /race a friend/i }).click()
+  // The hero's own button; the race section further down has one too.
+  await landing.page.getByRole('button', { name: /race a friend/i }).first().click()
   await expect(landing.page).toHaveURL(/#\/race$/)
   await expect(landing.page.getByRole('heading', { name: 'Race someone.' })).toBeVisible()
 
@@ -186,3 +187,166 @@ test('leaving the race page closes its connection', async ({ browser }) => {
   expect(race.length).toBeGreaterThan(0)
   await expect.poll(() => race.every((s) => s.closed)).toBe(true)
 })
+
+test('the homepage leads to the race from its hero button and from the race section', async ({ browser }) => {
+  const { page, errors } = await open(browser, '/#/')
+
+  // In the hero, beside the main button rather than as a footnote under it.
+  const hero = page.locator('section').first()
+  await hero.getByRole('button', { name: 'Race a friend' }).click()
+  await expect(page).toHaveURL(/#\/race$/)
+
+  await page.goto('/#/')
+  const section = page.locator('.tt-lr')
+  await expect(section.getByRole('heading', { name: 'Race a friend.' })).toBeVisible()
+  await expect(section.locator('.tt-lr-tick')).toHaveText(['Same passage', 'Same timer', 'See them word by word'])
+  await section.getByRole('button', { name: 'Race a friend' }).click()
+  await expect(page).toHaveURL(/#\/race$/)
+  expect(errors).toEqual([])
+})
+
+test('the race preview runs a real minute, 1:00 down to 0:00, and then starts again', async ({ browser }) => {
+  // Playwright's WebKit build on Windows does not let the test clock drive
+  // this page's repeating timers, so the minute cannot be walked there. The
+  // real-time test below covers WebKit; the logic walked here is the same.
+  test.skip(browser.browserType().name() === 'webkit', 'test clock does not drive page timers in WebKit')
+  const context = await browser.newContext(forEngine(browser, DESKTOP))
+  contexts.push(context)
+  await blockAnalytics(context)
+  const page = await context.newPage()
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  // A controllable clock, so a minute of preview does not cost a minute of test.
+  await page.clock.install()
+  await page.goto('/#/')
+
+  const clock = page.locator('.tt-lr-clock')
+  const standing = page.locator('.tt-lr-standing')
+  await clock.scrollIntoViewIfNeeded()
+  await expect(page.locator('.tt-lr-players')).toContainText('Ramesh')
+  await expect(page.locator('.tt-lr-players')).toContainText('Suresh')
+
+  // The preview starts the moment it is on screen, and how far it got while
+  // the page loaded differs by engine. Stop time, then carry the preview to
+  // the start of its next minute, so the walk below begins from a known 1:00.
+  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 200)
+  const shown = async () => ((await clock.textContent()) ?? '').slice(0, 4)
+  await expect
+    .poll(
+      async () => {
+        await page.clock.runFor(500)
+        return shown()
+      },
+      { intervals: [50], timeout: 60_000 }
+    )
+    .toBe('1:00')
+
+  await page.clock.runFor(30_000)
+  await expect(clock).toHaveText(/^0:30/)
+  // Suresh leads early...
+  await expect(standing).toHaveText(/Suresh is \d+ words? ahead/)
+  const typed = await page.locator('.tt-lr-typed').textContent()
+  expect(typed!.length).toBeGreaterThan(40)
+
+  // ...and Ramesh has overtaken him before the end.
+  await page.clock.runFor(28_000)
+  await expect(clock).toHaveText(/^0:02/)
+  await expect(standing).toHaveText(/Ramesh is \d+ words? ahead/)
+
+  await page.clock.runFor(2_500)
+  await expect(clock).toHaveText(/^0:00/)
+  // A beat on 0:00, then the next race.
+  await page.clock.runFor(1_000)
+  await expect(clock).toHaveText(/^1:00/)
+  expect(errors).toEqual([])
+})
+
+test('the race preview counts down in real time, in every engine', async ({ browser }) => {
+  const { page, errors } = await open(browser, '/#/')
+  const clock = page.locator('.tt-lr-clock')
+  await clock.scrollIntoViewIfNeeded()
+  await page.waitForTimeout(1500)
+
+  const seconds = async () => {
+    const [, m, s] = ((await clock.textContent()) ?? '').match(/^(\d):(\d\d)/) ?? []
+    return Number(m) * 60 + Number(s)
+  }
+  // The line shows only the last stretch typed, so compare the text, not its length.
+  const typed = async () => (await page.locator('.tt-lr-typed').textContent()) ?? ''
+
+  // Under a full parallel run a single read can take seconds in WebKit, so
+  // the clock is judged against the time that really passed between reads.
+  const start = Date.now()
+  const before = { left: await seconds(), typed: await typed() }
+  const startRead = Date.now()
+  await page.waitForTimeout(3200)
+  const endRead = Date.now()
+  const after = { left: await seconds(), typed: await typed() }
+  const end = Date.now()
+
+  const dropped = before.left - after.left
+  expect(dropped).toBeGreaterThanOrEqual(Math.floor((endRead - startRead) / 1000) - 1)
+  expect(dropped).toBeLessThanOrEqual(Math.ceil((end - start) / 1000) + 1)
+  expect(after.typed).not.toBe(before.typed)
+  expect(errors).toEqual([])
+})
+
+test('with reduced motion the race preview holds a single still frame', async ({ browser }) => {
+  const context = await browser.newContext({ ...forEngine(browser, DESKTOP), reducedMotion: 'reduce' })
+  contexts.push(context)
+  await blockAnalytics(context)
+  const page = await context.newPage()
+  await page.goto('/#/')
+
+  const clock = page.locator('.tt-lr-clock')
+  await clock.scrollIntoViewIfNeeded()
+  const first = await clock.textContent()
+  expect(first).toMatch(/^0:12/)
+  await page.waitForTimeout(1500)
+  expect(await clock.textContent()).toBe(first)
+})
+
+test('the homepage loads no Google sign-in script and no full-size logo', async ({ browser }) => {
+  // Two 1.5 MB logos and Google's 100 KB sign-in script used to ride along on
+  // every first visit; on a phone over slow 4G they kept the page loading for
+  // about 18 seconds.
+  const context = await browser.newContext(forEngine(browser, PHONE))
+  contexts.push(context)
+  await blockAnalytics(context)
+  const page = await context.newPage()
+  const urls: string[] = []
+  page.on('request', (request) => urls.push(request.url()))
+
+  await page.goto('/#/')
+  await expect(page.locator('h1').first()).toBeVisible()
+  await page.waitForLoadState('load')
+  await page.waitForTimeout(1000)
+
+  expect(urls.filter((url) => url.includes('accounts.google.com'))).toEqual([])
+  expect(urls.filter((url) => /\/logo(un)?press\.png/.test(url))).toEqual([])
+  expect(urls.some((url) => url.includes('/assets/logounpress-192.webp'))).toBe(true)
+})
+
+for (const route of ['/#/login', '/#/register']) {
+  test(`${route} still loads Google sign-in`, async ({ browser }) => {
+    const context = await browser.newContext(forEngine(browser, DESKTOP))
+    contexts.push(context)
+    await blockAnalytics(context)
+    // Answered here, so the test proves the page asks for the script without
+    // depending on Google's servers.
+    await context.route(/accounts\.google\.com\/gsi\/client/, (r) =>
+      r.fulfill({ status: 200, contentType: 'text/javascript', body: '' })
+    )
+    const page = await context.newPage()
+    const errors: string[] = []
+    page.on('pageerror', (error) => errors.push(error.message))
+
+    const signIn = page.waitForRequest((request) => request.url().includes('accounts.google.com/gsi/client'), {
+      timeout: 20_000,
+    })
+    await page.goto(route)
+    await signIn
+    await expect(page.locator('form').first()).toBeVisible({ timeout: 15_000 })
+    expect(errors).toEqual([])
+  })
+}
