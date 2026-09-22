@@ -5,14 +5,16 @@ import Logo from './Logo';
 import { CONTACT_EMAIL } from '@/lib/seo';
 
 /**
- * These were buttons calling navigate(). A button is invisible to a crawler,
- * cannot be opened in a new tab, and cannot be middle-clicked, so About,
- * Privacy, Terms and Contact had nothing pointing at them at all. They are
- * real links now; the classes are unchanged, so is the look.
+ * The legal links were buttons calling navigate(). A button is invisible to a
+ * crawler, cannot be opened in a new tab, and cannot be middle-clicked, so
+ * About, Privacy, Terms and Contact had nothing pointing at them at all. They
+ * are real links now; the classes are unchanged, so is the look.
  *
- * "Send Feedback" used to reach into the DOM for the feedback button, which
- * lives in Navbar — a bar the landing page does not render. It did nothing
- * here. It is a mailto now, to the same address the page already shows.
+ * "Send Feedback" stays a button on purpose. It opens the feedback modal in
+ * place, which lives in Navbar — so it works on /start and /profile, which
+ * render that bar, and does nothing on the landing page, which does not.
+ * That last part is a known bug, left alone here rather than traded for a
+ * page navigation on the two screens where the button already worked.
  */
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -75,12 +77,17 @@ const Footer: React.FC = () => {
                 {CONTACT_EMAIL}
               </a>
             </div>
-            <Link
-              to="/contact"
+            <button
+              onClick={() => {
+                const feedbackButton = document.querySelector('[aria-label="Send feedback"]') as HTMLButtonElement;
+                if (feedbackButton) {
+                  feedbackButton.click();
+                }
+              }}
               className="text-sm text-foreground font-medium hover:text-primary transition-colors"
             >
               Send Feedback →
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -126,12 +133,17 @@ const Footer: React.FC = () => {
                 {CONTACT_EMAIL}
               </a>
             </div>
-            <Link
-              to="/contact"
-              className="block text-sm text-foreground font-medium hover:text-primary transition-colors"
+            <button
+              onClick={() => {
+                const feedbackButton = document.querySelector('[aria-label="Send feedback"]') as HTMLButtonElement;
+                if (feedbackButton) {
+                  feedbackButton.click();
+                }
+              }}
+              className="text-sm text-foreground font-medium hover:text-primary transition-colors"
             >
               Send Feedback →
-            </Link>
+            </button>
           </div>
         </div>
 

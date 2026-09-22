@@ -1060,7 +1060,14 @@ What changed:
   instead of leaving two.
 - **`lib/site-routes.json`** is the one route table. `Seo.tsx` reads it and so
   does `scripts/generate-sitemap.mjs`, so the sitemap cannot drift from the
-  app. `lastmod` comes from the last commit touching each page's files.
+  app. `lastmod` comes from the last commit touching each page's files, and is
+  left out entirely when the history cannot answer. Vercel clones shallow, and
+  a shallow clone does not fail that question, it lies about it: `git log -1 --
+  <path>` returns the boundary commit, which looks like it introduced every
+  file in the tree, so every page would be dated the day of the deploy on
+  every deploy. The depth is checked up front instead. The step also never
+  fails the build — dates, then URLs without dates, then a warning — because a
+  sitemap is worth less than a deploy.
 - **Real 404s.** The catch-all rewrite is gone; `vercel.json` lists the ten
   client routes explicitly, so anything else falls through to `public/404.html`
   with a 404 status. It is a standalone page — booting React only to say "not
@@ -1076,10 +1083,13 @@ What changed:
   quiet, and both pay for their line by taking it out of the padding above, so
   at 390px the first timer option and the WPM readout sit at exactly the y they
   did before — measured against the live build, 292.0 and 149.0.
-- **Footer and landing calls to action are `<Link>`s**, same classes, same
-  look. The footer's "Send Feedback" used to reach into the DOM for a button
-  that lives in `Navbar`, a bar the landing page does not render, so it did
-  nothing; it points at the new `/contact` page now.
+- **Footer legal links and landing calls to action are `<Link>`s**, same
+  classes, same look, plus a new Contact entry beside About. "Send Feedback"
+  stays a button: it reaches into the DOM for the trigger in `Navbar`, so it
+  opens the modal in place on `/start` and `/profile` and does nothing on the
+  landing page, which renders no `Navbar`. That last part is a real bug, left
+  alone rather than traded for a page navigation on the two screens where the
+  button already worked.
 - **robots.txt**: no `Crawl-delay`, no blocking of the private routes. A page
   blocked there is never fetched, so Google never sees its noindex and can
   still index the bare URL. `/login`, `/register` and `/profile` carry noindex
