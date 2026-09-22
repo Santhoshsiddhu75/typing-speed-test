@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ArrowRight, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import FloatingKeys, { RACE_KEYS } from '@/components/landing/FloatingKeys'
@@ -200,7 +200,6 @@ const CLAIMS = ['Same passage', 'Same timer', 'See them word by word']
  * itself running beside them, and the way in.
  */
 export const RaceSection: React.FC = () => {
-  const navigate = useNavigate()
 
   // Full width, so its keycaps sit against the screen's edges like the hero's,
   // with the centred card over them.
@@ -228,10 +227,10 @@ export const RaceSection: React.FC = () => {
           </div>
 
           <div className="tt-lr-cta">
-            <button type="button" onClick={() => navigate('/race')} className="tt-btn tt-btn-primary">
+            <Link to="/race" className="tt-btn tt-btn-primary">
               Race a friend
               <ArrowRight className="h-4 w-4" />
-            </button>
+            </Link>
             <p className="tt-lr-note">Send a six-digit code. No account needed.</p>
           </div>
         </div>

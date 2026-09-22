@@ -1,0 +1,108 @@
+{
+  "siteUrl": "https://www.taptest.in",
+  "siteName": "TapTest",
+  "routes": [
+    {
+      "path": "/",
+      "title": "TapTest — Typing Speed Test",
+      "description": "Find out how fast you really type. TapTest times you on real prose, not scrambled word lists, and measures your WPM and accuracy. No account needed.",
+      "index": true,
+      "sitemap": true,
+      "changefreq": "weekly",
+      "priority": "1.0",
+      "sources": ["src/pages/LandingPage.tsx", "src/components/landing"]
+    },
+    {
+      "path": "/start",
+      "title": "Start a Typing Test — TapTest",
+      "description": "Set up your typing test: pick 1, 2 or 5 minutes and an easy, medium or hard passage, then start typing. Free, and no sign-up required.",
+      "index": true,
+      "sitemap": true,
+      "changefreq": "monthly",
+      "priority": "0.9",
+      "sources": ["src/pages/SetupScreen.tsx"]
+    },
+    {
+      "path": "/test",
+      "title": "Typing Speed Test — TapTest",
+      "description": "Take a timed typing speed test on real English prose. TapTest shows your WPM, characters per minute and accuracy live as you type.",
+      "index": true,
+      "sitemap": true,
+      "changefreq": "weekly",
+      "priority": "0.9",
+      "sources": ["src/pages/TypingTestScreen.tsx", "src/data/passages"]
+    },
+    {
+      "path": "/about",
+      "title": "About TapTest — Typing Speed Test",
+      "description": "Why TapTest uses real sentences instead of scrambled word lists, and how its three difficulty levels are graded by average word length.",
+      "index": true,
+      "sitemap": true,
+      "changefreq": "monthly",
+      "priority": "0.7",
+      "sources": ["src/pages/AboutPage.tsx"]
+    },
+    {
+      "path": "/contact",
+      "title": "Contact — TapTest",
+      "description": "Get in touch with TapTest. Email us about a bug, a passage that reads wrong, or anything else, or send feedback straight from the site.",
+      "index": true,
+      "sitemap": true,
+      "changefreq": "monthly",
+      "priority": "0.6",
+      "sources": ["src/pages/ContactPage.tsx"]
+    },
+    {
+      "path": "/privacy",
+      "title": "Privacy Policy — TapTest",
+      "description": "How TapTest handles your data: what is collected when you take a typing test or create an account, how it is stored, and how to have it deleted.",
+      "index": true,
+      "sitemap": true,
+      "changefreq": "yearly",
+      "priority": "0.4",
+      "sources": ["src/pages/PrivacyPolicy.tsx"]
+    },
+    {
+      "path": "/terms",
+      "title": "Terms of Service — TapTest",
+      "description": "The terms you agree to when you use TapTest: acceptable use, accounts, intellectual property and the limits of our liability.",
+      "index": true,
+      "sitemap": true,
+      "changefreq": "yearly",
+      "priority": "0.4",
+      "sources": ["src/pages/TermsOfService.tsx"]
+    },
+    {
+      "path": "/race",
+      "title": "Race a Friend — TapTest Typing Test",
+      "description": "Race a friend at typing. Share a room code, both type the same passage, and watch each other's speed update live. Free on TapTest.",
+      "index": true,
+      "sitemap": false,
+      "sources": ["src/pages/RacePage.tsx"]
+    },
+    {
+      "path": "/login",
+      "title": "Sign In — TapTest",
+      "description": "Sign in to TapTest to save your typing test results and track your progress over time.",
+      "index": false,
+      "sitemap": false,
+      "sources": ["src/pages/LoginPage.tsx"]
+    },
+    {
+      "path": "/register",
+      "title": "Create an Account — TapTest",
+      "description": "Create a free TapTest account to keep a history of your typing tests and watch your WPM improve.",
+      "index": false,
+      "sitemap": false,
+      "sources": ["src/pages/RegisterPage.tsx"]
+    },
+    {
+      "path": "/profile",
+      "title": "Your Profile — TapTest",
+      "description": "Your TapTest profile: your typing test history, your best WPM and accuracy, and how your speed has changed.",
+      "index": false,
+      "sitemap": false,
+      "sources": ["src/pages/ProfilePage.tsx"]
+    }
+  ]
+}

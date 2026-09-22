@@ -1,12 +1,24 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Mail } from 'lucide-react';
 import Logo from './Logo';
+import { CONTACT_EMAIL } from '@/lib/seo';
 
+/**
+ * These were buttons calling navigate(). A button is invisible to a crawler,
+ * cannot be opened in a new tab, and cannot be middle-clicked, so About,
+ * Privacy, Terms and Contact had nothing pointing at them at all. They are
+ * real links now; the classes are unchanged, so is the look.
+ *
+ * "Send Feedback" used to reach into the DOM for the feedback button, which
+ * lives in Navbar — a bar the landing page does not render. It did nothing
+ * here. It is a mailto now, to the same address the page already shows.
+ */
 const Footer: React.FC = () => {
-  const navigate = useNavigate();
-  
   const currentYear = new Date().getFullYear();
+
+  const legalLinkClass =
+    'hover:text-primary transition-colors p-0 m-0 bg-transparent border-0';
 
   return (
     <footer className="relative bg-gradient-to-br from-background via-background to-muted/20 border-t border-border/60 overflow-hidden">
@@ -35,46 +47,40 @@ const Footer: React.FC = () => {
           <div className="text-center">
             <nav className="flex flex-col gap-1">
               <div className="flex justify-center gap-4 text-xs text-muted-foreground">
-                <button
-                  onClick={() => navigate('/privacy')}
-                  className="hover:text-primary transition-colors p-0 m-0 bg-transparent border-0"
-                >
+                <Link to="/privacy" className={legalLinkClass}>
                   Privacy Policy
-                </button>
+                </Link>
                 <span>•</span>
-                <button
-                  onClick={() => navigate('/terms')}
-                  className="hover:text-primary transition-colors p-0 m-0 bg-transparent border-0"
-                >
+                <Link to="/terms" className={legalLinkClass}>
                   Terms of Service
-                </button>
+                </Link>
               </div>
-              <button
-                onClick={() => navigate('/about')}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors mt-1 p-0 m-0 bg-transparent border-0"
-              >
-                About
-              </button>
+              <div className="flex justify-center gap-4 text-xs text-muted-foreground mt-1">
+                <Link to="/about" className={legalLinkClass}>
+                  About
+                </Link>
+                <span>•</span>
+                <Link to="/contact" className={legalLinkClass}>
+                  Contact
+                </Link>
+              </div>
             </nav>
           </div>
-          
+
           {/* Contact */}
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 text-sm text-foreground mb-2">
               <Mail className="w-3 h-3 text-primary" />
-              <span className="font-semibold">taptest321@gmail.com</span>
+              <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold hover:text-primary transition-colors">
+                {CONTACT_EMAIL}
+              </a>
             </div>
-            <button
-              onClick={() => {
-                const feedbackButton = document.querySelector('[aria-label="Send feedback"]') as HTMLButtonElement;
-                if (feedbackButton) {
-                  feedbackButton.click();
-                }
-              }}
+            <Link
+              to="/contact"
               className="text-sm text-foreground font-medium hover:text-primary transition-colors"
             >
               Send Feedback →
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -92,46 +98,40 @@ const Footer: React.FC = () => {
           <div className="text-center">
             <nav className="flex flex-col gap-1">
               <div className="flex justify-center gap-4 text-xs text-muted-foreground">
-                <button
-                  onClick={() => navigate('/privacy')}
-                  className="hover:text-primary transition-colors p-0 m-0 bg-transparent border-0"
-                >
+                <Link to="/privacy" className={legalLinkClass}>
                   Privacy Policy
-                </button>
+                </Link>
                 <span>•</span>
-                <button
-                  onClick={() => navigate('/terms')}
-                  className="hover:text-primary transition-colors p-0 m-0 bg-transparent border-0"
-                >
+                <Link to="/terms" className={legalLinkClass}>
                   Terms of Service
-                </button>
+                </Link>
               </div>
-              <button
-                onClick={() => navigate('/about')}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors mt-1 p-0 m-0 bg-transparent border-0"
-              >
-                About
-              </button>
+              <div className="flex justify-center gap-4 text-xs text-muted-foreground mt-1">
+                <Link to="/about" className={legalLinkClass}>
+                  About
+                </Link>
+                <span>•</span>
+                <Link to="/contact" className={legalLinkClass}>
+                  Contact
+                </Link>
+              </div>
             </nav>
           </div>
-          
+
           {/* Right - Contact */}
           <div className="space-y-3 text-right">
             <div className="flex items-center justify-end gap-2 text-sm text-foreground">
               <Mail className="w-3 h-3 text-primary" />
-              <span className="font-semibold">taptest321@gmail.com</span>
+              <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold hover:text-primary transition-colors">
+                {CONTACT_EMAIL}
+              </a>
             </div>
-            <button
-              onClick={() => {
-                const feedbackButton = document.querySelector('[aria-label="Send feedback"]') as HTMLButtonElement;
-                if (feedbackButton) {
-                  feedbackButton.click();
-                }
-              }}
-              className="text-sm text-foreground font-medium hover:text-primary transition-colors"
+            <Link
+              to="/contact"
+              className="block text-sm text-foreground font-medium hover:text-primary transition-colors"
             >
               Send Feedback →
-            </button>
+            </Link>
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Logo from '@/components/Logo'
 import { ThemeOnlyToggle } from '@/components/ThemeOnlyToggle'
 import { useAuth } from '@/hooks/useAuth'
@@ -23,7 +23,6 @@ interface LandingNavProps {
  * scrim behind them: with solid islands it only smeared the page into a ghost.
  */
 export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
-  const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
   const [scrolled, setScrolled] = useState(false)
 
@@ -105,16 +104,15 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
             {/* Between Sign in and the theme toggle, and always present.
                 Phones keep it off: agreed earlier, and it does not fit beside
                 the logo, Sign in and the toggle at 390px. */}
-            <button
-              type="button"
-              onClick={() => navigate('/start')}
+            <Link
+              to="/start"
               className={cn(
-                'tt-nav-ease hidden items-center whitespace-nowrap rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-md transition-all duration-500 hover:shadow-lg sm:inline-flex',
+                'tt-nav-ease hidden items-center whitespace-nowrap rounded-full bg-primary text-sm font-semibold text-primary-foreground no-underline shadow-md transition-all duration-500 hover:shadow-lg sm:inline-flex',
                 scrolled ? 'h-[32px] px-3.5' : 'h-[40px] px-5'
               )}
             >
               Start typing
-            </button>
+            </Link>
 
             {/* Inside the split capsule the toggle's own bordered circle reads
                 as a button inside a button, so it drops to a bare icon. It

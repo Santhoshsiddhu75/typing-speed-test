@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ArrowRight, Users } from 'lucide-react'
 import LandingNav from '@/components/landing/LandingNav'
 import FloatingKeys from '@/components/landing/FloatingKeys'
@@ -9,12 +9,11 @@ import RaceSection from '@/components/landing/RaceSection'
 import Footer from '@/components/Footer'
 
 const LandingPage = () => {
-  const navigate = useNavigate()
   const demoRef = useRef<DemoHandle>(null)
 
-  // Not an href anchor: the app runs on HashRouter, which has already spent
-  // the URL's hash on routing, so "#try" would break navigation rather than
-  // scroll. This keeps working whichever router we end up on.
+  // Stays a button rather than an "#try" anchor: it has to replay the demo as
+  // well as move to it, and an anchor would put a fragment in the URL that
+  // means nothing to anyone arriving on it later.
   //
   // Replaying waits for the scroll to settle, so a finished run restarts as
   // you arrive rather than while you are still travelling. A run already in
@@ -57,16 +56,16 @@ const LandingPage = () => {
             </p>
 
             <div className="mt-[26px] flex flex-col items-stretch gap-3 sm:mt-[30px] sm:flex-row sm:items-center sm:gap-3.5">
-              <button type="button" onClick={() => navigate('/start')} className="tt-btn tt-btn-primary">
+              <Link to="/start" className="tt-btn tt-btn-primary">
                 Start a 1-minute test
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Link>
               {/* The race gets a real button rather than a footnote: a grey line
                   under the main button was easy to read straight past. */}
-              <button type="button" onClick={() => navigate('/race')} className="tt-btn tt-btn-quiet">
+              <Link to="/race" className="tt-btn tt-btn-quiet">
                 <Users className="h-[17px] w-[17px]" aria-hidden="true" />
                 Race a friend
-              </button>
+              </Link>
             </div>
 
             <p className="mt-3 text-center text-[13px] sm:text-left">

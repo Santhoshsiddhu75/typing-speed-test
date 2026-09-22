@@ -1,7 +1,13 @@
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+// BrowserRouter, not HashRouter. Under a hash the whole site was one URL as
+// far as a search engine was concerned — Google stopped crawling fragments in
+// 2015 — so /test, /about and the rest were unreachable. index.html carries a
+// shim that turns a legacy #/path link into a real one before this mounts.
+import { BrowserRouter as Router, Routes, Route, useLocation, Link } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
+import { HelmetProvider } from 'react-helmet-async'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import Seo from '@/components/Seo'
 import ErrorBoundary from '@/components/ErrorBoundary'
 // The homepage is where most visits start, so it ships in the first bundle
 // rather than as a second download the first paint has to wait for.
@@ -16,6 +22,7 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
 const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'))
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'))
 const AboutPage = lazy(() => import('@/pages/AboutPage'))
+const ContactPage = lazy(() => import('@/pages/ContactPage'))
 import BuyMeCoffeeFloatingButton from '@/components/BuyMeCoffeeFloatingButton'
 import './index.css'
 
@@ -39,10 +46,13 @@ function AppContent() {
   const isLandingPage = location.pathname === '/';
   const isSetupPage = location.pathname === '/start';
   const isRacePage = location.pathname === '/race';
-  const isLegalPage = location.pathname === '/privacy' || location.pathname === '/terms' || location.pathname === '/about';
+  const isLegalPage = location.pathname === '/privacy' || location.pathname === '/terms' || location.pathname === '/about' || location.pathname === '/contact';
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+      {/* Rendered once here rather than per page, so a route cannot ship
+          without a canonical or wearing the homepage's description. */}
+      <Seo />
       {!isAuthPage && !isTestPage && !isProfilePage && !isLandingPage && !isSetupPage && !isRacePage && !isLegalPage && <ThemeToggle />}
       <BuyMeCoffeeFloatingButton />
       <Suspense fallback={<RouteLoadingSpinner />}>
@@ -57,6 +67,7 @@ function AppContent() {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
@@ -66,26 +77,33 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <ErrorBoundary>
-        <Router>
-          <AppContent />
-        </Router>
-      </ErrorBoundary>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <ErrorBoundary>
+          <Router>
+            <AppContent />
+          </Router>
+        </ErrorBoundary>
+      </ThemeProvider>
+    </HelmetProvider>
   )
 }
 
-// 404 Page Component
+/**
+ * Only reached by a client-side navigation to an unknown path. A crawler or a
+ * typed URL never gets here: Vercel has no rewrite for an unknown path, so it
+ * serves public/404.html with a real 404 status instead. Seo() gives this one
+ * noindex, since it answers on a 200.
+ */
 function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold">404</h1>
         <p className="text-muted-foreground">Page not found</p>
-        <a href="/" className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+        <Link to="/" className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
           Go Home
-        </a>
+        </Link>
       </div>
     </div>
   )

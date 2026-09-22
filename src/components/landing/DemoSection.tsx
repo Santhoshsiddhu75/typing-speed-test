@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ArrowRight, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import FloatingKeys, { DEMO_KEYS } from '@/components/landing/FloatingKeys'
@@ -40,7 +40,6 @@ export interface DemoHandle {
 }
 
 export const DemoSection = forwardRef<DemoHandle>((_props, ref) => {
-  const navigate = useNavigate()
   const sectionRef = useRef<HTMLElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<number | undefined>(undefined)
@@ -206,14 +205,13 @@ export const DemoSection = forwardRef<DemoHandle>((_props, ref) => {
                 >
                   <RotateCcw className="h-[18px] w-[18px]" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/start')}
+                <Link
+                  to="/start"
                   className="tt-btn tt-btn-primary flex-1 sm:flex-none"
                 >
                   Try it
                   <ArrowRight className="h-4 w-4" />
-                </button>
+                </Link>
               </div>
             </div>
           )}

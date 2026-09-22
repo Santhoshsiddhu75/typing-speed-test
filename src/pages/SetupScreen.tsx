@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Clock, Target, Play, ArrowLeft } from 'lucide-react'
@@ -143,8 +143,16 @@ const SetupScreen = () => {
       </div>
       
       {/* Main Content - Centered */}
-      <div className="flex-1 flex items-start sm:items-center justify-center p-4 pt-20 sm:pt-24">
+      <div className="flex-1 flex items-start sm:items-center justify-center p-4 pt-16 sm:pt-24">
         <div className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in relative z-10">
+        {/* The page's one heading, and the only thing on it a search engine
+            can read — the logo block below is hidden at phone width, and
+            Google indexes the phone rendering. Small and quiet, like the one
+            on /test. The wrapper loses 16px of top padding to pay for the
+            line, so at 390px the card sits exactly where it did. */}
+        <h1 className="text-center text-xs sm:text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Start a Typing Test
+        </h1>
         {/* Header - Hidden on mobile since logo is in navbar */}
         <div className="text-center space-y-4 mt-4 sm:mt-8 hidden sm:block">
           <div className="flex items-center justify-center mb-6">
@@ -352,13 +360,12 @@ const SetupScreen = () => {
 
         {/* Race mode lives beside the solo flow rather than inside it. */}
         <div className="text-center">
-          <button
-            type="button"
-            onClick={() => navigate('/race')}
+          <Link
+            to="/race"
             className="text-sm text-muted-foreground transition-colors hover:text-primary"
           >
             Or race a friend &rarr;
-          </button>
+          </Link>
         </div>
 
         {/* Advertisement Banner - Always visible for maximum viewability */}

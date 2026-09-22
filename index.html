@@ -2,6 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- TapTest ran on HashRouter until September 2026, so any link shared
+         before then looks like https://www.taptest.in/#/about. Turn those into
+         real paths before React boots, keeping the query string wherever it
+         sits: "#/x?t=1" carries its own, "/?t=1#/x" carries the page's. A
+         plain anchor such as "#try" is left alone. -->
+    <script>
+      (function () {
+        var hash = window.location.hash
+        if (hash.slice(0, 2) !== '#/') return
+        var target = hash.slice(1)
+        if (target.indexOf('?') === -1 && window.location.search) {
+          target += window.location.search
+        }
+        window.history.replaceState(null, '', target)
+      })()
+    </script>
+
     <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon-64.png" />
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -10,12 +28,38 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="theme-color" content="#22c55e">
     <meta name="color-scheme" content="light dark">
-    <meta name="description" content="TapTest - Master your typing speed with our interactive TapTest. Track your WPM, accuracy, and improve your typing skills." />
+    <!-- The homepage's head, and the fallback for anything that reads the HTML
+         without running it. Every tag marked data-rh="true" is replaced by
+         components/Seo.tsx once React mounts, per route — that attribute is
+         how react-helmet-async recognises a tag as its own. Keep any tag added
+         here marked, or the page ends up with two of it. -->
+    <title>TapTest — Typing Speed Test</title>
+    <meta data-rh="true" name="description" content="Find out how fast you really type. TapTest times you on real prose, not scrambled word lists, and measures your WPM and accuracy. No account needed." />
     <meta name="keywords" content="typing test, typing speed, WPM, typing practice, keyboard skills, typing accuracy" />
-    <meta property="og:title" content="TapTest - Master Your Typing Speed" />
-    <meta property="og:description" content="Interactive TapTest with real-time feedback and beautiful 3D interface" />
-    <meta property="og:type" content="website" />
-    <title>TapTest - Master Your Typing Speed</title>
+    <meta data-rh="true" name="robots" content="index, follow, max-image-preview:large" />
+
+    <!-- No canonical and no og:url here on purpose. Until prerendering lands,
+         every route is served this same file, so a canonical written here
+         would tell a crawler that /test, /about and the rest are all the
+         homepage. Seo.tsx adds the right one per route once React mounts;
+         absent is safe in the meantime, because a URL with no canonical is
+         its own. The tags left below are generic enough to be true of any
+         page, and give a scraper that runs no JavaScript something to show. -->
+
+    <meta data-rh="true" property="og:site_name" content="TapTest" />
+    <meta data-rh="true" property="og:type" content="website" />
+    <meta data-rh="true" property="og:title" content="TapTest — Typing Speed Test" />
+    <meta data-rh="true" property="og:description" content="Find out how fast you really type. TapTest times you on real prose, not scrambled word lists, and measures your WPM and accuracy. No account needed." />
+    <meta data-rh="true" property="og:locale" content="en_IN" />
+    <meta data-rh="true" property="og:image" content="https://www.taptest.in/assets/og-image.png" />
+    <meta data-rh="true" property="og:image:width" content="1200" />
+    <meta data-rh="true" property="og:image:height" content="630" />
+    <meta data-rh="true" property="og:image:alt" content="TapTest — a typing speed test" />
+
+    <meta data-rh="true" name="twitter:card" content="summary_large_image" />
+    <meta data-rh="true" name="twitter:title" content="TapTest — Typing Speed Test" />
+    <meta data-rh="true" name="twitter:description" content="Find out how fast you really type. TapTest times you on real prose, not scrambled word lists, and measures your WPM and accuracy. No account needed." />
+    <meta data-rh="true" name="twitter:image" content="https://www.taptest.in/assets/og-image.png" />
     
     <!-- Resource Hints for Performance (ZERO RISK) -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">

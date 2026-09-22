@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
@@ -819,8 +819,16 @@ const TypingTestScreen = () => {
       </div>
       
       <div className="max-w-6xl mx-auto space-y-6 relative z-10">
-        {/* Content Area */}
-        <div className="pt-16 sm:pt-20 md:pt-24"></div>
+        {/* The page's one real heading. This was an empty spacer clearing the
+            fixed navbar, so the padding drops by exactly the height of the
+            line it now holds (48+16, 60+20, 76+20) and nothing below moves.
+            Set small and quiet on purpose: the test is the page, not its
+            title. */}
+        <div className="pt-12 sm:pt-[60px] md:pt-[76px] text-center">
+          <h1 className="text-xs sm:text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Typing Speed Test
+          </h1>
+        </div>
 
         {/* Stats Display */}
         <div className="flex items-center justify-center max-w-2xl mx-auto gap-3 sm:gap-6 md:gap-8">
@@ -1051,15 +1059,63 @@ const TypingTestScreen = () => {
 
         {/* Back to Setup Button */}
         <div className="flex justify-center mt-6">
-          <Button 
-            onClick={() => navigate('/')}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Setup Screen
+          <Button asChild variant="outline" className="flex items-center gap-2">
+            <Link to="/">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Setup Screen
+            </Link>
           </Button>
         </div>
+
+        {/* Below the test, so it cannot push the typing area around, and
+            because anyone arriving here from a search deserves an answer to
+            "what do these numbers actually mean". Every figure below is the
+            one lib/utils.ts computes. */}
+        <section className="mx-auto max-w-2xl px-1 pb-14 pt-12 text-left">
+          <h2 className="text-lg font-semibold">How the numbers are worked out</h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            A word counts as five characters. That is the convention every typing test uses, so
+            60&nbsp;WPM here means what it means anywhere else.
+          </p>
+
+          <h3 className="mt-6 text-sm font-semibold">Words per minute</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Only the characters you got right are counted. TapTest divides them by five, then by
+            the minutes you have been typing. A mistake costs you twice over: it earns nothing, and
+            it still took time.
+          </p>
+
+          <h3 className="mt-5 text-sm font-semibold">Accuracy</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Correct characters as a share of everything you typed. It updates as you go, so you can
+            watch it drop the moment you start guessing at a long word.
+          </p>
+
+          <h3 className="mt-5 text-sm font-semibold">Characters per minute</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The same correct characters without the divide-by-five — useful if you are practising
+            for an exam scored in keystrokes rather than words.
+          </p>
+
+          <h2 className="mt-9 text-lg font-semibold">Taking the test</h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Choose one, two or five minutes, and easy, medium or hard. Difficulty here is average
+            word length — about 3.8, 5.9 and 8.0 characters — rather than rare words for their own
+            sake. Every passage is real prose, so you type the punctuation and capital letters you
+            would actually meet in writing.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Nothing is stored unless you sign in and choose to save a result.{' '}
+            <Link to="/start" className="text-primary hover:underline">
+              Set up another test
+            </Link>
+            , or read{' '}
+            <Link to="/about" className="text-primary hover:underline">
+              how the passages are graded
+            </Link>
+            .
+          </p>
+        </section>
 
         {/* Results Modal */}
         <Dialog open={showResults} onOpenChange={handleCloseResults}>

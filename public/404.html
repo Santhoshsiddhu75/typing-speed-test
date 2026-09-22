@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, follow" />
+    <title>Page Not Found — TapTest</title>
+    <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon-64.png" />
+
+    <!-- The one web font the site's identity rests on, for the heading only.
+         Body text stays on the system stack: this page should appear the
+         instant it is asked for, and it carries no bundle to wait behind. -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Autour+One&display=swap" rel="stylesheet" />
+
+    <!--
+      Served by Vercel with a real 404 status for any path that is not one of
+      the app's routes. Deliberately standalone: one stylesheet for the brand
+      face and nothing else — no bundle, no router, no waiting. Booting React
+      only to say "not found" would answer 200 and hand Google another copy of
+      the homepage, which is what used to happen.
+    -->
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: rgb(240, 248, 255);
+        --fg: rgb(55, 65, 81);
+        --muted: rgb(107, 114, 128);
+        --primary: rgb(34, 197, 94);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: rgb(15, 23, 42);
+          --fg: rgb(209, 213, 219);
+          --muted: rgb(148, 163, 184);
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        text-align: center;
+      }
+      img { width: 56px; height: 56px; }
+      h1 {
+        margin: 18px 0 0;
+        font-family: 'Autour One', ui-sans-serif, system-ui, sans-serif;
+        font-size: 32px;
+        font-weight: 400;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 10px auto 0;
+        max-width: 42ch;
+        font-size: 15px;
+        line-height: 1.65;
+        color: var(--muted);
+      }
+      a.go {
+        display: inline-flex;
+        align-items: center;
+        height: 46px;
+        margin-top: 26px;
+        padding: 0 24px;
+        border-radius: 10px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      nav {
+        margin-top: 22px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      nav a { color: inherit; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/assets/logounpress-192.webp" alt="" aria-hidden="true" />
+      <h1>That page isn't here.</h1>
+      <p>
+        The link may be old, or mistyped. The typing test is still where you left it.
+      </p>
+      <a class="go" href="/">Take a typing test</a>
+      <nav>
+        <a href="/">Home</a> &middot; <a href="/about">About</a> &middot;
+        <a href="/contact">Contact</a> &middot; <a href="/privacy">Privacy</a>
+      </nav>
+    </main>
+  </body>
+</html>

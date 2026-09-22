@@ -1020,6 +1020,84 @@ Guarded by two regression tests: the homepage requests no Google sign-in
 script and no full-size logo, and the login and register pages still load
 Google sign-in.
 
+## SEO: the site was one URL (22 September 2026)
+
+Branch `seo-fixes`. taptest.in had been live for over a year without appearing
+in search results, not even for its own name. The audit found four reasons,
+and rendering was not the main one — Googlebot renders JavaScript, and a
+headless Chromium against the live site showed the homepage's full text.
+
+**The site was one URL.** `App.tsx` used `HashRouter`, so every page really
+lived at `taptest.in/#/test`, `/#/about` and so on. Google stopped crawling
+fragments in 2015. Meanwhile `vercel.json` rewrote everything to index.html,
+so `/test`, `/login`, `/profile` and every mistyped path answered 200 with the
+landing page. Five sitemap URLs, one page between them.
+
+**The sitemap named the wrong host.** `taptest.in` 307-redirects to
+`www.taptest.in`, but robots.txt and all five `<loc>` entries used the apex, so
+every submitted URL was a redirect. No canonical tag existed anywhere to settle
+which host was the site.
+
+**Nothing identified the brand.** No structured data, no per-route titles, one
+description for all ten routes, no og:image. "TapTest" also belongs to a
+Flutter package, a Rust crate, an iOS app, taptest.co and a medical test.
+
+**About, Privacy and Terms were unreachable.** Real, substantial pages, linked
+only from `<button onClick={navigate}>` in the footer — invisible to a crawler,
+unopenable in a new tab — and absent from the sitemap.
+
+What changed:
+
+- **BrowserRouter**, with a shim in `index.html` that rewrites a legacy `#/x`
+  link to `/x` before React boots, carrying the query string from either
+  position (`#/x?t=1` and `/?t=1#/x` both arrive intact). Nothing in `src/`
+  read `location.hash`, the race shares a code rather than a link, and the
+  backend generates no links at all, so nothing else had to move.
+- **`components/Seo.tsx`**, rendered once in `AppContent` rather than per page,
+  so no route can ship without a canonical or wearing the homepage's
+  description. The static tags in `index.html` are marked `data-rh="true"`,
+  which is how react-helmet-async recognises a tag as its own and replaces it
+  instead of leaving two.
+- **`lib/site-routes.json`** is the one route table. `Seo.tsx` reads it and so
+  does `scripts/generate-sitemap.mjs`, so the sitemap cannot drift from the
+  app. `lastmod` comes from the last commit touching each page's files.
+- **Real 404s.** The catch-all rewrite is gone; `vercel.json` lists the ten
+  client routes explicitly, so anything else falls through to `public/404.html`
+  with a 404 status. It is a standalone page — booting React only to say "not
+  found" is what produced the soft 404 in the first place.
+- **Structured data**: Organization, WebSite and WebApplication in one
+  `@graph`. `sameAs` is deliberately empty rather than filled with example
+  URLs; a profile that does not exist is a claim Google can check.
+- **`public/assets/og-image.png`**, 1200x630, built by
+  `scripts/build-og-image.mjs` — a Playwright screenshot, so the card uses the
+  real logo and the real brand face. Run by hand, not in the Vercel build,
+  which has no browser.
+- **An H1 on `/test` and `/start`**, which had none. Both are set small and
+  quiet, and both pay for their line by taking it out of the padding above, so
+  at 390px the first timer option and the WPM readout sit at exactly the y they
+  did before — measured against the live build, 292.0 and 149.0.
+- **Footer and landing calls to action are `<Link>`s**, same classes, same
+  look. The footer's "Send Feedback" used to reach into the DOM for a button
+  that lives in `Navbar`, a bar the landing page does not render, so it did
+  nothing; it points at the new `/contact` page now.
+- **robots.txt**: no `Crawl-delay`, no blocking of the private routes. A page
+  blocked there is never fetched, so Google never sees its noindex and can
+  still index the bare URL. `/login`, `/register` and `/profile` carry noindex
+  instead.
+
+Verified on the production build: all twelve routes have exactly one title,
+description, canonical, og:url and H1, with no duplicated tags; noindex on the
+three private routes and on the 404, and on no public one; six legacy hash
+URLs land on the right path. Lighthouse SEO 100 on `/`, `/test` and `/about`.
+The race suite's URLs and two role selectors were updated — `Race a friend` is
+an anchor now, so its role is link.
+
+Left alone: the hero's `.tt-wash-2` is the whole of the homepage's 0.193 CLS,
+and the Google Fonts stylesheet still blocks first paint. Both predate this
+work. `/race` is indexable but kept out of the sitemap until its backend
+deploys. Prerendering is a separate branch, after this is live and confirmed
+in Search Console.
+
 ## How to run
 
 ```

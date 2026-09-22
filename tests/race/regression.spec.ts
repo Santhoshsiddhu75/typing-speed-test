@@ -71,11 +71,11 @@ const noSidewaysScroll = (page: Page) =>
 /** What shows a route has rendered. The solo setup screen has no heading, so it gets its first control. */
 const timerChoice = (page: Page) => page.getByRole('button', { name: /^Select .* timer$/ }).first()
 const READY: Record<string, (page: Page) => Locator> = {
-  '/#/': (page) => page.locator('h1').first(),
-  '/#/start': timerChoice,
-  '/#/terms': (page) => page.locator('h1').first(),
-  '/#/privacy': (page) => page.locator('h1').first(),
-  '/#/about': (page) => page.locator('h1').first(),
+  '/': (page) => page.locator('h1').first(),
+  '/start': timerChoice,
+  '/terms': (page) => page.locator('h1').first(),
+  '/privacy': (page) => page.locator('h1').first(),
+  '/about': (page) => page.locator('h1').first(),
 }
 
 for (const [route, ready] of Object.entries(READY)) {
@@ -95,7 +95,7 @@ for (const [route, ready] of Object.entries(READY)) {
 test('Terms keeps its own two equal columns on desktop and one column on a phone', async ({ browser }) => {
   // .tt-split belongs to the Terms page. The race once defined a class of the
   // same name globally and silently re-laid it out.
-  const desktop = await open(browser, '/#/terms')
+  const desktop = await open(browser, '/terms')
   const split = desktop.page.locator('.tt-split').first()
   await expect(split).toBeVisible()
   const wide = await split.evaluate((el) => {
@@ -107,7 +107,7 @@ test('Terms keeps its own two equal columns on desktop and one column on a phone
   expect(Math.abs(wide.columns[0] - wide.columns[1])).toBeLessThanOrEqual(1)
   expect(wide.gap).toBe('34px')
 
-  const phone = await open(browser, '/#/terms', PHONE)
+  const phone = await open(browser, '/terms', PHONE)
   const narrow = await phone.page
     .locator('.tt-split')
     .first()
@@ -119,25 +119,25 @@ test('Terms keeps its own two equal columns on desktop and one column on a phone
 })
 
 test('the landing page and the solo setup both lead to the race', async ({ browser }) => {
-  const landing = await open(browser, '/#/')
-  // The hero's own button; the race section further down has one too.
-  await landing.page.getByRole('button', { name: /race a friend/i }).first().click()
-  await expect(landing.page).toHaveURL(/#\/race$/)
+  const landing = await open(browser, '/')
+  // The hero's own link; the race section further down has one too.
+  await landing.page.getByRole('link', { name: /race a friend/i }).first().click()
+  await expect(landing.page).toHaveURL(/\/race$/)
   await expect(landing.page.getByRole('heading', { name: 'Race someone.' })).toBeVisible()
 
-  const setup = await open(browser, '/#/start')
-  await setup.page.getByRole('button', { name: /race a friend/i }).click()
-  await expect(setup.page).toHaveURL(/#\/race$/)
+  const setup = await open(browser, '/start')
+  await setup.page.getByRole('link', { name: /race a friend/i }).click()
+  await expect(setup.page).toHaveURL(/\/race$/)
   expect([...landing.errors, ...setup.errors]).toEqual([])
 })
 
 test('the solo test still starts and marks typing right and wrong', async ({ browser }) => {
-  const { page, errors } = await open(browser, '/#/start')
+  const { page, errors } = await open(browser, '/start')
 
   await timerChoice(page).click()
   await page.getByRole('button', { name: /^Select .* difficulty$/ }).first().click()
   await page.getByRole('button', { name: 'Start typing test' }).click()
-  await expect(page).toHaveURL(/#\/test\?/)
+  await expect(page).toHaveURL(/\/test\?/)
 
   // The real characters carry data-testid="char-N". The typing area also
   // holds a hidden measuring span, so its textContent is not the passage.
@@ -168,7 +168,7 @@ test('the solo test still starts and marks typing right and wrong', async ({ bro
 test('leaving the race page closes its connection', async ({ browser }) => {
   // The race socket keeps the server container awake, and that server bills
   // by usage. It must not outlive the race page.
-  const { page } = await open(browser, '/#/')
+  const { page } = await open(browser, '/')
   const sockets: { url: string; closed: boolean }[] = []
   page.on('websocket', (ws) => {
     const entry = { url: ws.url(), closed: false }
@@ -178,9 +178,9 @@ test('leaving the race page closes its connection', async ({ browser }) => {
     })
   })
 
-  await page.goto('/#/race')
+  await page.goto('/race')
   await expect(page.getByRole('button', { name: 'Create a room' })).toBeEnabled()
-  await page.goto('/#/start')
+  await page.goto('/start')
   await expect(timerChoice(page)).toBeVisible()
 
   const race = sockets.filter((s) => s.url.includes('race-socket'))
@@ -189,19 +189,20 @@ test('leaving the race page closes its connection', async ({ browser }) => {
 })
 
 test('the homepage leads to the race from its hero button and from the race section', async ({ browser }) => {
-  const { page, errors } = await open(browser, '/#/')
+  const { page, errors } = await open(browser, '/')
 
-  // In the hero, beside the main button rather than as a footnote under it.
+  // In the hero, beside the main call to action rather than as a footnote
+  // under it.
   const hero = page.locator('section').first()
-  await hero.getByRole('button', { name: 'Race a friend' }).click()
-  await expect(page).toHaveURL(/#\/race$/)
+  await hero.getByRole('link', { name: 'Race a friend' }).click()
+  await expect(page).toHaveURL(/\/race$/)
 
-  await page.goto('/#/')
+  await page.goto('/')
   const section = page.locator('.tt-lr')
   await expect(section.getByRole('heading', { name: 'Race a friend.' })).toBeVisible()
   await expect(section.locator('.tt-lr-tick')).toHaveText(['Same passage', 'Same timer', 'See them word by word'])
-  await section.getByRole('button', { name: 'Race a friend' }).click()
-  await expect(page).toHaveURL(/#\/race$/)
+  await section.getByRole('link', { name: 'Race a friend' }).click()
+  await expect(page).toHaveURL(/\/race$/)
   expect(errors).toEqual([])
 })
 
@@ -218,7 +219,7 @@ test('the race preview runs a real minute, 1:00 down to 0:00, and then starts ag
   page.on('pageerror', (error) => errors.push(error.message))
   // A controllable clock, so a minute of preview does not cost a minute of test.
   await page.clock.install()
-  await page.goto('/#/')
+  await page.goto('/')
 
   const clock = page.locator('.tt-lr-clock')
   const standing = page.locator('.tt-lr-standing')
@@ -262,7 +263,7 @@ test('the race preview runs a real minute, 1:00 down to 0:00, and then starts ag
 })
 
 test('the race preview counts down in real time, in every engine', async ({ browser }) => {
-  const { page, errors } = await open(browser, '/#/')
+  const { page, errors } = await open(browser, '/')
   const clock = page.locator('.tt-lr-clock')
   await clock.scrollIntoViewIfNeeded()
   await page.waitForTimeout(1500)
@@ -296,7 +297,7 @@ test('with reduced motion the race preview holds a single still frame', async ({
   contexts.push(context)
   await blockAnalytics(context)
   const page = await context.newPage()
-  await page.goto('/#/')
+  await page.goto('/')
 
   const clock = page.locator('.tt-lr-clock')
   await clock.scrollIntoViewIfNeeded()
@@ -317,7 +318,7 @@ test('the homepage loads no Google sign-in script and no full-size logo', async 
   const urls: string[] = []
   page.on('request', (request) => urls.push(request.url()))
 
-  await page.goto('/#/')
+  await page.goto('/')
   await expect(page.locator('h1').first()).toBeVisible()
   await page.waitForLoadState('load')
   await page.waitForTimeout(1000)
@@ -327,7 +328,7 @@ test('the homepage loads no Google sign-in script and no full-size logo', async 
   expect(urls.some((url) => url.includes('/assets/logounpress-192.webp'))).toBe(true)
 })
 
-for (const route of ['/#/login', '/#/register']) {
+for (const route of ['/login', '/register']) {
   test(`${route} still loads Google sign-in`, async ({ browser }) => {
     const context = await browser.newContext(forEngine(browser, DESKTOP))
     contexts.push(context)

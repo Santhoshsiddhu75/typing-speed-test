@@ -121,7 +121,7 @@ async function openPlayer(
     blocked || unreachable ? route.abort() : route.continue()
   )
 
-  await page.goto('/#/race')
+  await page.goto('/race')
   if (!unreachable) await expect(page.getByRole('button', { name: 'Create a room' })).toBeEnabled()
 
   return {
@@ -336,16 +336,16 @@ test.describe('setup', () => {
     const player = await openPlayer(browser)
     const { page } = player
 
-    const logo = page.locator('.tt-race-bar a[href="#/"]')
+    const logo = page.locator('.tt-race-bar a[href="/"]')
     await expect(logo).toBeVisible()
     await expect(logo.locator('img').first()).toBeVisible()
 
     await page.getByRole('button', { name: 'Solo test' }).click()
-    await expect(page).toHaveURL(/#\/start$/)
+    await expect(page).toHaveURL(/\/start$/)
 
-    await page.goto('/#/race')
-    await page.locator('.tt-race-bar a[href="#/"]').click()
-    await expect(page).toHaveURL(/#\/$/)
+    await page.goto('/race')
+    await page.locator('.tt-race-bar a[href="/"]').click()
+    await expect(page).toHaveURL(/\/$/)
     expectNoErrors(player)
   })
 })

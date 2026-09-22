@@ -1,33 +1,18 @@
-# Robots.txt for TapTest - Typing Speed Test Application
-# https://taptest.in
+# Robots.txt for TapTest — https://www.taptest.in
+#
+# taptest.in redirects to www.taptest.in, so the sitemap is named on the www
+# host. Pointing at the apex would hand every crawler a redirect to follow.
+#
+# /login, /register and /profile are deliberately NOT disallowed here. A page
+# blocked in robots.txt is never fetched, so Google never sees the noindex on
+# it and can still index the bare URL from a link. Those three carry a
+# noindex meta tag instead, which removes them for certain.
 
 User-agent: *
 Allow: /
 
-# Allow all pages for search engine indexing
-Allow: /login
-Allow: /register
-Allow: /profile
-Allow: /test
-
-# Disallow sensitive or unnecessary paths
+# Nothing is served under /api on this host — the API lives on Railway — and
+# this keeps it that way.
 Disallow: /api/
-Disallow: /*.json$
-Disallow: /server/
 
-# Allow access to assets and static files
-Allow: /assets/
-Allow: /models/
-Allow: /*.css$
-Allow: /*.js$
-Allow: /*.png$
-Allow: /*.jpg$
-Allow: /*.svg$
-Allow: /*.woff$
-Allow: /*.woff2$
-
-# Sitemap location
-Sitemap: https://taptest.in/sitemap.xml
-
-# Crawl delay (optional - 1 second between requests)
-Crawl-delay: 1
+Sitemap: https://www.taptest.in/sitemap.xml

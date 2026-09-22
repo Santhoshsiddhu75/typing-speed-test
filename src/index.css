@@ -1040,7 +1040,7 @@ html, body {
   display: inline-flex; align-items: center; justify-content: center; gap: 9px;
   height: 52px; padding: 0 26px; border-radius: 10px;
   font-family: inherit; font-size: 15px; font-weight: 600;
-  cursor: pointer; border: none;
+  cursor: pointer; border: none; text-decoration: none;
   transition: transform .15s ease, box-shadow .15s ease;
 }
 @media (min-width: 640px) { .tt-btn { height: 50px; } }

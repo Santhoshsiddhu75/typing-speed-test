@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Rows } from '@/components/legal/DocPage'
 import DocHeader from '@/components/legal/DocHeader'
 
@@ -27,15 +27,17 @@ const LEVELS = [
 ]
 
 const AboutPage = () => {
-  const navigate = useNavigate()
 
   return (
     <div className="tt-doc">
       <DocHeader />
 
       <div className="tt-doc-masthead tt-about-masthead">
+        {/* The space before the break is deliberate: without it the heading
+            reads as "Most typing testsmeasure the wrong thing." to anything
+            pulling textContent, search engines included. Renders identically. */}
         <h1>
-          Most typing tests
+          Most typing tests{' '}
           <br />
           measure the wrong thing.
         </h1>
@@ -120,9 +122,9 @@ const AboutPage = () => {
 
           <section className="tt-closer">
             <h2>Find out what you actually type at.</h2>
-            <button type="button" className="tt-closer-cta" onClick={() => navigate('/start')}>
+            <Link to="/start" className="tt-closer-cta">
               Start a 1-minute test
-            </button>
+            </Link>
             <p className="tt-quiet" style={{ marginTop: 12 }}>
               No account needed.
             </p>
