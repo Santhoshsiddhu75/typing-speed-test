@@ -342,10 +342,18 @@ test.describe('setup', () => {
 
     await page.getByRole('button', { name: 'Solo test' }).click()
     await expect(page).toHaveURL(/\/start$/)
+    // The URL changes the instant the click lands, but the setup screen is a
+    // lazy chunk still on its way. Navigating on top of that aborts the
+    // module request, and WebKit and Firefox both report an aborted import as
+    // an uncaught page error. Wait for the screen, not just the URL. On
+    // HashRouter this never showed up, because goto('/#/race') only changed
+    // the fragment and left the document — and its pending import — alone.
+    await expect(page.getByRole('button', { name: /^Select .* timer$/ }).first()).toBeVisible()
 
     await page.goto('/race')
     await page.locator('.tt-race-bar a[href="/"]').click()
     await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     expectNoErrors(player)
   })
 })
