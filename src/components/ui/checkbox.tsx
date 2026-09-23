@@ -12,8 +12,24 @@ export interface CheckboxProps
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, label, id, onCheckedChange, checked, ...props }, ref) => {
     const [internalChecked, setInternalChecked] = React.useState(false)
-    const checkboxId = id || React.useId()
-    
+
+    /**
+     * AuthLayout renders its children twice — once for the desktop layout and
+     * once for the phone one, both always in the DOM — so a caller's id like
+     * "remember-me" lands in the document twice. getElementById and
+     * <label for> each resolve to the *first* match, which at phone width is
+     * the copy inside the hidden desktop branch. Tapping the visible box
+     * toggled an input nobody could see, so the checkbox simply did not work
+     * on a phone. A per-instance suffix keeps the two copies apart.
+     */
+    const instanceId = React.useId()
+    const checkboxId = id ? `${id}-${instanceId}` : instanceId
+
+    // Clicking through a ref rather than a document lookup, so this cannot be
+    // fooled by a duplicate id again however the component is reused.
+    const inputRef = React.useRef<HTMLInputElement>(null)
+    React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement)
+
     const isChecked = checked !== undefined ? checked : internalChecked
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,7 +46,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           <input
             type="checkbox"
             id={checkboxId}
-            ref={ref}
+            ref={inputRef}
             checked={isChecked}
             onChange={handleChange}
             className={cn(
@@ -45,7 +61,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
               isChecked && "bg-primary text-primary-foreground",
               props.disabled && "cursor-not-allowed opacity-50"
             )}
-            onClick={() => !props.disabled && document.getElementById(checkboxId)?.click()}
+            onClick={() => !props.disabled && inputRef.current?.click()}
           >
             <Check className={cn(
               "h-3 w-3 transition-opacity",

@@ -351,3 +351,73 @@ for (const route of ['/login', '/register']) {
     expect(errors).toEqual([])
   })
 }
+
+/**
+ * AuthLayout keeps both layouts in the DOM at once — `hidden md:flex` for the
+ * desktop split screen, `md:hidden` for the phone — so every id inside the
+ * form exists twice. The checkbox drove itself with getElementById, which
+ * returns the first match: at phone width that is the copy inside the hidden
+ * desktop branch, so tapping the visible box toggled an input nobody could
+ * see and nobody could sign up. Phone first, because that is where it broke.
+ */
+for (const device of [PHONE, DESKTOP]) {
+  const where = device === PHONE ? 'a phone' : 'a desktop'
+
+  test(`Remember me can be ticked on ${where}`, async ({ browser }) => {
+    const { page, errors } = await open(browser, '/login', device)
+
+    const box = page.locator('input[type="checkbox"]:visible').first()
+    await expect(box).toHaveCount(1)
+    await expect(box).not.toBeChecked()
+
+    // The square, which is a sibling div driving the visually hidden input.
+    await box.locator('xpath=following-sibling::div[1]').click()
+    await expect(box).toBeChecked()
+
+    // And the text, through the native label association. Scoped to the
+    // visible one: both layouts are in the DOM, so there are two labels.
+    await page.locator('label:visible', { hasText: 'Remember me' }).click()
+    await expect(box).not.toBeChecked()
+
+    expect(errors).toEqual([])
+  })
+
+  test(`the terms box can be ticked on ${where}`, async ({ browser }) => {
+    const { page, errors } = await open(browser, '/register', device)
+
+    const box = page.locator('input[type="checkbox"]:visible').first()
+    await expect(box).toHaveCount(1)
+    await expect(box).not.toBeChecked()
+
+    await box.locator('xpath=following-sibling::div[1]').click()
+    await expect(box).toBeChecked()
+
+    expect(errors).toEqual([])
+  })
+}
+
+/** The duplicate ids are what broke the checkbox; none should be left on it. */
+test('no id inside the auth forms is duplicated by the two layouts', async ({ browser }) => {
+  for (const route of ['/login', '/register']) {
+    const { page } = await open(browser, route, PHONE)
+    // open() resolves on load, but the form is a lazy chunk. Without this the
+    // evaluate below runs against an empty #root, finds no ids at all, and
+    // passes whatever the component does — which is how this test first went
+    // green against the very bug it exists to catch.
+    await expect(page.locator('input[type="checkbox"]:visible')).toHaveCount(1)
+
+    const duplicated = await page.evaluate(() => {
+      const seen: Record<string, number> = {}
+      document.querySelectorAll('[id]').forEach((el) => {
+        seen[el.id] = (seen[el.id] ?? 0) + 1
+      })
+      return Object.entries(seen)
+        .filter(([, count]) => count > 1)
+        .map(([id]) => id)
+    })
+    // username and password are still duplicated — a known, separate issue
+    // tracked in DEVELOPMENT_LOG. The checkbox ids must not come back.
+    expect(duplicated, `${route} has duplicate checkbox ids`).not.toContain('remember-me')
+    expect(duplicated, `${route} has duplicate checkbox ids`).not.toContain('accept-terms')
+  }
+})

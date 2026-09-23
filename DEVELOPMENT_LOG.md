@@ -1108,6 +1108,58 @@ work. `/race` is indexable but kept out of the sitemap until its backend
 deploys. Prerendering is a separate branch, after this is live and confirmed
 in Search Console.
 
+## The checkbox nobody could tick on a phone (23 September 2026)
+
+Reported from a phone: "Remember me" and the terms box could not be ticked
+below tablet width. Both worked on a desktop.
+
+`AuthLayout` keeps **both** layouts in the DOM at once — `hidden md:flex` for
+the desktop split screen at line 65, `md:hidden` for the phone at line 109 —
+and renders `{children}` inside each. So the whole form exists twice, and
+every hardcoded id in it exists twice with it. At phone width the live DOM
+held `username x2, password x2, remember-me x2`; on register, `accept-terms x2`
+as well.
+
+`Checkbox` hides the real input with `sr-only` and drives it from a sibling
+div: `document.getElementById(checkboxId).click()`. getElementById returns the
+**first** match, which at phone width is the copy inside the hidden desktop
+branch. Tapping the visible square clicked an input nobody could see, and
+`<label for>` resolved the same way, so the text did not work either. Nobody
+could accept the terms, so nobody could register on a phone.
+
+Fixed in `components/ui/checkbox.tsx`: the id gets a `React.useId()` suffix so
+the two copies cannot collide, and the square clicks through a ref rather than
+a document lookup, so a duplicate id can never fool it again. Nothing outside
+the component referenced those ids.
+
+Measured before and after, tapping the square and the label at 390x844 and
+1280x900:
+
+| | square, before | square, after | label, before | label, after |
+|---|---|---|---|---|
+| /login desktop | ticks | ticks | ticks | ticks |
+| /login phone | **nothing** | ticks | **nothing** | ticks |
+| /register desktop | ticks | ticks | n/a | n/a |
+| /register phone | **nothing** | ticks | n/a | n/a |
+
+On register the label is entirely a button that opens the Terms page
+(`RegisterForm.tsx:561`), so clicking it is meant to navigate rather than tick.
+That is not a bug, and a first pass at measuring this reported it as one.
+
+Guarded by five tests in `tests/race/regression.spec.ts`, phone first. They
+were checked against the unfixed component: the three that matter fail there
+and pass here. The duplicate-id test went green against the bug at first,
+because `open()` resolves on load and the form is a lazy chunk, so it read an
+empty `#root` and compared nothing — it now waits for the form before looking.
+
+**Left alone:** `username`, `password` and `confirmPassword` are still
+duplicated by the same double render. Tapping those fields works, because a
+tap lands on the input itself, but their `<label for>` and `aria-describedby`
+point at the hidden copy, so clicking a field's label focuses an invisible
+input and a screen reader is read the wrong error. The real fix is for
+AuthLayout to render the form once and lay it out with CSS, which is a
+restructure of both layouts rather than a patch.
+
 ## How to run
 
 ```
