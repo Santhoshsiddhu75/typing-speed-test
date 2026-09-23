@@ -1485,6 +1485,12 @@ html, body {
   background: var(--primary); color: var(--primary-foreground);
   font-family: var(--font-serif); font-size: 17px; font-weight: 700;
 }
+/* These became links in September 2026. `.tt-doc a` above sets the green link
+   colour at one notch more specificity than a bare class, so it beat
+   .tt-closer-cta and painted the label --primary-deep on a --primary button:
+   green on green, unreadable. Qualifying with the tag outranks it. */
+.tt-doc a.tt-closer-cta,
+.tt-doc a.tt-closer-cta:hover { color: var(--primary-foreground); }
 .tt-closer-cta:hover { color: var(--primary-foreground); }
 
 @media (max-width: 767px) {

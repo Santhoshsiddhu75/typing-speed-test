@@ -1160,6 +1160,41 @@ input and a screen reader is read the wrong error. The real fix is for
 AuthLayout to render the form once and lay it out with CSS, which is a
 restructure of both layouts rather than a patch.
 
+## Green on green: a regression from the SEO branch (23 September 2026)
+
+Reported: the "Start a 1-minute test" button at the foot of About and Contact
+had text the same colour as the button, so the label was invisible. Those two
+pages are the only places `.tt-closer-cta` is used.
+
+Self-inflicted, in `dbc8153`. That button used to be a `<button>`; the SEO work
+turned it into a `<Link>` so the page linked to /start in a way a crawler could
+follow. Inside `.tt-doc`, anchors are styled by `.tt-doc a` (index.css:1377),
+which sets `--primary-deep`. Its specificity is (0,1,1) — a class plus an
+element — against (0,1,0) for the bare `.tt-closer-cta`, so it won:
+
+    before   color rgb(22,163,74)   on background rgb(34,197,94)
+    after    color rgb(255,255,255) on background rgb(34,197,94)
+
+Hover was the same story: `.tt-doc a:hover` outranked `.tt-closer-cta:hover`.
+Fixed by qualifying with the tag — `.tt-doc a.tt-closer-cta` is (0,2,1) and
+outranks the link rule, for both states.
+
+The `.tt-btn` conversions on the landing page were checked at the time, by
+screenshotting the footer and measuring element positions at 390px. The doc
+pages' closers were not in any of those shots, which is how this shipped.
+
+Guarded by two tests in `tests/race/regression.spec.ts`, asserted against
+`--primary-foreground` rather than a literal white, so they keep their meaning
+if the theme is retuned. Both fail against the unfixed stylesheet.
+
+**Noted, not changed:** white on `--primary` is about 2.3:1, below the 4.5:1
+WCAG AA wants for text this size. That is the brand green, not this bug.
+
+**Also noticed, pre-existing:** the wordmark in `DocHeader` is an `<a>` inside
+`.tt-doc`, so it renders green with a 1px underline on About, Privacy, Terms
+and Contact. `DocHeader.tsx` is byte-identical before and after the SEO branch
+and was not in that commit, so this predates it and is left alone.
+
 ## How to run
 
 ```

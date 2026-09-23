@@ -421,3 +421,35 @@ test('no id inside the auth forms is duplicated by the two layouts', async ({ br
     expect(duplicated, `${route} has duplicate checkbox ids`).not.toContain('accept-terms')
   }
 })
+
+/**
+ * The closing call to action on About and Contact became a link in September
+ * 2026. `.tt-doc a` sets the green link colour with one notch more specificity
+ * than the bare `.tt-closer-cta` class, so it won and painted the label
+ * --primary-deep on a --primary button: green on green, unreadable.
+ *
+ * Asserted against the token rather than a literal colour, so this still means
+ * "the label uses the button's own foreground" if the theme is ever retuned.
+ */
+for (const route of ['/about', '/contact']) {
+  test(`the closing call to action on ${route} is readable`, async ({ browser }) => {
+    const { page, errors } = await open(browser, route)
+
+    const cta = page.locator('.tt-closer-cta')
+    await expect(cta).toBeVisible()
+
+    const seen = await cta.evaluate((el) => {
+      const root = getComputedStyle(document.documentElement)
+      const cs = getComputedStyle(el)
+      return {
+        colour: cs.color,
+        background: cs.backgroundColor,
+        foregroundToken: root.getPropertyValue('--primary-foreground').trim(),
+      }
+    })
+
+    expect(seen.colour, 'label should use the button foreground').toBe(seen.foregroundToken)
+    expect(seen.colour, 'label is the same colour as the button').not.toBe(seen.background)
+    expect(errors).toEqual([])
+  })
+}
