@@ -77,7 +77,9 @@
       "title": "Race a Friend — TapTest Typing Test",
       "description": "Race a friend at typing. Share a room code, both type the same passage, and watch each other's speed update live. Free on TapTest.",
       "index": true,
-      "sitemap": false,
+      "sitemap": true,
+      "changefreq": "monthly",
+      "priority": "0.8",
       "sources": ["src/pages/RacePage.tsx"]
     },
     {

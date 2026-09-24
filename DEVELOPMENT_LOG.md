@@ -1195,6 +1195,20 @@ WCAG AA wants for text this size. That is the brand green, not this bug.
 and Contact. `DocHeader.tsx` is byte-identical before and after the SEO branch
 and was not in that commit, so this predates it and is left alone.
 
+## /race joins the sitemap (24 September 2026)
+
+It was held out because its backend was not deployed and an indexed page that
+answers "could not reach the race server" is worse than no indexed page.
+Railway has served `/race-socket` since 22 September, so the reason is gone.
+Eight URLs now.
+
+The README's only link was `https://taptest-snowy.vercel.app/#/` — the host
+the site left behind and a hash route that no longer exists. It 308s to the
+right place, but a redirect is a weaker signal than naming the canonical host,
+and the repo is currently the top result for "TapTest": Search Console reports
+"Referring page: None detected" for the site itself, so the repo's link is one
+of the few pointing at the domain at all. It now reads www.taptest.in.
+
 ## How to run
 
 ```

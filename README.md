@@ -1,6 +1,9 @@
-# TapTest
+# TapTest — Typing Speed Test
 
-https://taptest-snowy.vercel.app/#/
+**[www.taptest.in](https://www.taptest.in)** — a free typing speed test that
+measures words per minute and accuracy on real prose rather than scrambled
+word lists. One, two and five minute tests, three difficulty levels, and a
+head-to-head race. No account needed.
 
 A modern, responsive TapTest application built with React, TypeScript, TailwindCSS, ShadCN UI, and comprehensive Playwright testing.
 
