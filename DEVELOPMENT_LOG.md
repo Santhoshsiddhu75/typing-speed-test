@@ -1209,6 +1209,51 @@ and the repo is currently the top result for "TapTest": Search Console reports
 "Referring page: None detected" for the site itself, so the repo's link is one
 of the few pointing at the domain at all. It now reads www.taptest.in.
 
+## Google called /race a soft 404 (24 September 2026)
+
+Requesting indexing for `/race` came back **"URL is not available to Google —
+Page cannot be indexed: Soft 404"**, with crawl allowed, fetch successful and
+indexing allowed. Nothing was blocking it; Google fetched the page, looked at
+it, and decided there was nothing there.
+
+Measured against the live site:
+
+| | words rendered |
+|---|---|
+| /race, socket reachable | 47 |
+| /race, socket asleep | 68, including "Could not reach the race server" |
+| /test, indexed without complaint | 495 |
+
+Two causes, and the same fix for both. The page was 47 words, nearly all of
+them button labels — "1 min", "easy", "Join" — with nothing for a reader. And
+Railway's free dyno sleeps, so a crawl that arrives cold reads an error line,
+which is textbook soft-404 material. `/test` carries a 190-word explainer and
+indexed happily; `/race` carried none.
+
+Added the same treatment: three sections under the setup screen on what a race
+is, how the code works, what gets counted, and why the first connection can be
+slow — 47 words to 266. Only on the setup screen: a race in progress must not
+have prose sitting under it, and a test asserts it disappears once a room is
+made. The word count has a floor of 150 in the suite, well under what the copy
+provides, so ordinary edits do not trip it and only losing the section does.
+
+At 390px the name field still sits at y=239.4, the same as the build before
+it, so the race UI itself is untouched.
+
+**This was avoidable.** `/race` went into the sitemap an hour earlier on the
+strength of `/race-socket` answering 200 — the backend was up, so the page was
+declared fit to index. Whether the *page* had anything on it was never checked.
+A sitemap entry is a claim that a URL is worth indexing, and that claim needs
+looking at the rendered page, not at its API.
+
+**A test caught something else on the way in.** Enlarging RacePage widened the
+window on a latent race in `the homepage leads to the race` — the test clicked
+through to /race and called `page.goto('/')` while the lazy chunk was still
+arriving, which Firefox reports as "error loading dynamically imported module".
+It failed 2 runs in 3 there. Same shape as the WebKit failure fixed on
+22 September, same fix: wait for the page, not the URL. 9 for 9 across three
+engines afterwards.
+
 ## How to run
 
 ```

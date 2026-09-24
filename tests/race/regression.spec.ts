@@ -196,6 +196,11 @@ test('the homepage leads to the race from its hero button and from the race sect
   const hero = page.locator('section').first()
   await hero.getByRole('link', { name: 'Race a friend' }).click()
   await expect(page).toHaveURL(/\/race$/)
+  // The URL changes the instant the click lands, but RacePage is a lazy chunk
+  // still arriving. Navigating on top of that aborts the module request, and
+  // Firefox reports "error loading dynamically imported module" as an uncaught
+  // page error. Wait for the page, not just the URL.
+  await expect(page.getByRole('heading', { name: 'Race someone.' })).toBeVisible()
 
   await page.goto('/')
   const section = page.locator('.tt-lr')
@@ -203,6 +208,7 @@ test('the homepage leads to the race from its hero button and from the race sect
   await expect(section.locator('.tt-lr-tick')).toHaveText(['Same passage', 'Same timer', 'See them word by word'])
   await section.getByRole('link', { name: 'Race a friend' }).click()
   await expect(page).toHaveURL(/\/race$/)
+  await expect(page.getByRole('heading', { name: 'Race someone.' })).toBeVisible()
   expect(errors).toEqual([])
 })
 
@@ -453,3 +459,41 @@ for (const route of ['/about', '/contact']) {
     expect(errors).toEqual([])
   })
 }
+
+/**
+ * Google called /race a soft 404 on 24 September and refused to index it: the
+ * page rendered 47 words, nearly all of them button labels, and if the crawl
+ * caught the Railway dyno asleep it also read "Could not reach the race
+ * server". /test, which carries a real explainer, indexed without complaint.
+ *
+ * The floor is deliberately well under what the copy provides, so ordinary
+ * edits do not trip it and only losing the section does.
+ */
+test('the race page carries enough content to be indexable', async ({ browser }) => {
+  const { page, errors } = await open(browser, '/race')
+
+  await expect(page.getByRole('heading', { name: 'Race someone.' })).toBeVisible()
+  for (const heading of ['How a race works', 'What gets counted', 'If it takes a moment to connect']) {
+    await expect(page.getByRole('heading', { name: heading })).toBeVisible()
+  }
+
+  const words = await page.evaluate(
+    () => (document.body.innerText.match(/\S+/g) ?? []).length
+  )
+  expect(words, `/race renders only ${words} words — Google reads that as a soft 404`)
+    .toBeGreaterThan(150)
+
+  expect(errors).toEqual([])
+})
+
+/** The prose belongs to the setup screen; a race in progress must not carry it. */
+test('the race explainer is gone once a race is set up', async ({ browser }) => {
+  const { page } = await open(browser, '/race')
+  await expect(page.getByRole('heading', { name: 'How a race works' })).toBeVisible()
+
+  await page.getByLabel('Your name').fill('Ada')
+  await page.getByRole('button', { name: 'Create a room' }).click()
+  await expect(page.getByRole('heading', { name: 'Send this code.' })).toBeVisible()
+
+  await expect(page.getByRole('heading', { name: 'How a race works' })).toHaveCount(0)
+})

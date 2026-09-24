@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Brain, Check, Copy, Flame, Loader2, Zap } from 'lucide-react'
 import Logo from '@/components/Logo'
 import { ThemeOnlyToggle } from '@/components/ThemeOnlyToggle'
@@ -281,6 +281,7 @@ const RacePage = () => {
 
       {/* ---------------- setup ---------------- */}
       {!room && !invite && (
+        <>
         <div className="tt-stage is-mid tt-race-setup">
           <div className="tt-race-split">
             <div>
@@ -446,6 +447,49 @@ const RacePage = () => {
             </div>
           </div>
         </div>
+
+        {/* Below the fold, and only on the setup screen — a race in progress must
+            not have prose sitting under it. Google called this page a soft 404 on
+            24 September: 47 words, nearly all of them button labels, plus an error
+            line whenever a crawl caught the server asleep. This is the treatment
+            /test got, and /test indexed without complaint. */}
+        <section className="mx-auto w-full max-w-2xl px-6 pb-16 pt-4 text-left sm:px-10">
+          <h2 className="text-lg font-semibold">How a race works</h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            One of you creates a room and gets a six-digit code. The other types it in. That is the
+            whole setup — no account, no link to share, nothing to install.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Both of you then get the same passage and the same clock, so the result means
+            something: you are not comparing two different texts typed for two different lengths.
+            Choose one, two or five minutes, and easy, medium or hard.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            While you type you can see where the other person has reached. Their caret moves
+            through the same line as yours, so you know whether you are a word ahead or a word
+            behind without looking away from what you are typing.
+          </p>
+
+          <h2 className="mt-8 text-lg font-semibold">What gets counted</h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            The same as a solo test. Words per minute is the characters you got right, divided by
+            five, divided by the minutes elapsed. Accuracy is the share of everything you typed
+            that was correct. A mistake costs you twice over: it earns nothing, and it still took
+            time.
+          </p>
+
+          <h2 className="mt-8 text-lg font-semibold">If it takes a moment to connect</h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            The race server sleeps when nobody is using it, so the first race after a quiet spell
+            can take a few seconds to wake up. If it does not connect straight away, wait a moment
+            and try again, or{' '}
+            <Link to="/start" className="text-primary hover:underline">
+              take a solo test
+            </Link>{' '}
+            meanwhile.
+          </p>
+        </section>
+        </>
       )}
 
       {/* ---------------- joining: the code checked out, now who are you ---------------- */}
