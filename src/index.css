@@ -11,6 +11,15 @@
   --popover-foreground: rgb(55, 65, 81);
   --primary: rgb(34, 197, 94);
   --primary-foreground: rgb(255, 255, 255);
+  /* A softened primary, for a control that is present but not yet live.
+     Kept as its own token because --primary is a complete rgb() rather than
+     bare channels, so Tailwind's /alpha modifiers (bg-primary/30) cannot add
+     an alpha to it and silently compute to transparent. */
+  --primary-soft: rgba(34, 197, 94, 0.3);
+  /* The brand green darkened until it is readable as body text. --primary
+     itself sits at about 2:1 on this background — fine for a 128px numeral,
+     unreadable at 14px. On dark the primary is already light enough. */
+  --primary-ink: rgb(21, 128, 61);
   --secondary: rgb(224, 242, 254);
   --secondary-foreground: rgb(75, 85, 99);
   --muted: rgb(243, 244, 246);
@@ -70,6 +79,8 @@
   --popover-foreground: rgb(209, 213, 219);
   --primary: rgb(52, 211, 153);
   --primary-foreground: rgb(15, 23, 42);
+  --primary-soft: rgba(52, 211, 153, 0.25);
+  --primary-ink: rgb(52, 211, 153);
   --secondary: rgb(45, 55, 72);
   --secondary-foreground: rgb(161, 161, 170);
   --muted: rgb(30, 41, 59);
@@ -1041,7 +1052,8 @@ html, body {
   height: 52px; padding: 0 26px; border-radius: 10px;
   font-family: inherit; font-size: 15px; font-weight: 600;
   cursor: pointer; border: none; text-decoration: none;
-  transition: transform .15s ease, box-shadow .15s ease;
+  transition: transform .15s ease, box-shadow .15s ease,
+              background-color .3s ease, color .3s ease, border-color .3s ease;
 }
 @media (min-width: 640px) { .tt-btn { height: 50px; } }
 .tt-btn:hover { transform: translateY(-1px); }
@@ -1058,6 +1070,25 @@ html, body {
   background: transparent; color: var(--foreground);
   border: 2px solid var(--border);
 }
+
+/* Held shut for the first two seconds after a race result, so a player still
+   mid-flow cannot leave the room or restart before reading the numbers. The
+   primary pales, the quiet one greys; both go live together. */
+.tt-btn.is-locked { cursor: default; }
+.tt-btn.is-locked:hover { transform: none; }
+.tt-btn-primary.is-locked {
+  background: var(--primary-soft);
+  color: var(--foreground);
+  box-shadow: none;
+}
+.tt-btn-quiet.is-locked {
+  color: var(--muted-foreground);
+  border-color: var(--muted);
+}
+
+/* A keyword lifted out of running text in the brand green. Named tt-kw, not
+   tt-key: that one is the floating keycap decoration. */
+.tt-kw { color: var(--primary-ink); font-weight: 600; }
 
 /* ---- Demo card ---- */
 

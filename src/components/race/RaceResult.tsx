@@ -13,7 +13,17 @@ interface RaceResultProps {
   rematchFrom?: string | null
   /** No rematch to be had: the opponent walked away after the race. */
   rematchDisabled?: boolean
+  /** The opponent has left while the result is up. Their score still stands. */
+  opponentGone?: boolean
 }
+
+/**
+ * Both players are still mid-flow when the result lands, so for a moment
+ * neither action takes a press: a stray tap used to leave the room or restart
+ * the race before anyone had read the numbers. Matches the solo test's
+ * Back to Setup.
+ */
+const ACTIONS_LOCK_MS = 2000
 
 /** Counts up rather than landing on the number, so the result arrives slowly. */
 const CLIMB_MS = 2200
@@ -56,6 +66,7 @@ export const RaceResult: React.FC<RaceResultProps> = ({
   rematchError,
   rematchFrom,
   rematchDisabled,
+  opponentGone,
 }) => {
   const players = Object.values(room.players)
   const me = room.players[you]
@@ -63,6 +74,14 @@ export const RaceResult: React.FC<RaceResultProps> = ({
 
   const [revealed, setRevealed] = useState(false)
   const [verdict, setVerdict] = useState(false)
+  // Locked from the first paint rather than from an effect, so there is no
+  // frame in which either button is live.
+  const [actionsLocked, setActionsLocked] = useState(true)
+
+  useEffect(() => {
+    const unlock = setTimeout(() => setActionsLocked(false), ACTIONS_LOCK_MS)
+    return () => clearTimeout(unlock)
+  }, [])
 
   const myWpm = useClimb(me?.wpm ?? 0, revealed)
   const theirWpm = useClimb(them?.wpm ?? 0, revealed)
@@ -121,10 +140,21 @@ export const RaceResult: React.FC<RaceResultProps> = ({
               : 'You lost this one.'}
       </div>
 
-      {!theyQuit && !drew && margin > 0 && (
+      {/* Someone leaving does not undo the race they just ran, so the scores
+          stay exactly as they were and only this line changes: the margin is
+          no longer the useful thing to say. */}
+      {opponentGone ? (
         <p className="tt-margin text-center">
-          {iWon ? 'Ahead by' : 'Behind by'} {margin} words per minute
+          {them?.name ?? 'Your opponent'} has left the lobby.
         </p>
+      ) : (
+        !theyQuit &&
+        !drew &&
+        margin > 0 && (
+          <p className="tt-margin text-center">
+            {iWon ? 'Ahead by' : 'Behind by'} {margin} words per minute
+          </p>
+        )
       )}
 
       {rematchError && <div className="tt-race-error tt-result-error">{rematchError}</div>}
@@ -142,13 +172,18 @@ export const RaceResult: React.FC<RaceResultProps> = ({
       <div className="tt-result-actions">
         <button
           type="button"
-          className="tt-btn tt-btn-primary"
+          className={cn('tt-btn tt-btn-primary', actionsLocked && 'is-locked')}
           onClick={onRematch}
-          disabled={Boolean(theyQuit) || Boolean(rematchDisabled)}
+          disabled={actionsLocked || Boolean(theyQuit) || Boolean(rematchDisabled)}
         >
           Rematch
         </button>
-        <button type="button" className="tt-btn tt-btn-quiet" onClick={onLeave}>
+        <button
+          type="button"
+          className={cn('tt-btn tt-btn-quiet', actionsLocked && 'is-locked')}
+          onClick={onLeave}
+          disabled={actionsLocked}
+        >
           Leave
         </button>
       </div>

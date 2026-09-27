@@ -10,12 +10,19 @@ import FeedbackModal from '@/components/FeedbackModal';
 interface NavbarProps {
   showBackButton?: boolean;
   backUrl?: string;
+  /**
+   * Drops the bar's own surface — background, blur and bottom border — and
+   * makes the empty middle inert. For the typing test, where the timer
+   * scrolls up to the top of the screen and must stay legible.
+   */
+  transparent?: boolean;
   className?: string;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ 
   showBackButton = true, 
   backUrl = '/',
+  transparent = false,
   className 
 }) => {
   const navigate = useNavigate();
@@ -82,7 +89,15 @@ const Navbar: React.FC<NavbarProps> = ({
   return (
     <header 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm",
+        "fixed top-0 left-0 right-0 z-50",
+        // The typing test scrolls the timer right up to the top of the screen,
+        // so there the bar must not exist as a surface at all — a tinted,
+        // blurred panel would sit over the numbers. Only the two clusters
+        // remain, and the empty middle stops taking pointer events so nothing
+        // invisible can swallow a tap.
+        transparent
+          ? "pointer-events-none"
+          : "border-b border-border/50 bg-background/80 backdrop-blur-sm",
         "mobile-safe-navbar", // Add custom CSS class for mobile safe area
         className
       )}
@@ -101,7 +116,10 @@ const Navbar: React.FC<NavbarProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleBackClick}
-                className="text-muted-foreground hover:text-foreground p-1.5 sm:p-2 flex-shrink-0"
+                className={cn(
+                  "text-muted-foreground hover:text-foreground p-1.5 sm:p-2 flex-shrink-0",
+                  transparent && "pointer-events-auto"
+                )}
                 aria-label="Go back"
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -112,7 +130,10 @@ const Navbar: React.FC<NavbarProps> = ({
             <Link
               to="/"
               aria-label="TapTest home"
-              className="flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className={cn(
+                "flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                transparent && "pointer-events-auto"
+              )}
             >
               <img
                 src="/assets/logounpress-192.webp"
@@ -125,7 +146,10 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Right side: Profile/Login + Feedback + Theme Toggle */}
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+          <div className={cn(
+            "flex items-center space-x-2 sm:space-x-3 flex-shrink-0",
+            transparent && "pointer-events-auto"
+          )}>
             {/* Profile Picture or Login */}
             <Button
               variant="outline"

@@ -1254,6 +1254,131 @@ It failed 2 runs in 3 there. Same shape as the WebKit failure fixed on
 22 September, same fix: wait for the page, not the URL. 9 for 9 across three
 engines afterwards.
 
+## The typing screen stops moving, and five more (27 September 2026)
+
+Six changes to the pages people actually type on, all reported from a phone.
+
+### The screen that would not sit still
+
+The whole test page slid up and down while typing. The cause was mine.
+`TypingTestScreen` has a mobile-only `doTypingFieldScroll()` doing a *smooth*
+`scrollIntoView({ block: 'start' })` on the timer, fired on mount, on every
+focus and on every tap of the field. `index.css` pins `html, body` to
+`position: fixed; overflow: hidden` and makes `#root` the scroll container,
+under comments reading "CRITICAL: Prevent any scrolling when typing input is
+focused". The page was built to fit the viewport exactly so that call has
+nowhere to go. The 190-word explainer added on 22 September took it from 754px
+to 1846px and handed it somewhere to scroll.
+
+    viewport     scroll room live    after
+    390x844      1002px              0px, the page fits
+    390x740      1106px              14px
+    390x664      1182px              90px, pre-existing at that height
+
+Live it was displaced 144px before the player even tapped. `TypingTestScreen.tsx`
+was restored to its pre-SEO state byte for byte. On a 390x844 phone
+`#root.scrollTop` now reads 0 -> 0 -> 0 through tapping and typing, timer
+pinned at 144px, field at 464px.
+
+/test keeps 276 words because the passage itself is prose, so it stays
+indexable and stays in the sitemap — the second-richest page on the site,
+against /start's 102, which Google took happily.
+
+### A navbar with no surface
+
+On /test the timer scrolls up under the header and was being blurred out by it.
+There was never a background colour to remove: `bg-background/80` computes to
+`rgba(0, 0, 0, 0)` (see below). What sat over the timer was `backdrop-blur-sm`
+plus a 1px border.
+
+`Navbar` grew a `transparent` prop, passed only by `TypingTestScreen`: no
+background, no blur, no border, `pointer-events: none` on the header with
+`pointer-events: auto` on the two clusters, so the empty middle cannot swallow
+a tap. /start and /profile are untouched — same classes, same computed styles,
+verified before and after.
+
+### Two seconds before a button will take a press
+
+A test ends mid-word and the player is still in flow; the next tap landed on a
+button and threw away the result. Back to Setup on /test, and Rematch and Leave
+on the race result, now stay shut for 2000ms.
+
+Locked from the first paint, not from an effect, so there is no frame in which
+they are live. Measured: locked at t=0, still locked at 1.5s, live at 2.2s;
+in real time the unlock landed at 1.9s. Stray taps during the lock change
+nothing and leave the result on screen.
+
+Back to Setup pales to `--primary-soft` with `--foreground` text: 7.58:1 in
+light, 7.11:1 in dark. Rematch pales the same way, Leave greys to
+`--muted-foreground`.
+
+### /race, a third of the words
+
+The explainer was cut from 266 words to about 113, with the keywords carried in
+the brand green. The page reads 192 words (176 at 390px), which keeps it clear
+of the 47-word thinness Google called a soft 404 on 24 September.
+
+The brand green is unreadable as body text — about 2:1 on the light background,
+fine for a 128px numeral and not for 14px. `--primary-ink` is a darkened green
+for light mode and the existing green for dark: 4.68:1 and 9.29:1.
+
+### A name you only type once
+
+Players go race, solo test, race again, retyping their name each time. It is
+now kept in `localStorage` under `taptest.race.name`, mirroring the existing
+`readSeat`/`writeSeat` pattern. localStorage rather than the sessionStorage the
+seat uses: a seat belongs to one tab and must not outlive it, a name should
+still be there tomorrow. Both name fields share one state, so create and join
+both prefill. Clearing the field forgets it rather than storing "". With writes
+rejected, as in private mode, the field still works and the room still opens.
+
+### A player who leaves does not unwin the race
+
+Leaving after a result wiped the opponent from the scoreboard: their name
+became "Opponent" and their score animated down to 0. Worse, with both scores
+at 0 `drew` became true, so a loss was silently rewritten as "A dead heat."
+
+    live      Ada / Opponent    0 / 0        "A dead heat."
+    after     Ada / Grace       0 / 6451     "You lost this one."
+                                             "Grace has left the lobby."
+
+The server deletes a player on Leave when the room is not running
+(`rooms.ts:383`), and a finished race is not running, so the client loses the
+opponent object entirely and `Stand` falls back to its label. Fixed on the
+client rather than the backend, which would have meant a Railway deploy:
+`lastResult` was re-snapshotting on every finished update, so the depleted room
+overwrote the good one. It now keeps anyone who disappears, marked
+disconnected, and the result reads from the snapshot. A new `opponentGone` flag
+drives the message, kept separate from `theyQuit`, which means quitting
+mid-race without finishing.
+
+### Trap
+
+Two invented `tt-` class names were already taken, and both failed silently.
+`.tt-race-note` is an existing inline note at `display: inline-flex`; a
+`<section>` given it laid its paragraphs out side by side and produced
+horizontal scroll at 390px. `.tt-key` is the floating keycap decoration
+(`position: absolute`, gradient, animation); a new rule of the same name
+overrode the real one site-wide and would have shipped green keycaps on the
+homepage. Renamed `.tt-race-about` and `.tt-kw`. Grep `src/index.css` before
+naming anything `tt-`.
+
+The other trap is the one behind the navbar: TapTest's theme tokens are
+complete colour functions (`--primary: rgb(34, 197, 94)`) mapped straight
+through as `primary: "var(--primary)"`, so Tailwind cannot inject an alpha.
+Every `/alpha` modifier on them — `bg-primary/30`, `bg-background/80`,
+`bg-card/80` — computes to transparent with no error. The navbar pills are
+rings with no fill for this reason. Use a token, not a modifier, and check with
+`getComputedStyle` rather than by reading the class list.
+
+The first was caught by `phone, 390px › every phase fits`, asserting no
+sideways scroll. That same run also showed that piping a Playwright run through
+`tail` reports tail's exit code, not Playwright's; a failure had been sitting
+under a reported "exit 0".
+
+Two tests were removed with the copy they guarded: the /race word-count floor
+and the one asserting the explainer disappears once a room is made. 64 pass.
+
 ## How to run
 
 ```

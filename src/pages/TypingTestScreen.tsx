@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
@@ -30,7 +30,7 @@ import {
 } from 'lucide-react'
 import { TimerOption, DifficultyLevel, TypingStats, CharacterState, TestResult } from '@/types'
 import { getRandomText } from '@/data/texts'
-import { formatTime, calculateWPM, calculateCPM, calculateAccuracy } from '@/lib/utils'
+import { cn, formatTime, calculateWPM, calculateCPM, calculateAccuracy } from '@/lib/utils'
 import { saveTypingTestResult } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
 import { SplitText } from '@/components/SplitText'
@@ -39,6 +39,13 @@ import { Toggle } from '@/components/ui/toggle'
 import { CircularTimer } from '@/components/CircularTimer'
 import Navbar from '@/components/Navbar'
 import AdBanner from '@/components/AdBanner'
+
+/**
+ * How long Back to Setup stays shut once the results appear. The test ends
+ * mid-word, the modal lands under the player's fingers, and a stray tap used
+ * to navigate away from the score they had just earned.
+ */
+const BACK_TO_SETUP_LOCK_MS = 2000
 
 const TypingTestScreen = () => {
   const navigate = useNavigate()
@@ -65,6 +72,7 @@ const TypingTestScreen = () => {
   const [isTestActive, setIsTestActive] = useState(false)
   const [isTestComplete, setIsTestComplete] = useState(false)
   const [showResults, setShowResults] = useState(false)
+  const [backToSetupLocked, setBackToSetupLocked] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(timer * 60)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [scrollOffset, setScrollOffset] = useState(0)
@@ -165,6 +173,18 @@ const TypingTestScreen = () => {
     }
   }, [showResults])
 
+  // Keyboard input is already swallowed while the results are up, so the only
+  // way a stray press lands is a tap. Hold the button shut for a moment.
+  useEffect(() => {
+    if (!showResults) {
+      setBackToSetupLocked(false)
+      return
+    }
+    setBackToSetupLocked(true)
+    const unlock = setTimeout(() => setBackToSetupLocked(false), BACK_TO_SETUP_LOCK_MS)
+    return () => clearTimeout(unlock)
+  }, [showResults])
+
   // Trigger split animation on page load
   useEffect(() => {
     setShowSplitAnimation(true)
@@ -225,6 +245,9 @@ const TypingTestScreen = () => {
             setIsTestActive(false)
             setIsTestComplete(true)
             setShowResults(true)
+            // Set here as well as in the effect below, so the button is
+            // already shut on the modal's first paint rather than a frame later.
+            setBackToSetupLocked(true)
             return 0
           }
           return prev - 1
@@ -788,7 +811,7 @@ const TypingTestScreen = () => {
         paddingTop: 'max(env(safe-area-inset-top), 20px)'
       }}
     >
-      <Navbar backUrl="/" />
+      <Navbar backUrl="/" transparent />
         {/* Large Background Circle centered on timer */}
         <div className="absolute inset-0 flex items-start justify-center pt-[200px] md:pt-[220px] z-0">
         <div 
@@ -819,16 +842,8 @@ const TypingTestScreen = () => {
       </div>
       
       <div className="max-w-6xl mx-auto space-y-6 relative z-10">
-        {/* The page's one real heading. This was an empty spacer clearing the
-            fixed navbar, so the padding drops by exactly the height of the
-            line it now holds (48+16, 60+20, 76+20) and nothing below moves.
-            Set small and quiet on purpose: the test is the page, not its
-            title. */}
-        <div className="pt-12 sm:pt-[60px] md:pt-[76px] text-center">
-          <h1 className="text-xs sm:text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Typing Speed Test
-          </h1>
-        </div>
+        {/* Content Area */}
+        <div className="pt-16 sm:pt-20 md:pt-24"></div>
 
         {/* Stats Display */}
         <div className="flex items-center justify-center max-w-2xl mx-auto gap-3 sm:gap-6 md:gap-8">
@@ -1059,63 +1074,15 @@ const TypingTestScreen = () => {
 
         {/* Back to Setup Button */}
         <div className="flex justify-center mt-6">
-          <Button asChild variant="outline" className="flex items-center gap-2">
-            <Link to="/">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Setup Screen
-            </Link>
+          <Button 
+            onClick={() => navigate('/')}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Setup Screen
           </Button>
         </div>
-
-        {/* Below the test, so it cannot push the typing area around, and
-            because anyone arriving here from a search deserves an answer to
-            "what do these numbers actually mean". Every figure below is the
-            one lib/utils.ts computes. */}
-        <section className="mx-auto max-w-2xl px-1 pb-14 pt-12 text-left">
-          <h2 className="text-lg font-semibold">How the numbers are worked out</h2>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            A word counts as five characters. That is the convention every typing test uses, so
-            60&nbsp;WPM here means what it means anywhere else.
-          </p>
-
-          <h3 className="mt-6 text-sm font-semibold">Words per minute</h3>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Only the characters you got right are counted. TapTest divides them by five, then by
-            the minutes you have been typing. A mistake costs you twice over: it earns nothing, and
-            it still took time.
-          </p>
-
-          <h3 className="mt-5 text-sm font-semibold">Accuracy</h3>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Correct characters as a share of everything you typed. It updates as you go, so you can
-            watch it drop the moment you start guessing at a long word.
-          </p>
-
-          <h3 className="mt-5 text-sm font-semibold">Characters per minute</h3>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            The same correct characters without the divide-by-five — useful if you are practising
-            for an exam scored in keystrokes rather than words.
-          </p>
-
-          <h2 className="mt-9 text-lg font-semibold">Taking the test</h2>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Choose one, two or five minutes, and easy, medium or hard. Difficulty here is average
-            word length — about 3.8, 5.9 and 8.0 characters — rather than rare words for their own
-            sake. Every passage is real prose, so you type the punctuation and capital letters you
-            would actually meet in writing.
-          </p>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Nothing is stored unless you sign in and choose to save a result.{' '}
-            <Link to="/start" className="text-primary hover:underline">
-              Set up another test
-            </Link>
-            , or read{' '}
-            <Link to="/about" className="text-primary hover:underline">
-              how the passages are graded
-            </Link>
-            .
-          </p>
-        </section>
 
         {/* Results Modal */}
         <Dialog open={showResults} onOpenChange={handleCloseResults}>
@@ -1244,8 +1211,16 @@ const TypingTestScreen = () => {
               {/* Back to Setup Button */}
               <Button 
                 onClick={handleBackToSetup} 
+                disabled={backToSetupLocked}
                 variant={isAuthenticated && !isResultSaved ? "outline" : "default"}
-                className="w-full"
+                className={cn(
+                  "w-full transition-colors duration-300",
+                  // Pale green while it is shut, then the ordinary button.
+                  // Dark text rather than white: white on a 30% green reads at
+                  // about 1.6:1, which is the green-on-green trap again.
+                  backToSetupLocked &&
+                    "disabled:opacity-100 bg-[var(--primary-soft)] text-foreground border-transparent hover:bg-[var(--primary-soft)]"
+                )}
                 data-testid="back-to-setup-button"
               >
                 <Home className="w-4 h-4 mr-2" />

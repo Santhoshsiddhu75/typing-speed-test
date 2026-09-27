@@ -26,6 +26,35 @@ const JOIN_MESSAGES: Record<JoinFailure, string> = {
  */
 const NAME_MAX = 8
 
+const NAME_STORAGE = 'taptest.race.name'
+
+/**
+ * The one thing a player has to type before they can race, and they go back and
+ * forth — a race, a solo test, another race — retyping it every time.
+ *
+ * localStorage rather than the sessionStorage the seat uses: a seat belongs to
+ * one tab and must not outlive it, whereas a name should still be here
+ * tomorrow. Nothing here is sensitive; it is at most eight characters, and it
+ * never leaves the device until the player opens a room.
+ */
+function readName(): string {
+  try {
+    return (localStorage.getItem(NAME_STORAGE) ?? '').slice(0, NAME_MAX)
+  } catch {
+    // Private mode, or storage refused. The field simply starts empty.
+    return ''
+  }
+}
+
+function writeName(name: string) {
+  try {
+    if (name) localStorage.setItem(NAME_STORAGE, name)
+    else localStorage.removeItem(NAME_STORAGE)
+  } catch {
+    // Storage refused. The name just will not be remembered next time.
+  }
+}
+
 const LEVELS: { id: Difficulty; Icon: typeof Zap }[] = [
   { id: 'easy', Icon: Zap },
   { id: 'medium', Icon: Brain },
@@ -53,7 +82,7 @@ const RacePage = () => {
     leave,
   } = useRace()
 
-  const [name, setName] = useState('')
+  const [name, setName] = useState(readName)
   const [code, setCode] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [timer, setTimer] = useState<TimerOption>(1)
@@ -68,15 +97,36 @@ const RacePage = () => {
   const [rematchError, setRematchError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+
+  // Remember the name as it is typed, so it is there on the next visit whether
+  // or not this one ends in a race.
+  useEffect(() => {
+    writeName(name)
+  }, [name])
   // The last finished race. Kept for whoever is still reading it after the
   // other player has pressed Rematch, which resets the room underneath them.
   const [lastResult, setLastResult] = useState<Room | null>(null)
   const opponentWasConnected = useRef<boolean | null>(null)
 
   useEffect(() => {
-    if (!room) setLastResult(null)
-    else if (room.status === 'finished') setLastResult(room)
-    else if (room.status === 'countdown') setLastResult(null)
+    if (!room) return setLastResult(null)
+    if (room.status === 'countdown') return setLastResult(null)
+    if (room.status !== 'finished') return
+
+    setLastResult((prev) => {
+      // Keep everyone who was on the scoreboard when the race ended. The
+      // server deletes a player from the room the instant they press Leave,
+      // and a finished race does not count as running (rooms.ts: "how ===
+      // 'left' && !running"), so without this their name and score disappear
+      // from a result the other player is still reading — the name falls back
+      // to "Opponent" and the score animates down to 0.
+      if (!prev || prev.code !== room.code) return room
+      const players = { ...room.players }
+      for (const [id, player] of Object.entries(prev.players)) {
+        if (!players[id]) players[id] = { ...player, connected: false }
+      }
+      return { ...room, players }
+    })
   }, [room])
 
   // A disconnect is worth telling the other player about, but not worth
@@ -199,9 +249,14 @@ const RacePage = () => {
   // once the other player has reset the room and gone back to the lobby.
   const onResult =
     phase === 'finished' || (phase === 'waiting' && Boolean(me && !me.inLobby && lastResult))
-  const resultRoom = phase === 'finished' ? room : lastResult
+  // The snapshot first: it still holds anyone who has since walked out.
+  const resultRoom = phase === 'finished' ? (lastResult ?? room) : lastResult
   // The opponent reset the room for a rematch and then walked away from it.
   const opponentWalked = phase === 'waiting' && onResult && (!them || !them.connected)
+  // Gone from the live room while the result is still up — which is not the
+  // same as quitting mid-race. Their score stands; they are simply not there
+  // any more. Read from the live room, never from the frozen snapshot.
+  const opponentGone = Boolean(onResult && (!them || !them.connected))
   // Two seats filled, both back, not started: that is the ready gate.
   const atGate = phase === 'waiting' && seated.length === 2 && !onResult
 
@@ -448,45 +503,34 @@ const RacePage = () => {
           </div>
         </div>
 
-        {/* Below the fold, and only on the setup screen — a race in progress must
-            not have prose sitting under it. Google called this page a soft 404 on
-            24 September: 47 words, nearly all of them button labels, plus an error
-            line whenever a crawl caught the server asleep. This is the treatment
-            /test got, and /test indexed without complaint. */}
-        <section className="mx-auto w-full max-w-2xl px-6 pb-16 pt-4 text-left sm:px-10">
+        {/* Below the fold, and only on the setup screen — a race in progress
+            must not have prose sitting under it. Google called this page a soft
+            404 on 24 September, when it was 47 words of button labels. Kept
+            deliberately short this time: the keywords carry it. */}
+        <section className="tt-race-about mx-auto w-full max-w-2xl px-6 pb-16 pt-4 text-left sm:px-10">
           <h2 className="text-lg font-semibold">How a race works</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            One of you creates a room and gets a six-digit code. The other types it in. That is the
-            whole setup — no account, no link to share, nothing to install.
+            Create a room and share the <span className="tt-kw">six-digit code</span>. Your
+            opponent types it in — <span className="tt-kw">no account, nothing to install</span>.
           </p>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Both of you then get the same passage and the same clock, so the result means
-            something: you are not comparing two different texts typed for two different lengths.
-            Choose one, two or five minutes, and easy, medium or hard.
-          </p>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            While you type you can see where the other person has reached. Their caret moves
-            through the same line as yours, so you know whether you are a word ahead or a word
-            behind without looking away from what you are typing.
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Pick <span className="tt-kw">1, 2 or 5 minutes</span> and{' '}
+            <span className="tt-kw">easy, medium or hard</span>. While you type you can see how far
+            they have got — a word ahead, or a word behind, without looking away.
           </p>
 
-          <h2 className="mt-8 text-lg font-semibold">What gets counted</h2>
+          <h2 className="mt-8 text-lg font-semibold">What counts</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            The same as a solo test. Words per minute is the characters you got right, divided by
-            five, divided by the minutes elapsed. Accuracy is the share of everything you typed
-            that was correct. A mistake costs you twice over: it earns nothing, and it still took
-            time.
+            <span className="tt-kw">Words per minute</span> is your correct characters divided by
+            five, then by the minutes elapsed. <span className="tt-kw">Accuracy</span> is the share
+            of what you typed that was right. A mistake earns nothing and still costs time.
           </p>
 
-          <h2 className="mt-8 text-lg font-semibold">If it takes a moment to connect</h2>
+          <h2 className="mt-8 text-lg font-semibold">If it is slow to start</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            The race server sleeps when nobody is using it, so the first race after a quiet spell
-            can take a few seconds to wake up. If it does not connect straight away, wait a moment
-            and try again, or{' '}
-            <Link to="/start" className="text-primary hover:underline">
-              take a solo test
-            </Link>{' '}
-            meanwhile.
+            The race server <span className="tt-kw">sleeps when nobody is using it</span>, so the
+            first race after a quiet spell takes a few seconds to wake. Wait a moment, or{' '}
+            <Link to="/start" className="tt-kw underline underline-offset-2">take a solo test</Link>.
           </p>
         </section>
         </>
@@ -702,6 +746,7 @@ const RacePage = () => {
           rematchError={rematchError ?? (opponentWalked ? 'Your opponent has left the room.' : null)}
           rematchFrom={phase === 'waiting' && them?.inLobby ? them.name : null}
           rematchDisabled={opponentWalked}
+          opponentGone={opponentGone}
           onLeave={handleLeave}
         />
       )}
