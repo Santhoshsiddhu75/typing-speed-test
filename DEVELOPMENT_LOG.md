@@ -1379,6 +1379,63 @@ under a reported "exit 0".
 Two tests were removed with the copy they guarded: the /race word-count floor
 and the one asserting the explainer disappears once a room is made. 64 pass.
 
+## Caps Lock that barely lit, and a Back that went home (27 September 2026)
+
+### The Caps Lock badge
+
+The badge beside "Type the text below" shows a green capital A while Caps Lock
+is on and a grey lowercase a while it is off. The logic was right — fed a key
+event reporting Caps Lock on, it produced exactly that — but it only ever
+sampled from key events inside the typing area, which is not how the key is
+used.
+
+    Caps Lock pressed before the field has focus     stayed grey
+    pressed while focus is on the navbar or page     stayed grey
+    switched off in Firefox                          stuck on A
+    pressed mid-typing                               worked
+
+Firefox is the sharp one: it fires keydown when Caps Lock goes on but only
+keyup when it goes off, so reading keydown alone leaves the badge stuck on.
+It now samples from any key event on the document, on keydown and on keyup.
+
+On a phone it cannot work at all, and that is not fixable here. A soft
+keyboard's shift state lives in the IME and is never exposed to the page, so
+getModifierState('CapsLock') is always false. The same limitation is already
+worked around a few lines above: mobile typing arrives through
+handleHiddenInputChange, the input event, because soft keyboards do not send
+usable key events. The only way to light the badge on a phone would be to infer
+it from what was typed — two consecutive characters differing from the passage
+by case alone would be proof, since a single one is just a sentence start.
+Considered, not built.
+
+### Back to Setup went to the landing page
+
+`/` is the LandingPage and `/start` is the SetupScreen. Every route back from a
+test pointed at the first:
+
+    navbar back arrow                     /  ->  /start
+    "Back to Setup Screen", page bottom   /  ->  /start
+    "Back to Setup", results modal        /  ->  /start
+    leave-without-saving confirmation     /  ->  /start
+
+All four are a fresh navigate(), so SetupScreen remounts with currentStep at
+its default of 'timer'. It reads nothing from the URL or from storage, so it
+cannot open on the difficulty step. Walked end to end on a phone and a desktop:
+2 min -> hard -> /test?timer=2&difficulty=hard -> back arrow -> /start, on the
+timer step.
+
+Two assertions in the older suite expected '/' after that click and were
+updated with it. Those files carry other staleness that is left alone —
+typing-test.spec.ts still expects an h1 of "Setup Your Test", which has not
+existed since the SEO work, and a goBack() assertion nearby is unrelated.
+
+### Tried and reverted
+
+Hiding "Type the text below" and the Caps Lock badge on phones only, to close
+the gap between the timer and the text field. It worked: 52px closer at every
+phone size, page height 754px -> 702px, desktop untouched. Rejected — the badge
+is wanted and the heading with it. Recorded so it is not proposed again.
+
 ## How to run
 
 ```

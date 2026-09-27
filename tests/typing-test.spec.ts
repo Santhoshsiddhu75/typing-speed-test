@@ -152,7 +152,7 @@ test.describe('Typing Test Screen', () => {
     await page.locator('text=Back to Setup').click()
     
     // Check we're back on setup screen
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/start')
     await expect(page.locator('h1')).toContainText('Setup Your Test')
   })
 

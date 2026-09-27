@@ -131,7 +131,7 @@ test.describe('Complete Application Flow', () => {
     
     // Test return to setup
     await page.locator('text=Back to Setup').click()
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/start')
   })
 
   test('Error handling - Invalid URL parameters', async ({ page }) => {

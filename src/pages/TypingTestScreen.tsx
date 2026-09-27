@@ -395,6 +395,25 @@ const TypingTestScreen = () => {
     }
   }, [isTestComplete, difficulty, timer])
 
+  /**
+   * Caps Lock, sampled from any key event on the page.
+   *
+   * Reading it only inside the typing area misses the ordinary cases: the key
+   * is usually pressed before the field has focus, or while focus is on the
+   * navbar, or it was already on when the page opened. keyup as well as
+   * keydown because Firefox fires keydown when Caps Lock goes on but only
+   * keyup when it goes off, which would otherwise leave the badge stuck at A.
+   */
+  useEffect(() => {
+    const sample = (e: KeyboardEvent) => setIsCapsLockOn(e.getModifierState('CapsLock'))
+    document.addEventListener('keydown', sample)
+    document.addEventListener('keyup', sample)
+    return () => {
+      document.removeEventListener('keydown', sample)
+      document.removeEventListener('keyup', sample)
+    }
+  }, [])
+
   // Handle key events from either input method
   const handleKeyInput = (e: React.KeyboardEvent, fromHiddenInput = false) => {
     if (isTestComplete || showResults) return
@@ -688,13 +707,13 @@ const TypingTestScreen = () => {
     if (!isResultSaved && isAuthenticated) {
       setShowUnsavedWarning(true)
     } else {
-      navigate('/')
+      navigate('/start')
     }
   }
 
   const handleConfirmBackWithoutSaving = () => {
     setShowUnsavedWarning(false)
-    navigate('/')
+    navigate('/start')
   }
 
   const handleCloseResults = (open: boolean) => {
@@ -811,7 +830,10 @@ const TypingTestScreen = () => {
         paddingTop: 'max(env(safe-area-inset-top), 20px)'
       }}
     >
-      <Navbar backUrl="/" transparent />
+      {/* Back from a test means the setup screen it came from, not the
+          landing page. SetupScreen mounts fresh, so it opens on its first
+          step, the timer. */}
+      <Navbar backUrl="/start" transparent />
         {/* Large Background Circle centered on timer */}
         <div className="absolute inset-0 flex items-start justify-center pt-[200px] md:pt-[220px] z-0">
         <div 
@@ -1075,7 +1097,7 @@ const TypingTestScreen = () => {
         {/* Back to Setup Button */}
         <div className="flex justify-center mt-6">
           <Button 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/start')}
             variant="outline"
             className="flex items-center gap-2"
           >
