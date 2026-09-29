@@ -5,11 +5,6 @@ import { ThemeOnlyToggle } from '@/components/ThemeOnlyToggle'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
-interface LandingNavProps {
-  /** Scrolls to the demo section; an href anchor cannot be used here. */
-  onSeeDemo: () => void
-}
-
 /**
  * The landing page's own bar, in two states.
  *
@@ -22,7 +17,7 @@ interface LandingNavProps {
  * text can never sit on top of page text — which is why there is no blurred
  * scrim behind them: with solid islands it only smeared the page into a ghost.
  */
-export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
+export const LandingNav: React.FC = () => {
   const { isAuthenticated } = useAuth()
   const [scrolled, setScrolled] = useState(false)
 
@@ -85,14 +80,6 @@ export const LandingNav: React.FC<LandingNavProps> = ({ onSeeDemo }) => {
             )}
           >
             <div className="flex items-center gap-6">
-              {/* Dropped at phone width — the hero's own button sits right under it. */}
-              <button
-                type="button"
-                onClick={onSeeDemo}
-                className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline"
-              >
-                See it work
-              </button>
               <Link
                 to={isAuthenticated ? '/profile' : '/login'}
                 className="whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground"

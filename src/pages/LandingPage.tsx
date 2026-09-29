@@ -25,7 +25,7 @@ const LandingPage = () => {
 
   return (
     <div className="tt-landing min-h-screen">
-      <LandingNav onSeeDemo={scrollToDemo} />
+      <LandingNav />
 
       {/* One ground under every section above the footer, so the washes and
           the keycaps carry on down the page instead of stopping at the

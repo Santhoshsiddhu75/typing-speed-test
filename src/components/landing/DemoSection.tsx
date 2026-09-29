@@ -177,7 +177,10 @@ export const DemoSection = forwardRef<DemoHandle>((_props, ref) => {
             <div className="tt-bar-fill" style={{ width: `${progress}%` }} />
           </div>
 
-          <div className="mt-[18px] flex items-center gap-[30px] border-t border-border/60 pt-4">
+          {/* The run's numbers, and once it is over the two things to do about
+              them, on the same line. The sentence that used to sit below only
+              repeated the figures already standing here. */}
+          <div className="mt-[18px] flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-border/60 pt-4 sm:gap-x-[30px]">
             <div className="flex items-baseline gap-1.5">
               <span className="tt-stat-num tabular-nums">{wpm}</span>
               <span className="tt-stat-label">WPM</span>
@@ -186,16 +189,9 @@ export const DemoSection = forwardRef<DemoHandle>((_props, ref) => {
               <span className="tt-stat-num tabular-nums">{accuracy}%</span>
               <span className="tt-stat-label">ACCURACY</span>
             </div>
-          </div>
 
-          {finished && (
-            <div className="mt-5 flex flex-col items-stretch justify-between gap-5 border-t border-border/60 pt-5 sm:flex-row sm:items-center">
-              <p className="text-[19px] leading-snug">
-                That run was <b className="font-semibold text-primary">{wpm} WPM</b> at{' '}
-                <b className="font-semibold text-primary">{accuracy}%</b> accuracy.
-              </p>
-
-              <div className="flex items-center gap-3">
+            {finished && (
+              <div className="ml-auto flex items-center gap-3">
                 <button
                   type="button"
                   onClick={play}
@@ -205,16 +201,13 @@ export const DemoSection = forwardRef<DemoHandle>((_props, ref) => {
                 >
                   <RotateCcw className="h-[18px] w-[18px]" />
                 </button>
-                <Link
-                  to="/start"
-                  className="tt-btn tt-btn-primary flex-1 sm:flex-none"
-                >
+                <Link to="/start" className="tt-btn tt-btn-primary">
                   Try it
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </section>

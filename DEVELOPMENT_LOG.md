@@ -1545,6 +1545,26 @@ page, or deleting.
 Separately, `npm run lint` has been broken repo-wide for some time — ESLint cannot
 resolve the config "@typescript-eslint/recommended". Left alone.
 
+## Landing page: two things that were saying it twice (29 September 2026)
+
+"See it work" left the landing nav. It was desktop-only (`hidden sm:inline`) and
+scrolled to the demo, which the hero's own "Or watch a full test first" line
+already does, sitting directly under the buttons. The `onSeeDemo` prop went with
+it, so LandingNav now takes none; `scrollToDemo` stays in LandingPage for the
+hero link.
+
+In the demo card, the run used to end with "That run was 83 WPM at 98%
+accuracy." directly beneath a row already reading 83 WPM / 98% ACCURACY. The
+sentence is gone and the Replay and Try it buttons moved up into that stats row.
+
+It does not fit on a phone. The row needs 388px of content width; at a 390px
+viewport it has 312, and at 430 it has 352 — so the buttons wrap to a second
+line below 486px or so, right-aligned under the numbers, and sit beside them
+from there up (row height 103px wrapped, 67px on one line). Forcing one row at
+390 means cutting 76px, which nothing but the numerals themselves can give:
+dropping the arrow from Try it saves 24, losing the Replay button entirely still
+leaves it 13px over. Left to wrap.
+
 ## How to run
 
 ```
