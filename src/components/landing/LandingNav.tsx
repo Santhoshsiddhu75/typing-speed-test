@@ -18,8 +18,19 @@ import { cn } from '@/lib/utils'
  * scrim behind them: with solid islands it only smeared the page into a ghost.
  */
 export const LandingNav: React.FC = () => {
-  const { isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const [scrolled, setScrolled] = useState(false)
+  const [avatarFailed, setAvatarFailed] = useState(false)
+
+  // The API hands the user back nested on some paths and flat on others.
+  const actualUser = (user as any)?.user || user
+  const picture: string | undefined = actualUser?.profile_picture
+  const initial = (actualUser?.username || '?').charAt(0).toUpperCase()
+
+  // A new URL deserves a fresh attempt, e.g. straight after an avatar upload.
+  useEffect(() => {
+    setAvatarFailed(false)
+  }, [picture])
 
   // index.css pins html and body (position: fixed; overflow: hidden) and makes
   // #root the scroll container, so window.scrollY never moves and scroll
@@ -80,12 +91,29 @@ export const LandingNav: React.FC = () => {
             )}
           >
             <div className="flex items-center gap-6">
-              <Link
-                to={isAuthenticated ? '/profile' : '/login'}
-                className="whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {isAuthenticated ? 'Profile' : 'Sign in'}
-              </Link>
+              {isAuthenticated ? (
+                <Link to="/profile" className="tt-nav-avatar" aria-label="Your profile">
+                  {picture && !avatarFailed ? (
+                    <img
+                      src={picture}
+                      alt=""
+                      // Chrome and Edge block Google's avatars with
+                      // ERR_BLOCKED_BY_ORB when the page sends a referrer.
+                      referrerPolicy="no-referrer"
+                      onError={() => setAvatarFailed(true)}
+                    />
+                  ) : (
+                    <span aria-hidden="true">{initial}</span>
+                  )}
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className="tt-nav-signin whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Sign in
+                </Link>
+              )}
             </div>
 
             {/* Between Sign in and the theme toggle, and always present.

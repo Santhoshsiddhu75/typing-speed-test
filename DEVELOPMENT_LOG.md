@@ -1565,6 +1565,29 @@ from there up (row height 103px wrapped, 67px on one line). Forcing one row at
 dropping the arrow from Try it saves 24, losing the Replay button entirely still
 leaves it 13px over. Left to wrap.
 
+## Landing page: three sizing fixes (29 September 2026)
+
+**The demo card's buttons were phone-sized for a desktop.** `.tt-btn` is 52px
+tall with 26px of side padding, which is right in the hero and on the race
+screen but out of scale sitting beside 83 WPM / 98% ACCURACY. A `.tt-btn-compact`
+modifier, scoped to `max-width: 639px` so nothing else moves: Try it goes
+135x52 -> 97x44, Replay 52x52 -> 44x44. 44 is the floor, not a preference — below
+that the tap target stops being reliable.
+
+It still does not put them on one line at 390px. Stats 179 + gap 20 + buttons 153
+= 352 against 312 available, so 40px short even after the trim; the row is 95px
+tall instead of 103. Only the numerals have that much to give.
+
+**The landing bar shows the avatar instead of the word "Profile".** Same ORB
+guard as everywhere else (`referrerPolicy="no-referrer"`), same initials
+fallback on error, reset when the URL changes. Worth knowing when testing: a
+Google account with no uploaded photo gets Google's own generated letter-avatar,
+a solid coloured circle with an initial — that is the real image loading, not
+the fallback, which is a green letter on pale blue.
+
+**"Sign in" shrinks under 335px.** `.tt-nav-signin` is 14px, 12px below 335.
+Measured at 320, 334, 360 and 390: 12/12/14/14, no overflow at any of them.
+
 ## How to run
 
 ```

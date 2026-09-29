@@ -197,11 +197,11 @@ export const DemoSection = forwardRef<DemoHandle>((_props, ref) => {
                   onClick={play}
                   aria-label="Play the demo again"
                   title="Play again"
-                  className="tt-btn tt-btn-quiet tt-btn-icon"
+                  className="tt-btn tt-btn-compact tt-btn-quiet tt-btn-icon"
                 >
                   <RotateCcw className="h-[18px] w-[18px]" />
                 </button>
-                <Link to="/start" className="tt-btn tt-btn-primary">
+                <Link to="/start" className="tt-btn tt-btn-compact tt-btn-primary">
                   Try it
                   <ArrowRight className="h-4 w-4" />
                 </Link>
