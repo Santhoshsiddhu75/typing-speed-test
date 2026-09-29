@@ -1436,6 +1436,115 @@ the gap between the timer and the text field. It worked: 52px closer at every
 phone size, page height 754px -> 702px, desktop untouched. Rejected — the badge
 is wanted and the heading with it. Recorded so it is not proposed again.
 
+## The profile page, rebuilt (29 September 2026)
+
+The profile page was the last screen still wearing its original look: 1882 lines
+that rendered the whole tab tree twice (one copy commented "exact copy from
+desktop"), 51 Card mounts, 14 of them `border-0 shadow-lg`, and 12 hand-rolled
+`textShadow` faux-outlines around headings set in Fira Code where the rest of the
+site uses Autour One. In dark mode those headings went plain white, dropping the
+signature green entirely. Password strength used `bg-red-500 / bg-blue-500 /
+bg-yellow-500`, and 8 `/alpha` modifiers silently computed to transparent.
+
+Rebuilt from three designs on a canvas; the chosen one is editorial — the name in
+Autour One, every number in Fira Code, captions in Alegreya italic, on the landing
+page's own ground. Not a copy of that ground: it reuses `.tt-ground`, `.tt-wash`,
+`.tt-wash-mid`, `.tt-wash-2` and the real `FloatingKeys` component, with a new
+`PROFILE_KEYS` set — two keycaps on a phone, four from 768px, the same restraint
+`HERO_KEYS` keeps.
+
+File went 1882 -> 931 lines. Every handler, effect, API call, dialog and route is
+byte-for-byte what it was.
+
+### The one behaviour change
+
+The three tabs (Progress / Test History / Analytics) are gone, because the chosen
+design is one scrolling page. Nothing was lost: average accuracy and improvement
+became figures, best accuracy is the small "Best 99.1%" line under the accuracy
+figure, and difficulty distribution is the "By difficulty" panel. `activeTab`
+state went with them.
+
+Also: "Take your first test" now goes to /start rather than /, matching the fix
+made to the other start buttons on 27 September. Three of four AdBanner
+placeholders dropped, leaving one horizontal unit above the footer; ads are not
+wired up (`void slot`, the AdSense push is commented out) so no revenue moves.
+
+### Two colours derived rather than taken
+
+`--muted-foreground` (#6B7280) is 4.38:1 on this background and small text needs
+4.5:1, so `--pf-dim` is #5A6370 (5.98:1) in light and #94A3B8 (7.06:1) in dark.
+White on `--primary` (#22C55E) is 2.28:1, so filled buttons use `--pf-solid`
+#15803D (5.02:1). Dark mode needs no substitute: its shipped pairing, #0F172A on
+#34D399, is already 9.3:1.
+
+### Four bugs the measurements found
+
+Each of these looked fine and was not.
+
+**The count-up flashed a negative number.** requestAnimationFrame hands back the
+timestamp of the start of the frame, which can predate the `performance.now()`
+recorded a line earlier, so the eased value went below zero and the hero figure
+showed "-2". Clamped the low end of t, not just the high end.
+
+**The chart line never animated.** A CSS transition on stroke-dashoffset needs the
+browser to paint the undrawn state first and it does not reliably get the chance;
+the line simply arrived complete. The dash is now driven frame by frame by
+`useIntroProgress`. Verified: 543 -> 436 -> 315 -> 230 -> 153 -> 102 -> 59 -> 33
+-> 16 -> 5 -> 0.
+
+**The navbar covered the name.** `.mobile-safe-navbar` forces `position: fixed
+!important` below 769px, which means the `className="sticky"` this page passes to
+Navbar has never done anything. The old page's `paddingTop: 40px` was quietly
+compensating. `.tt-pf-top` now offsets only below 769px, where the bar is
+actually fixed; above that it is sticky and in flow and an offset would open a
+hole under it.
+
+**A figure rendered 0px wide at the right edge.** In a wrapping flex row a
+full-width divider does not force a line break, so the zero-basis "on average"
+cell packed onto the divider's line with no free space to grow into. The figures
+are a CSS grid now and the dividers are borders on the cells, so they match the
+row height for free.
+
+### Google avatars were blocked, not missing
+
+Reported as the picture never showing for Google accounts. Nothing was wrong with
+the data: `findUserById` selects `profile_picture`, /auth/me returns it, and the
+URL fetches fine outside a browser (200 image/png). Chrome and Edge block
+lh3.googleusercontent.com avatars with `net::ERR_BLOCKED_BY_ORB` when the page
+sends a referrer. `referrerPolicy="no-referrer"` on the img fixes it; proved by
+loading both stored avatars from a localhost page, where the Cloudinary one
+returned 400x400 and the Google one failed until the referrer was dropped.
+
+Behind it sat a second bug: the navbar's onError did
+`e.currentTarget.style.display = 'none'`, hiding the broken image without showing
+the initials fallback, so a failed avatar left an empty circle. Now real React
+state, reset when the URL changes so a fresh upload gets a new attempt.
+
+### The six Go again buttons
+
+They had `background: none` and read as outlines on a near-white ground. Three
+separated states: white at rest, a pale green tint on hover, a stronger green
+fill when chosen. Selected text is #14532D on #C6ECD5 (7.1:1) — the first pick,
+#15803D, came out at 3.9:1, under the 4.5 needed at 13px. Hover sits behind
+`@media (hover: hover)` so a tap on a phone does not leave a button stuck looking
+hovered, plus a :focus-visible ring.
+
+Export data, Log out and Delete history carry icons so the actions read at a
+glance; Change password took one too, since three of four would have looked like
+a bug. The underline moved from the button to the label span so the icon is not
+underlined with the words.
+
+### On the stale profile specs
+
+`tests/profile-*.spec.ts` were already failing before any of this: 36 failed, 1
+passed, measured on unmodified main and again on the rebuilt page, identical both
+times. They target an older page with an "Edit Profile" button that does not
+exist on main either. Not repaired here; they need rewriting against the current
+page, or deleting.
+
+Separately, `npm run lint` has been broken repo-wide for some time — ESLint cannot
+resolve the config "@typescript-eslint/recommended". Left alone.
+
 ## How to run
 
 ```

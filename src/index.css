@@ -2263,3 +2263,205 @@ html, body {
   opacity: 1;
   transform: translate(-50%, 0);
 }
+
+/* ==========================================================================
+   The profile page
+   An editorial record on the landing page's ground: the name in Autour One,
+   every number in Fira Code, captions in Alegreya italic. Two colours are
+   derived rather than taken straight from the tokens, both for contrast:
+   --pf-dim, because --muted-foreground is 4.38:1 on this background and small
+   text needs 4.5:1, and --pf-solid, because white on --primary is only 2.28:1.
+   ========================================================================== */
+
+:root {
+  --pf-dim: rgb(90, 99, 112);
+  --pf-hair: rgb(220, 231, 242);
+  --pf-hair-soft: rgb(232, 240, 248);
+  --pf-num: rgb(22, 163, 74);
+  --pf-green: rgb(21, 128, 61);
+  --pf-chip: rgb(209, 250, 229);
+  --pf-tint: rgb(224, 242, 254);
+  --pf-solid: rgb(21, 128, 61);
+  --pf-solid-ink: rgb(255, 255, 255);
+  --pf-danger: rgb(185, 28, 28);
+  --pf-avatar: rgb(224, 242, 254);
+  --pf-avatar-ring: rgb(201, 228, 246);
+  --pf-chrome: rgb(255, 255, 255);
+  --pf-bar-easy: rgb(21, 128, 61);
+  --pf-bar-medium: rgb(180, 83, 9);
+  --pf-bar-hard: rgb(127, 29, 29);
+  --pf-pill: rgb(255, 255, 255);
+  --pf-pill-hover: rgb(230, 246, 236);
+  --pf-pill-hover-border: rgb(134, 200, 162);
+  --pf-pill-on: rgb(198, 236, 213);
+  --pf-pill-on-hover: rgb(180, 228, 199);
+  --pf-pill-on-ink: rgb(20, 83, 45);
+}
+
+.dark {
+  --pf-dim: rgb(148, 163, 184);
+  --pf-hair: rgb(51, 65, 85);
+  --pf-hair-soft: rgb(37, 50, 74);
+  --pf-num: rgb(52, 211, 153);
+  --pf-green: rgb(110, 231, 183);
+  --pf-chip: rgba(52, 211, 153, 0.14);
+  --pf-tint: rgba(52, 211, 153, 0.12);
+  --pf-solid: rgb(52, 211, 153);
+  --pf-solid-ink: rgb(15, 23, 42);
+  --pf-danger: rgb(248, 113, 113);
+  --pf-avatar: rgb(30, 41, 59);
+  --pf-avatar-ring: rgb(59, 75, 99);
+  --pf-chrome: rgb(30, 41, 59);
+  --pf-bar-easy: rgb(52, 211, 153);
+  --pf-bar-medium: rgb(251, 191, 36);
+  --pf-bar-hard: rgb(248, 113, 113);
+  --pf-pill: rgba(148, 163, 184, 0.10);
+  --pf-pill-hover: rgba(52, 211, 153, 0.16);
+  --pf-pill-hover-border: rgba(52, 211, 153, 0.55);
+  --pf-pill-on: rgba(52, 211, 153, 0.26);
+  --pf-pill-on-hover: rgba(52, 211, 153, 0.34);
+  --pf-pill-on-ink: rgb(110, 231, 183);
+}
+
+.tt-pf { background: var(--background); color: var(--foreground); }
+
+/* Navbar.mobile-safe-navbar forces position: fixed below 769px, so the page has
+   to clear the bar itself there. Above that the bar is sticky and in flow, and
+   an offset would just open a hole under it. */
+.tt-pf-top { padding-top: 26px; }
+@media (max-width: 768px) {
+  .tt-pf-top { padding-top: calc(max(env(safe-area-inset-top), 20px) + 58px); }
+}
+
+.tt-pf-name {
+  font-family: var(--font-sans); font-weight: 400;
+  letter-spacing: -0.02em; line-height: 1.04; margin: 0;
+}
+.tt-pf-meta {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--pf-dim);
+}
+.tt-pf-eyebrow {
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--pf-dim);
+  margin: 0;
+}
+.tt-pf-num {
+  font-family: var(--font-mono); font-weight: 500;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 0.9;
+}
+.tt-pf-cap { font-family: var(--font-serif); font-style: italic; }
+.tt-pf-rule { display: block; height: 2px; width: 84px; background: var(--primary); }
+.tt-pf-hair { display: block; height: 1px; background: var(--pf-hair); }
+
+.tt-pf-chip {
+  display: inline-block;
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--pf-green); background: var(--pf-chip);
+  border-radius: 999px; padding: 4px 8px;
+}
+
+/* Account actions are actions, so they are buttons that read as links. The rule
+   sits on the label rather than the button, so an icon beside it is not
+   underlined along with the words. */
+.tt-pf-link {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 44px;
+  font-family: var(--font-serif); font-size: 14.5px; line-height: 1.6;
+  color: var(--pf-green); background: none; border: none; padding: 0;
+  cursor: pointer; transition: color 0.2s ease;
+}
+.tt-pf-link > span { border-bottom: 1px solid currentColor; }
+.tt-pf-link > svg { flex: none; }
+.tt-pf-link:hover { color: var(--primary); }
+.tt-pf-link:disabled { color: var(--pf-dim); cursor: not-allowed; }
+.tt-pf-link:disabled > span { border-bottom-color: transparent; }
+.tt-pf-link.is-danger { color: var(--pf-danger); }
+
+.tt-pf-tab {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--pf-dim);
+  background: none; border: none; padding: 6px 0;
+  border-bottom: 1.5px solid transparent; cursor: pointer;
+  transition: color 0.2s ease;
+}
+.tt-pf-tab:hover { color: var(--foreground); }
+.tt-pf-tab.is-on { color: var(--pf-green); border-bottom-color: var(--primary); }
+
+/* Three states that read apart at a glance: a light fill at rest, a green tint
+   under the pointer, and a stronger green fill once chosen. Hover is behind a
+   hover query so a tap on a phone does not leave a pill stuck looking hovered. */
+.tt-pf-pill {
+  flex-grow: 1; min-height: 44px;
+  font-family: var(--font-mono); font-size: 13px;
+  background: var(--pf-pill);
+  border: 1px solid var(--pf-hair); border-radius: 8px;
+  color: var(--pf-dim); cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease;
+}
+@media (hover: hover) {
+  .tt-pf-pill:hover {
+    background: var(--pf-pill-hover);
+    border-color: var(--pf-pill-hover-border);
+    color: var(--pf-green);
+  }
+  .tt-pf-pill.is-on:hover { background: var(--pf-pill-on-hover); }
+}
+.tt-pf-pill:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.tt-pf-pill:active { transform: translateY(1px); }
+.tt-pf-pill.is-on {
+  background: var(--pf-pill-on);
+  border-color: var(--pf-solid);
+  color: var(--pf-pill-on-ink);
+  font-weight: 500;
+}
+
+.tt-pf-go {
+  width: 100%; min-height: 50px; border: none; border-radius: 8px;
+  background: var(--pf-solid); color: var(--pf-solid-ink);
+  font-family: var(--font-sans); font-size: 17px; cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.tt-pf-go:hover { opacity: 0.92; }
+.tt-pf-go:disabled { background: var(--muted); color: var(--pf-dim); cursor: not-allowed; }
+
+.tt-pf-track { height: 6px; border-radius: 3px; background: var(--pf-hair-soft); }
+.tt-pf-track > span { display: block; height: 6px; border-radius: 3px; }
+
+/* ---- The entry animation ----
+   One keyframe set, a delay class per step, so the choreography is a class
+   on each element rather than bespoke code. The chart line is the exception:
+   its dash is driven frame by frame in ProfileProgressChart, because a
+   transition needs the undrawn state painted first and does not reliably
+   get the chance. */
+@keyframes tt-pf-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes tt-pf-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tt-pf-wipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.tt-pf-anim .tt-pf-a { animation: tt-pf-rise 0.62s cubic-bezier(0.22, 0.7, 0.28, 1) both; }
+.tt-pf-anim .tt-pf-f { animation: tt-pf-fade 0.8s ease both; }
+.tt-pf-anim .tt-pf-w { animation: tt-pf-wipe 0.75s cubic-bezier(0.22, 0.7, 0.28, 1) both; transform-origin: left center; }
+
+.tt-pf-anim .tt-pf-d1 { animation-delay: 0.04s; }
+.tt-pf-anim .tt-pf-d2 { animation-delay: 0.10s; }
+.tt-pf-anim .tt-pf-d3 { animation-delay: 0.17s; }
+.tt-pf-anim .tt-pf-d4 { animation-delay: 0.24s; }
+.tt-pf-anim .tt-pf-d5 { animation-delay: 0.30s; }
+.tt-pf-anim .tt-pf-d6 { animation-delay: 0.38s; }
+.tt-pf-anim .tt-pf-d7 { animation-delay: 0.46s; }
+.tt-pf-anim .tt-pf-d8 { animation-delay: 0.54s; }
+.tt-pf-anim .tt-pf-d9 { animation-delay: 0.62s; }
+.tt-pf-anim .tt-pf-d10 { animation-delay: 0.72s; }
+.tt-pf-anim .tt-pf-d11 { animation-delay: 0.82s; }
+.tt-pf-anim .tt-pf-d12 { animation-delay: 0.90s; }
+.tt-pf-anim .tt-pf-d13 { animation-delay: 0.98s; }
+.tt-pf-anim .tt-pf-d14 { animation-delay: 1.10s; }
+
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-pf-anim .tt-pf-a,
+  .tt-pf-anim .tt-pf-f,
+  .tt-pf-anim .tt-pf-w { animation: none; }
+}

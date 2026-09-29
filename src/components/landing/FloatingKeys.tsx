@@ -52,6 +52,18 @@ export const DEMO_KEYS: FloatingKey[] = [
 ]
 
 /**
+ * Behind the profile page, from the top of its ground. Kept to the margins and
+ * bleeding off the edges, because unlike the hero this page carries small text
+ * at every height; on a phone only two survive, as on the landing hero.
+ */
+export const PROFILE_KEYS: FloatingKey[] = [
+  { label: 'T', right: 12, top: 96, size: 68, rotate: 7, delay: 0, depth: 'mid', onPhone: true },
+  { label: 'A', left: -22, top: 150, size: 82, rotate: -9, delay: 0.8, depth: 'mid' },
+  { label: 'S', right: -26, top: 520, size: 88, rotate: -7, delay: 1.9, depth: 'far' },
+  { label: 'P', left: -20, top: 880, size: 80, rotate: 6, delay: 2.5, depth: 'far', onPhone: true },
+]
+
+/**
  * Decorative keycaps drifting behind a section. Physical keys rather than flat
  * tiles — a hard bottom edge for the throw, a soft cast shadow beneath — at
  * three depths so the eye reads distance rather than clutter.

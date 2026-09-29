@@ -31,6 +31,7 @@ const Navbar: React.FC<NavbarProps> = ({
   const { theme, toggleTheme } = useTheme();
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   // Check if mobile on mount, window resize, and route changes
   React.useEffect(() => {
@@ -73,6 +74,11 @@ const Navbar: React.FC<NavbarProps> = ({
       });
     }
   }, [isAuthenticated, actualUser]);
+
+  // A new URL deserves a fresh attempt, e.g. straight after an avatar upload.
+  React.useEffect(() => {
+    setAvatarFailed(false);
+  }, [actualUser?.profile_picture]);
 
   const handleBackClick = () => {
     navigate(backUrl);
@@ -171,16 +177,16 @@ const Navbar: React.FC<NavbarProps> = ({
               
               {isAuthenticated && (
                 <>
-                  {actualUser?.profile_picture ? (
+                  {actualUser?.profile_picture && !avatarFailed ? (
                     <img
                       src={actualUser.profile_picture}
                       alt={`${actualUser.username}'s profile picture`}
                       className="h-full w-full object-cover rounded-full"
-                      onError={(e) => {
-                        console.error('🔍 Failed to load profile picture:', actualUser.profile_picture);
-                        // Hide the image and show fallback if image fails to load
-                        e.currentTarget.style.display = 'none';
-                      }}
+                      // Google serves avatars from lh3.googleusercontent.com, which
+                      // Chrome and Edge block with ERR_BLOCKED_BY_ORB when the page
+                      // sends a referrer. Dropping it is what makes them load.
+                      referrerPolicy="no-referrer"
+                      onError={() => setAvatarFailed(true)}
                     />
                   ) : (
                     // Fallback avatar for authenticated users without profile pictures
