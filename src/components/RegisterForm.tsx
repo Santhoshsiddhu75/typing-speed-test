@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useId, useState, useMemo } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -111,6 +111,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     }
   });
   
+  // AuthLayout renders its children twice, once for the desktop pane and once
+  // for the mobile one, so every hard-coded id in here would appear twice in the
+  // document. Duplicate ids break label targeting and confuse browser autofill.
+  const uid = useId();
+
   const [formData, setFormData] = useState<RegisterFormData>({
     username: '',
     password: '',
@@ -365,7 +370,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           {/* Username Field */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label htmlFor="username" className="text-sm font-medium leading-none">
+              <label htmlFor={`${uid}-username`} className="text-sm font-medium leading-none">
                 Username
               </label>
               <div className="flex items-center gap-1">
@@ -399,7 +404,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="username"
+                id={`${uid}-username`}
                 type="text"
                 placeholder="Choose your username"
                 value={formData.username}
@@ -407,14 +412,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 className={`pl-10 ${errors.username ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 disabled={currentIsLoading}
                 aria-invalid={!!errors.username}
-                aria-describedby={errors.username ? 'username-error' : 'username-help'}
+                aria-describedby={errors.username ? `${uid}-username-error` : undefined}
                 autoComplete="username"
                 data-testid="username-input"
               />
             </div>
             {errors.username && (
               <p 
-                id="username-error" 
+                id={`${uid}-username-error`} 
                 className="text-sm text-red-600"
                 role="alert"
                 aria-live="polite"
@@ -426,13 +431,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
           {/* Password Field */}
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium leading-none">
+            <label htmlFor={`${uid}-password`} className="text-sm font-medium leading-none">
               Password
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="password"
+                id={`${uid}-password`}
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Create a password"
                 value={formData.password}
@@ -440,7 +445,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 className={`pl-10 pr-10 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 disabled={currentIsLoading}
                 aria-invalid={!!errors.password}
-                aria-describedby={errors.password ? 'password-error' : 'password-strength'}
+                aria-describedby={errors.password ? `${uid}-password-error` : `${uid}-password-strength`}
                 autoComplete="new-password"
                 data-testid="password-input"
               />
@@ -458,7 +463,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
             {/* Password Strength Indicator */}
             {formData.password && (
-              <div id="password-strength" className="space-y-2" aria-live="polite">
+              <div id={`${uid}-password-strength`} className="space-y-2" aria-live="polite">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">Password strength:</span>
                   <span className={`text-xs font-medium ${
@@ -498,7 +503,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
             {errors.password && (
               <p 
-                id="password-error" 
+                id={`${uid}-password-error`} 
                 className="text-sm text-red-600"
                 role="alert"
                 aria-live="polite"
@@ -510,13 +515,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
           {/* Confirm Password Field */}
           <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="text-sm font-medium leading-none">
+            <label htmlFor={`${uid}-confirmPassword`} className="text-sm font-medium leading-none">
               Confirm Password
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="confirmPassword"
+                id={`${uid}-confirmPassword`}
                 type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirm your password"
                 value={formData.confirmPassword}
@@ -524,7 +529,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 className={`pl-10 pr-10 ${errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 disabled={currentIsLoading}
                 aria-invalid={!!errors.confirmPassword}
-                aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+                aria-describedby={errors.confirmPassword ? `${uid}-confirmPassword-error` : undefined}
                 autoComplete="new-password"
                 data-testid="confirmPassword-input"
               />
@@ -541,7 +546,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             </div>
             {errors.confirmPassword && (
               <p 
-                id="confirmPassword-error" 
+                id={`${uid}-confirmPassword-error`} 
                 className="text-sm text-red-600"
                 role="alert"
                 aria-live="polite"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -94,6 +94,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
   });
   
+  // AuthLayout renders its children twice, once for the desktop pane and once
+  // for the mobile one, so every hard-coded id in here would appear twice in the
+  // document. Duplicate ids break label targeting and confuse browser autofill.
+  const uid = useId();
+
   const [formData, setFormData] = useState<LoginFormData>({
     username: '',
     password: '',
@@ -253,13 +258,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
           {/* Username Field */}
           <div className="space-y-2">
-            <label htmlFor="username" className="text-sm font-medium leading-none">
+            <label htmlFor={`${uid}-username`} className="text-sm font-medium leading-none">
               Username
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="username"
+                id={`${uid}-username`}
                 type="text"
                 placeholder="Enter your username"
                 value={formData.username}
@@ -267,14 +272,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 className={`pl-10 ${errors.username ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 disabled={currentIsLoading}
                 aria-invalid={!!errors.username}
-                aria-describedby={errors.username ? 'username-error' : undefined}
+                aria-describedby={errors.username ? `${uid}-username-error` : undefined}
                 autoComplete="username"
                 data-testid="username-input"
               />
             </div>
             {errors.username && (
               <p 
-                id="username-error" 
+                id={`${uid}-username-error`} 
                 className="text-sm text-red-600"
                 role="alert"
                 aria-live="polite"
@@ -286,13 +291,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
           {/* Password Field */}
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium leading-none">
+            <label htmlFor={`${uid}-password`} className="text-sm font-medium leading-none">
               Password
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="password"
+                id={`${uid}-password`}
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
                 value={formData.password}
@@ -300,7 +305,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 className={`pl-10 pr-10 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 disabled={currentIsLoading}
                 aria-invalid={!!errors.password}
-                aria-describedby={errors.password ? 'password-error' : undefined}
+                aria-describedby={errors.password ? `${uid}-password-error` : undefined}
                 autoComplete="current-password"
                 data-testid="password-input"
               />
@@ -317,7 +322,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             </div>
             {errors.password && (
               <p 
-                id="password-error" 
+                id={`${uid}-password-error`} 
                 className="text-sm text-red-600"
                 role="alert"
                 aria-live="polite"

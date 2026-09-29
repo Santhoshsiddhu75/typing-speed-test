@@ -23,10 +23,17 @@ const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d'; // Lo
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
 
 // Rate limiting configuration - Relaxed for development/testing
+// 10 per 15 minutes locked people out of their own account during ordinary
+// use — a mistyped password twice over, a page reload or two, and the window
+// was gone. Development is effectively unlimited so testing is not fought;
+// production keeps a ceiling, because this is a login endpoint and removing
+// the brake altogether invites brute force.
+const RATE_LIMIT_DEV = process.env.NODE_ENV !== 'production';
+
 export const AUTH_RATE_LIMITS = {
-  login: { windowMs: 15 * 60 * 1000, max: 10 }, // 10 attempts per 15 minutes
-  register: { windowMs: 15 * 60 * 1000, max: 10 }, // 10 attempts per 15 minutes (was 3 per hour)
-  refresh: { windowMs: 15 * 60 * 1000, max: 10 }, // 10 refreshes per 15 minutes
+  login: { windowMs: 15 * 60 * 1000, max: RATE_LIMIT_DEV ? 10000 : 40 },
+  register: { windowMs: 15 * 60 * 1000, max: RATE_LIMIT_DEV ? 10000 : 20 },
+  refresh: { windowMs: 15 * 60 * 1000, max: RATE_LIMIT_DEV ? 10000 : 120 },
 };
 
 // JWT payload interfaces

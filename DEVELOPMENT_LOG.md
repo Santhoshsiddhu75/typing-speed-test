@@ -1588,6 +1588,84 @@ the fallback, which is a green letter on pale blue.
 **"Sign in" shrinks under 335px.** `.tt-nav-signin` is 14px, 12px below 335.
 Measured at 320, 334, 360 and 390: 12/12/14/14, no overflow at any of them.
 
+## A login report that was not a login bug (29 September 2026)
+
+Reported as: cannot sign in, signup says the account already exists, and the
+profile page's change-password says the current password is wrong. It looked
+like a broken auth stack. It was not, and two wrong diagnoses went out before
+the evidence did — worth recording so the next one starts with the log.
+
+What the evidence actually said, in order:
+
+- Register then login over the API: works. Through the real UI forms at 390px
+  and 1280px: works. `bcrypt.compare` against the hash the UI stored: true for
+  the right password, false for a wrong one.
+- The server log settled it. 11:54:19 `sant` authenticated successfully;
+  11:55:01 onward the same username failed. Between them, no request to
+  `/users/:id/password` at all — so no password change had happened, which
+  killed the theory that a change had silently succeeded.
+- Temporary length-only diagnostics on the failure path (never the password
+  itself) showed the request arriving intact: 8 chars, first "S", last "4",
+  user row found, bcrypt refusing. Comparing that password against the stored
+  hash directly, plus five near-variants, all returned false.
+- Every password used in testing until then had been alphanumeric, so a
+  round-trip with the reported password, `@` included, was run: registered and
+  signed in first try.
+
+Conclusion: the account had been created with a different password than the one
+being typed. No defect in the login path. The diagnostics were reverted.
+
+Three real defects surfaced along the way and were fixed on their own merits:
+
+**The rate limiter shared one counter per IP across every auth route.** `const
+key = req.ip` with a single module-level Map, so login, register and refresh
+all counted into the same bucket — a couple of page loads plus one mistyped
+password could spend the login budget before a sign-in was properly tried. The
+key now carries the route. Limits were 10 per 15 minutes for everything; now
+effectively unlimited in development and 40/20/120 in production. Verified: 15
+consecutive bad logins all return 401, never 429, and a real login still
+succeeds afterwards.
+
+**AuthLayout renders its children twice**, once for the `hidden md:flex` desktop
+pane and once for `md:hidden`, so LoginForm and RegisterForm are each mounted
+twice and every hard-coded id appeared twice in one document. Duplicate ids
+break `<label for>` targeting and confuse autofill. Both forms now derive field
+ids from `useId()`, the pattern the terms checkbox already used. Verified: zero
+duplicate ids on /login and /register, all labels resolve.
+
+**The change-password dialog carried no autocomplete hints**, while login and
+register both did. A password manager only offers to update a saved credential
+when the form names the account and labels the fields, so the browser kept the
+password from registration. Added a hidden `autocomplete="username"` field plus
+`current-password` and `new-password`.
+
+### The Google avatar reverting
+
+Separate report, and a genuine bug. `findOrCreateGoogleUser` ran an
+unconditional `UPDATE users SET profile_picture = ?` on every Google sign-in
+whenever the stored value differed from Google's, so an uploaded avatar
+survived until the next login and then silently reverted. Regular accounts
+never reach that path, which is why only Google accounts were affected.
+
+It now adopts the Google photo only when the account is not carrying one the
+user chose, decided by hostname through `URL().hostname` rather than a regex, so
+a lookalike string cannot pass and an unparseable value returns false. A stored
+googleusercontent.com URL was only ever adopted from Google, so users who never
+uploaded still follow their Google photo. Verified on a throwaway row, since
+removed: upload survives sign-in; a Google photo still refreshes; a null
+picture still adopts Google's.
+
+### Also
+
+Password changes now raise a confirmation pill — the race screen's toast
+recipe, lifted out of the race namespace as `.tt-toast` so the rest of the app
+can use it. Verified: appears centred at the top reading "Password has been
+changed.", `role="status"`, gone by 4s.
+
+Still missing, and the real gap this whole episode exposed: there is no
+forgot-password flow anywhere. No route, no UI, no email. Any account whose
+password diverges is locked out permanently.
+
 ## How to run
 
 ```

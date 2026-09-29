@@ -1080,6 +1080,19 @@ html, body {
   .tt-btn-compact.tt-btn-primary { box-shadow: 0 8px 20px -10px var(--primary); }
 }
 
+/* One look for a signed-in user with no photo, everywhere it appears: the
+   landing bar, the app bar and the profile page all fall back to the same
+   letter on the same ground, so the same person is not three different colours
+   depending on the screen. Sizing comes from whatever contains it. */
+.tt-avatar-fallback {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  background: var(--secondary);
+  color: var(--primary-deep);
+  font-family: var(--font-sans);
+  line-height: 1;
+}
+
 /* The landing bar, signed in: the avatar replaces the word "Profile". */
 .tt-nav-avatar {
   display: inline-flex; align-items: center; justify-content: center; flex: none;
@@ -2242,6 +2255,36 @@ html, body {
 
 /* A notice, not an interruption. It announces itself, holds long enough to
    read, and leaves — the race behind it never stops. */
+/* The race screen's confirmation pill, without the race namespace, so the
+   rest of the app can say "that worked" the same way. Shares tt-toast-life,
+   which carries the centring transform as well as the fade. */
+.tt-toast {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  z-index: 60;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--foreground);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: tt-toast-life 3s ease forwards;
+}
+@media (max-width: 767px) {
+  .tt-toast {
+    font-size: 13px;
+    padding: 9px 16px;
+    max-width: calc(100vw - 32px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 .tt-race-toast {
   position: fixed;
   top: 14px;

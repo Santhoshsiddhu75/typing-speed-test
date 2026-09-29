@@ -189,8 +189,9 @@ const Navbar: React.FC<NavbarProps> = ({
                       onError={() => setAvatarFailed(true)}
                     />
                   ) : (
-                    // Fallback avatar for authenticated users without profile pictures
-                    <div className="h-full w-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm">
+                    // No photo: the same letter on the same ground as the landing
+                    // bar and the profile page, rather than a separate gradient.
+                    <div className="tt-avatar-fallback rounded-full text-xs sm:text-sm">
                       {actualUser?.username?.charAt(0).toUpperCase() || 'U'}
                     </div>
                   )}

@@ -106,6 +106,7 @@ const ProfilePage: React.FC = () => {
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [avatarRefreshing, setAvatarRefreshing] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const [deleteHistoryDialogOpen, setDeleteHistoryDialogOpen] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -266,6 +267,7 @@ const ProfilePage: React.FC = () => {
         confirmPassword: ''
       });
       setPasswordErrors({});
+      setToast('Password has been changed.');
 
     } catch (error) {
       console.error('Failed to change password:', error);
@@ -394,6 +396,14 @@ const ProfilePage: React.FC = () => {
     setAvatarFailed(false);
   }, [(user as any)?.profile_picture, (user as any)?.user?.profile_picture]);
 
+  // The pill fades itself out over 3s; drop the message just after, so the same
+  // confirmation can be raised again if the action is repeated.
+  useEffect(() => {
+    if (!toast) return;
+    const clear = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(clear);
+  }, [toast]);
+
   // The figures count up to whatever the API returned, once it has landed.
   const intro = useIntroProgress(!loading);
 
@@ -464,6 +474,12 @@ const ProfilePage: React.FC = () => {
     >
       <Navbar backUrl="/" className="sticky" />
 
+      {toast && (
+        <div className="tt-toast" role="status" aria-live="polite">
+          {toast}
+        </div>
+      )}
+
       {/* One ground under the whole page: the landing page's two washes and its
           keycaps, so the profile sits on the same floor as everything else. */}
       <div className="tt-ground flex-1">
@@ -504,11 +520,7 @@ const ProfilePage: React.FC = () => {
                     onError={() => setAvatarFailed(true)}
                   />
                 ) : (
-                  <span
-                    className="font-sans text-[24px] sm:text-[30px]"
-                    style={{ color: 'var(--pf-green)' }}
-                    aria-hidden="true"
-                  >
+                  <span className="tt-avatar-fallback text-[24px] sm:text-[30px]" aria-hidden="true">
                     {initial}
                   </span>
                 )}
@@ -936,11 +948,27 @@ const ProfilePage: React.FC = () => {
                 )}
 
                 <div className="space-y-4">
+                  {/* Password managers only offer to update a saved credential
+                      when the form says which account it is for and which field
+                      is which. Without these the browser kept autofilling the
+                      password from registration, so signing in after a change
+                      failed with "invalid username or password". */}
+                  <input
+                    type="text"
+                    name="username"
+                    autoComplete="username"
+                    value={username}
+                    readOnly
+                    hidden
+                    aria-hidden="true"
+                    tabIndex={-1}
+                  />
                   <div>
                     <Label htmlFor="current-password">Current Password</Label>
                     <div className="relative">
                       <Input
                         id="current-password"
+                        autoComplete="current-password"
                         type={showPasswords.current ? 'text' : 'password'}
                         value={passwordFormData.currentPassword}
                         onChange={handlePasswordInputChange('currentPassword')}
@@ -965,6 +993,7 @@ const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <Input
                         id="new-password"
+                        autoComplete="new-password"
                         type={showPasswords.new ? 'text' : 'password'}
                         value={passwordFormData.newPassword}
                         onChange={handlePasswordInputChange('newPassword')}
@@ -1030,6 +1059,7 @@ const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <Input
                         id="confirm-password"
+                        autoComplete="new-password"
                         type={showPasswords.confirm ? 'text' : 'password'}
                         value={passwordFormData.confirmPassword}
                         onChange={handlePasswordInputChange('confirmPassword')}

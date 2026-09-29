@@ -103,7 +103,7 @@ export const LandingNav: React.FC = () => {
                       onError={() => setAvatarFailed(true)}
                     />
                   ) : (
-                    <span aria-hidden="true">{initial}</span>
+                    <span className="tt-avatar-fallback" aria-hidden="true">{initial}</span>
                   )}
                 </Link>
               ) : (

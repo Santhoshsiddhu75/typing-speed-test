@@ -179,7 +179,11 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 export const createRateLimit = (options: RateLimitOptions) => {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const key = req.ip || 'unknown';
+    // The store is one Map shared by every createRateLimit instance, so a key
+    // of the IP alone had login, register and refresh all counting into the
+    // same bucket: a few reloads could spend the login budget before a single
+    // sign-in was tried. The route makes each limiter its own counter.
+    const key = `${req.baseUrl}${req.path}:${req.ip || 'unknown'}`;
     const now = Date.now();
     
     // Clean up expired entries

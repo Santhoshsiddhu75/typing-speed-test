@@ -190,8 +190,11 @@ export const DemoSection = forwardRef<DemoHandle>((_props, ref) => {
               <span className="tt-stat-label">ACCURACY</span>
             </div>
 
-            {finished && (
-              <div className="ml-auto flex items-center gap-3">
+            {/* Try it stands there the whole way through, so the end of the run
+                does not make a pair of buttons appear out of nowhere. Only
+                Replay arrives, and only once there is something to replay. */}
+            <div className="ml-auto flex items-center gap-3">
+              {finished && (
                 <button
                   type="button"
                   onClick={play}
@@ -201,12 +204,12 @@ export const DemoSection = forwardRef<DemoHandle>((_props, ref) => {
                 >
                   <RotateCcw className="h-[18px] w-[18px]" />
                 </button>
-                <Link to="/start" className="tt-btn tt-btn-compact tt-btn-primary">
-                  Try it
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            )}
+              )}
+              <Link to="/start" className="tt-btn tt-btn-compact tt-btn-primary">
+                Try it
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>

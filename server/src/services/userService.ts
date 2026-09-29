@@ -22,6 +22,21 @@ export interface GoogleUserData {
  * SECURITY: Implements defense in depth with input validation, SQL injection prevention,
  * and secure data handling following OWASP guidelines
  */
+/**
+ * Google serves account photos from lh*.googleusercontent.com. Anything else
+ * stored against a user is a picture they uploaded themselves, which Google
+ * sign-in must not overwrite.
+ */
+function isGoogleHostedPicture(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === 'googleusercontent.com' || host.endsWith('.googleusercontent.com');
+  } catch {
+    // Not a URL we can parse, so not one we handed out either.
+    return false;
+  }
+}
+
 export class UserService {
   
   /**
@@ -240,14 +255,23 @@ export class UserService {
       );
 
       if (user) {
-        // Update profile picture if it has changed
-        if (picture && user.profile_picture !== picture) {
+        // Adopt the Google photo only when the account is not carrying one the
+        // user chose themselves. This ran on every sign-in and overwrote an
+        // uploaded avatar with the Google one, so a Google user's new picture
+        // survived until their next login and then silently reverted.
+        // A stored Google URL is fair game: it was only ever adopted from here,
+        // so a user who never uploaded still follows their Google photo.
+        const ownUpload = !!user.profile_picture && !isGoogleHostedPicture(user.profile_picture);
+
+        if (picture && !ownUpload && user.profile_picture !== picture) {
           await database.run(
             'UPDATE users SET profile_picture = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
             [picture, user.id]
           );
           user.profile_picture = picture;
           console.log(`✅ Updated profile picture for existing Google user: ${user.username}`);
+        } else if (ownUpload) {
+          console.log(`↪️  Keeping uploaded profile picture for Google user: ${user.username}`);
         }
         console.log(`✅ Existing Google user found: ${user.username}`);
         return user;
