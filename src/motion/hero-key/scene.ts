@@ -339,7 +339,6 @@ export async function createHeroKeyScene(
   const backlit = new InstancedMesh(backlitGeometry, backlitMaterial, KEY_SLOTS.length + 1)
   backlit.frustumCulled = false
   backlit.renderOrder = 3
-  KEY_SLOTS.forEach((slot, i) => backlit.setMatrixAt(i, new Matrix4().makeScale(1.5, 1, 1.5).setPosition(slot.x, 0.004, slot.z)))
   scene.add(backlit)
 
   let shadowTexture: Texture | null = null
@@ -387,12 +386,22 @@ export async function createHeroKeyScene(
     boardShadowMaterial.color.copy(colors.shadow)
     ;(glow.material as MeshBasicMaterial).color.copy(colors.primary)
     backlitMaterial.uniforms.uColor.value.copy(colors.primary)
-    // Subtle on the light ground, a little more on the dark, where a
-    // backlit keyboard reads as light rather than tint.
-    backlitMaterial.uniforms.uStrength.value = colors.dark ? 0.55 : 0.4
+    // On the dark ground a backlit key reads as light straight away. On the
+    // light ground green can only show as colour, so there the pool under a
+    // key is stronger and reaches further out from beneath it.
+    backlitMaterial.uniforms.uStrength.value = colors.dark ? 0.55 : 1.3
+    const spread = colors.dark ? 1.5 : 1.85
+    KEY_SLOTS.forEach((slot, i) =>
+      backlit.setMatrixAt(i, matrix.makeScale(spread, 1, spread).setPosition(slot.x, 0.004, slot.z))
+    )
+    const withSpace = next.aspect === 'square'
+    backlit.setMatrixAt(
+      KEY_SLOTS.length,
+      matrix.makeScale(withSpace ? SPACE.width + 0.1 + spread : 0, 1, withSpace ? spread : 0).setPosition(SPACE.x, 0.004, SPACE.z)
+    )
+    backlit.instanceMatrix.needsUpdate = true
 
     if (next.aspect !== previousAspect) {
-      const withSpace = next.aspect === 'square'
       space.visible = withSpace
       const { texture, bounds } = keyboardShadow(withSpace)
       shadowTexture?.dispose()
@@ -401,10 +410,6 @@ export async function createHeroKeyScene(
       boardShadowMaterial.needsUpdate = true
       boardShadow.position.set((bounds.minX + bounds.maxX) / 2, 0.001, (bounds.minZ + bounds.maxZ) / 2)
       boardShadow.scale.set(bounds.maxX - bounds.minX, 1, bounds.maxZ - bounds.minZ)
-
-      const spaceLight = new Matrix4().makeScale(withSpace ? SPACE.width + 1.6 : 0, 1, withSpace ? 1.5 : 0)
-      backlit.setMatrixAt(KEY_SLOTS.length, spaceLight.setPosition(SPACE.x, 0.004, SPACE.z))
-      backlit.instanceMatrix.needsUpdate = true
 
       const size = COMPOSITION_SIZE[next.aspect]
       camera.aspect = size.width / size.height
