@@ -38,7 +38,8 @@ import { clamp01, lerp } from './easing'
 import { luminance, over, parseColor, toHex } from './colors'
 import { ATLAS } from './glyphs'
 import type { GlyphAtlas } from './glyphs'
-import { keyboardShadow, softSpot } from './textures'
+import { keyboardShadow, softKey, softSpot } from './textures'
+import { litAt, waveStrength } from './wave'
 import {
   LOGO_KEY,
   PLAIN,
@@ -55,8 +56,10 @@ import {
  * The hero scene: the TapTest logo key as a 3D object, and the keyboard it
  * belongs to. Plain three.js, so it costs one library on the page.
  *
- * `render(frame)` is the only way anything moves, and it draws a pure
- * function of the frame and the props. It touches no DOM, so it runs on an
+ * `render(frame, waveSeconds)` is the only way anything moves, and it draws
+ * a pure function of those and the props. The frame is the story; the
+ * seconds are the light wave's own clock, counted from when the keyboard
+ * came up. It touches no DOM, so it runs on an
  * OffscreenCanvas in a worker as well as on a page's own canvas.
  *
  * To render it to video later, wrap it in a Remotion composition: a <canvas>
@@ -64,7 +67,7 @@ import {
  * drawGlyphAtlas, then this; then render(useCurrentFrame()) in an effect.
  */
 export interface HeroKeyScene {
-  render(frame: number): void
+  render(frame: number, waveSeconds?: number): void
   setProps(props: HeroKeyProps): void
   /** CSS size of the canvas, and the pixel ratio to draw it at. */
   setSize(width: number, height: number, pixelRatio: number): void
@@ -91,6 +94,36 @@ const LETTER_VERTEX = /* glsl */ `
       vColor = vec3(1.0);
     #endif
     gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+  }
+`
+
+/**
+ * The wave's backlight: a soft green pool on the ground under a key, which
+ * shows round its edges as it lights. Each key's brightness is its own.
+ */
+const BACKLIGHT_VERTEX = /* glsl */ `
+  attribute float aLit;
+  varying vec2 vUv;
+  varying float vLit;
+  void main() {
+    vUv = uv;
+    vLit = aLit;
+    gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+  }
+`
+
+const BACKLIGHT_FRAGMENT = /* glsl */ `
+  uniform sampler2D uMap;
+  uniform vec3 uColor;
+  uniform float uStrength;
+  varying vec2 vUv;
+  varying float vLit;
+  void main() {
+    float alpha = texture2D(uMap, vUv).a * vLit * uStrength;
+    if (alpha < 0.003) discard;
+    gl_FragColor = vec4(uColor, alpha);
+    #include <tonemapping_fragment>
+    #include <colorspace_fragment>
   }
 `
 
@@ -291,6 +324,24 @@ export async function createHeroKeyScene(
   boardShadow.renderOrder = 1
   scene.add(logoShadow, glow, boardShadow)
 
+  // One backlight per key, and one for the space bar, all in one draw.
+  const backlitTexture = softKey()
+  const backlitGeometry = flat()
+  const backlitLit = new InstancedBufferAttribute(new Float32Array(KEY_SLOTS.length + 1), 1)
+  backlitGeometry.setAttribute('aLit', backlitLit)
+  const backlitMaterial = new ShaderMaterial({
+    uniforms: { uMap: { value: backlitTexture }, uColor: { value: new Color() }, uStrength: { value: 0.4 } },
+    vertexShader: BACKLIGHT_VERTEX,
+    fragmentShader: BACKLIGHT_FRAGMENT,
+    transparent: true,
+    depthWrite: false,
+  })
+  const backlit = new InstancedMesh(backlitGeometry, backlitMaterial, KEY_SLOTS.length + 1)
+  backlit.frustumCulled = false
+  backlit.renderOrder = 3
+  KEY_SLOTS.forEach((slot, i) => backlit.setMatrixAt(i, new Matrix4().makeScale(1.5, 1, 1.5).setPosition(slot.x, 0.004, slot.z)))
+  scene.add(backlit)
+
   let shadowTexture: Texture | null = null
 
   // ---- Props --------------------------------------------------------------
@@ -335,6 +386,10 @@ export async function createHeroKeyScene(
     shadowMaterial.color.copy(colors.shadow)
     boardShadowMaterial.color.copy(colors.shadow)
     ;(glow.material as MeshBasicMaterial).color.copy(colors.primary)
+    backlitMaterial.uniforms.uColor.value.copy(colors.primary)
+    // Subtle on the light ground, a little more on the dark, where a
+    // backlit keyboard reads as light rather than tint.
+    backlitMaterial.uniforms.uStrength.value = colors.dark ? 0.55 : 0.4
 
     if (next.aspect !== previousAspect) {
       const withSpace = next.aspect === 'square'
@@ -347,6 +402,10 @@ export async function createHeroKeyScene(
       boardShadow.position.set((bounds.minX + bounds.maxX) / 2, 0.001, (bounds.minZ + bounds.maxZ) / 2)
       boardShadow.scale.set(bounds.maxX - bounds.minX, 1, bounds.maxZ - bounds.minZ)
 
+      const spaceLight = new Matrix4().makeScale(withSpace ? SPACE.width + 1.6 : 0, 1, withSpace ? 1.5 : 0)
+      backlit.setMatrixAt(KEY_SLOTS.length, spaceLight.setPosition(SPACE.x, 0.004, SPACE.z))
+      backlit.instanceMatrix.needsUpdate = true
+
       const size = COMPOSITION_SIZE[next.aspect]
       camera.aspect = size.width / size.height
     }
@@ -355,8 +414,9 @@ export async function createHeroKeyScene(
   await breathe()
   applyProps(initial, null)
 
-  function render(frame: number) {
+  function render(frame: number, waveSeconds = 0) {
     const state = stateAt(frame, props.aspect, props.framing)
+    const wave = waveStrength(frame, waveSeconds)
 
     const { azimuth, elevation, distance, target, roll, fov } = state.camera
     const az = rad(azimuth)
@@ -396,10 +456,9 @@ export async function createHeroKeyScene(
     glow.scale.setScalar(1.3 + 1.3 * state.glow)
     ;(glow.material as MeshBasicMaterial).opacity = (colors.dark ? 0.26 : 0.3) * state.glow
 
-    // The keyboard.
+    // The keyboard, and the light wave across it once it is up.
     KEY_SLOTS.forEach((slot, i) => {
-      const k = state.keys[i]
-      const y = REST + k.rise - TRAVEL * k.press
+      const y = REST + state.keys[i].rise
       matrix.makeTranslation(slot.x, y, slot.z)
       keys.setMatrixAt(i, matrix)
 
@@ -412,18 +471,25 @@ export async function createHeroKeyScene(
         matrix.makeScale(scale.x, scale.y, scale.z).setPosition(position)
         letters.setMatrixAt(i, matrix)
       }
-      letterColour.lerpColors(colors.letter, colors.primary, k.green)
+      const lit = wave > 0 ? wave * litAt(slot.x, slot.x, waveSeconds) : 0
+      letterColour.lerpColors(colors.letter, colors.primary, lit)
       letters.setColorAt(i, letterColour)
+      backlitLit.setX(i, lit)
     })
     keys.instanceMatrix.needsUpdate = true
     letters.instanceMatrix.needsUpdate = true
     if (letters.instanceColor) letters.instanceColor.needsUpdate = true
 
     if (state.space) {
-      matrix.makeTranslation(SPACE.x, REST + state.space.rise - TRAVEL * state.space.press, SPACE.z)
+      matrix.makeTranslation(SPACE.x, REST + state.space.rise, SPACE.z)
       space.setMatrixAt(0, matrix)
       space.instanceMatrix.needsUpdate = true
     }
+    // The space bar lights along its whole length as the band passes it.
+    const reach = SPACE.width / 2 - PLAIN.half
+    backlitLit.setX(KEY_SLOTS.length, state.space && wave > 0 ? wave * litAt(SPACE.x - reach, SPACE.x + reach, waveSeconds) : 0)
+    backlitLit.needsUpdate = true
+    backlit.visible = wave > 0.001
 
     boardShadow.visible = state.keyboardShadow > 0.002
     boardShadowMaterial.opacity = colors.shadowAlpha * 1.6 * state.keyboardShadow
@@ -437,7 +503,7 @@ export async function createHeroKeyScene(
   // allows, so the first scrolled frame does not stall on it. Then upload
   // the textures, each in its own task, for the same reason.
   await renderer.compileAsync(scene, camera)
-  for (const texture of [environment, atlas, spotTexture, glowTexture, shadowTexture]) {
+  for (const texture of [environment, atlas, spotTexture, glowTexture, backlitTexture, shadowTexture]) {
     await breathe()
     if (texture) renderer.initTexture(texture)
   }
@@ -458,7 +524,7 @@ export async function createHeroKeyScene(
           material.dispose()
         }
       })
-      for (const texture of [environment, atlas, spotTexture, glowTexture, shadowTexture]) texture?.dispose()
+      for (const texture of [environment, atlas, spotTexture, glowTexture, backlitTexture, shadowTexture]) texture?.dispose()
       renderer.dispose()
     },
   }

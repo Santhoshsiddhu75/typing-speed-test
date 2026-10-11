@@ -37,6 +37,28 @@ export function softSpot(falloff = 1): CanvasTexture {
   return new CanvasTexture(canvas)
 }
 
+/** A key's footprint, blurred: the shape of the light under a backlit key. */
+export function softKey(): CanvasTexture {
+  const size = 128
+  const { canvas, ctx } = canvas2d(size, size)
+  ctx.shadowColor = 'rgba(255,255,255,1)'
+  ctx.shadowBlur = size * 0.12
+  ctx.shadowOffsetX = size
+  ctx.fillStyle = '#ffffff'
+  const inset = size * 0.2
+  const r = size * 0.12
+  const [l, t, rt, b] = [inset - size, inset, size - inset - size, size - inset]
+  ctx.beginPath()
+  ctx.moveTo(l + r, t)
+  ctx.arcTo(rt, t, rt, b, r)
+  ctx.arcTo(rt, b, l, b, r)
+  ctx.arcTo(l, b, l, t, r)
+  ctx.arcTo(l, t, rt, t, r)
+  ctx.closePath()
+  ctx.fill()
+  return new CanvasTexture(canvas)
+}
+
 /** World-space rectangle the keyboard's shadow texture covers. */
 export interface ShadowBounds {
   minX: number

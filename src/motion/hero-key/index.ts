@@ -7,6 +7,7 @@ export { createHeroKeyScene } from './scene'
 export { drawGlyphAtlas, loadGlyphFont } from './glyphs'
 export type { GlyphAtlas } from './glyphs'
 export { LETTERS } from './layout'
+export { waveStrength } from './wave'
 export type { HeroKeyScene } from './scene'
 export type { HeroAspect, HeroFraming, HeroKeyColors, HeroKeyProps } from './types'
 export {
@@ -17,5 +18,6 @@ export {
   LANDED_FRAME,
   LAST_FRAME,
   SCROLL_FIRST_FRAME,
+  WAVE,
   frameForProgress,
 } from './constants'

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Logo from '@/components/Logo'
 import { ThemeOnlyToggle } from '@/components/ThemeOnlyToggle'
 import { useAuth } from '@/hooks/useAuth'
+import type { ScrollProgress } from '@/hooks/useScrollProgress'
 import { cn } from '@/lib/utils'
 
 /**
@@ -16,8 +17,12 @@ import { cn } from '@/lib/utils'
  * Both states are solid. There is no transparent phase at any point, so nav
  * text can never sit on top of page text — which is why there is no blurred
  * scrim behind them: with solid islands it only smeared the page into a ghost.
+ *
+ * While the hero's 3D story runs, the bar stays whole until the story
+ * finishes (`story` reaching 1), and joins again if the reader scrolls back
+ * above that point. Without a story, it splits as soon as the page moves.
  */
-export const LandingNav: React.FC = () => {
+export const LandingNav: React.FC<{ story?: ScrollProgress }> = ({ story }) => {
   const { user, isAuthenticated } = useAuth()
   const [scrolled, setScrolled] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
@@ -37,6 +42,12 @@ export const LandingNav: React.FC = () => {
   // events never reach window — they do not bubble. Listen on both and take
   // whichever is actually moving.
   useEffect(() => {
+    if (story) {
+      const read = (progress: number) => setScrolled(progress >= 1)
+      read(story.get())
+      return story.subscribe(read)
+    }
+
     const root = document.getElementById('root')
 
     const read = () => {
@@ -52,7 +63,7 @@ export const LandingNav: React.FC = () => {
       window.removeEventListener('scroll', read)
       root?.removeEventListener('scroll', read)
     }
-  }, [])
+  }, [story])
 
   return (
     <header className="pointer-events-none fixed left-0 right-0 top-0 z-50">

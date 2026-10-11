@@ -17,7 +17,8 @@ export type ToHeroWorker =
       size: CanvasSize
       frame: number
     }
-  | { type: 'frame'; frame: number }
+  /** A story frame, and the light wave's clock in seconds (0 when it is off). */
+  | { type: 'frame'; frame: number; wave: number }
   | { type: 'props'; props: HeroKeyProps }
   | { type: 'size'; size: CanvasSize }
 

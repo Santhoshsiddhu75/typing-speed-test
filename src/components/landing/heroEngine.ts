@@ -10,8 +10,11 @@ import type { CanvasSize, FromHeroWorker, ToHeroWorker } from './heroWorkerProto
 export type HeroEngineKind = 'worker' | 'main'
 
 export interface HeroEngine {
-  /** Draws a frame. Settings changes redraw the current one by themselves. */
-  render(frame: number): void
+  /**
+   * Draws a story frame, with the light wave at `wave` seconds. Settings
+   * changes redraw the current one by themselves.
+   */
+  render(frame: number, wave: number): void
   setProps(props: HeroKeyProps): void
   setSize(size: CanvasSize): void
   dispose(): void
@@ -44,7 +47,7 @@ function startInWorker({ canvas, props, glyphs, size, frame, onLost }: Start): P
       if (data.type === 'error') return fail(data.message)
       ready = true
       resolve({
-        render: (f) => send({ type: 'frame', frame: f }),
+        render: (f, w) => send({ type: 'frame', frame: f, wave: w }),
         setProps: (p) => send({ type: 'props', props: p }),
         setSize: (s) => send({ type: 'size', size: s }),
         dispose: () => worker.terminate(),
@@ -63,6 +66,7 @@ async function startOnMainThread({ canvas, props, glyphs, size, frame, onLost }:
   const { createHeroKeyScene } = await import('@/motion/hero-key/scene')
   const scene = await createHeroKeyScene(canvas, props, glyphs)
   let current = frame
+  let wave = 0
   scene.setSize(size.width, size.height, size.pixelRatio)
   scene.render(current)
 
@@ -73,17 +77,18 @@ async function startOnMainThread({ canvas, props, glyphs, size, frame, onLost }:
   canvas.addEventListener('webglcontextlost', onContextLost)
 
   return {
-    render(f) {
+    render(f, w) {
       current = f
-      scene.render(f)
+      wave = w
+      scene.render(f, w)
     },
     setProps(p) {
       scene.setProps(p)
-      scene.render(current)
+      scene.render(current, wave)
     },
     setSize(s) {
       scene.setSize(s.width, s.height, s.pixelRatio)
-      scene.render(current)
+      scene.render(current, wave)
     },
     dispose() {
       canvas.removeEventListener('webglcontextlost', onContextLost)

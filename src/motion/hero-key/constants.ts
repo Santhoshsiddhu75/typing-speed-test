@@ -35,6 +35,27 @@ export const LOGO = {
   underside: '#2A803F',
 } as const
 
+/**
+ * The light wave that loops across the keyboard once it is up (wave.ts):
+ * its timing, which the page also needs to drive it.
+ */
+export const WAVE = {
+  /** The band crosses the keyboard in this long… */
+  crossSeconds: 1.4,
+  /** …then every key rests dark for this long, and it repeats. */
+  restSeconds: 0.6,
+  /** Fades in this fast once the keyboard is up. */
+  fadeSeconds: 0.3,
+  /** Half the band's width, in keys. */
+  halfWidth: 1.5,
+  /** Below this frame the keys are sinking and the wave is gone… */
+  fromFrame: 430,
+  /** …and from this one they are fully up and it shows in full. */
+  fullFrame: 446,
+  /** The page draws it at this rate; nothing in it needs more. */
+  fps: 30,
+} as const
+
 export function frameForProgress(progress: number): number {
   const p = Math.min(1, Math.max(0, progress))
   return SCROLL_FIRST_FRAME + p * (LAST_FRAME - SCROLL_FIRST_FRAME)

@@ -19,6 +19,7 @@ const scope = self as unknown as {
 
 let scene: HeroKeyScene | null = null
 let frame = 0
+let wave = 0
 let scheduled = false
 // Anything that arrives while the scene is still starting waits for it.
 let pendingProps: Extract<ToHeroWorker, { type: 'props' }>['props'] | null = null
@@ -26,7 +27,7 @@ let pendingSize: CanvasSize | null = null
 
 const draw = () => {
   scheduled = false
-  scene?.render(frame)
+  scene?.render(frame, wave)
 }
 
 /** Frames can arrive faster than they draw; only the latest is drawn. */
@@ -54,6 +55,7 @@ scope.onmessage = async ({ data }) => {
       break
     case 'frame':
       frame = data.frame
+      wave = data.wave
       schedule()
       break
     case 'props':
@@ -68,7 +70,7 @@ scope.onmessage = async ({ data }) => {
       else {
         scene.setSize(data.size.width, data.size.height, data.size.pixelRatio)
         // A resize clears the canvas, so draw again now rather than next frame.
-        scene.render(frame)
+        scene.render(frame, wave)
       }
       break
   }

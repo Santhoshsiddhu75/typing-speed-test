@@ -6,6 +6,7 @@ import {
   INTRO_LAST_FRAME,
   LANDED_FRAME,
   SCROLL_FIRST_FRAME,
+  WAVE,
   frameForProgress,
 } from '@/motion/hero-key/constants'
 import { drawGlyphAtlas, loadGlyphFont } from '@/motion/hero-key/glyphs'
@@ -40,6 +41,10 @@ interface HeroSceneProps {
  * than jumps, and it always arrives. Nothing is drawn unless the frame
  * changes, and nothing at all while the visual is off screen or the tab is
  * hidden.
+ *
+ * Once the keyboard is up, the light wave runs on its own clock, counted
+ * from the moment the keys came up: the one thing drawn without the frame
+ * changing, at 30 fps, and never for a reader who asked for less motion.
  */
 const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, engine: preferred, progress, onShown, onError }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -68,12 +73,25 @@ const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, engine: preferre
     let onScreen = true
     /** Nothing moves until the scene has faded in over the poster. */
     let started = false
+    /** When the keyboard came up, or null while it is not up. */
+    let waveStart: number | null = null
+    let lastWave = 0
+    const lessMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 
-    const draw = () => {
+    const draw = (now: number) => {
       const frame = Math.round(current)
-      if (frame === shown || !engineRef.current) return
-      engineRef.current.render(frame)
+      let wave = 0
+      if (frame >= WAVE.fromFrame && !lessMotion.matches) {
+        if (waveStart === null) waveStart = now
+        wave = (now - waveStart) / 1000
+      } else {
+        waveStart = null
+      }
+      const waveDue = waveStart !== null && now - lastWave >= 1000 / WAVE.fps - 2
+      if ((frame === shown && !waveDue) || !engineRef.current) return
+      engineRef.current.render(frame, wave)
       shown = frame
+      if (waveDue) lastWave = now
     }
 
     const tick = (now: number) => {
@@ -108,8 +126,9 @@ const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, engine: preferre
         }
       }
 
-      draw()
-      if (moving && onScreen) raf = requestAnimationFrame(tick)
+      draw(now)
+      // The wave keeps the loop going after the scroll has settled.
+      if ((moving || waveStart !== null) && onScreen) raf = requestAnimationFrame(tick)
       else last = 0
     }
 

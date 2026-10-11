@@ -32,9 +32,6 @@ export const SPACE = { x: 0.5, z: 3, width: 5, distance: Math.hypot(0.5, 3) }
 /** The letters the logo key does not carry, for the glyph atlas. */
 export const LETTERS = KEY_SLOTS.map((slot) => slot.letter).join('')
 
-/** Pressed in this order at the end. The logo key takes all three Ts. */
-export const SPELLING = 'TAPTEST'
-
 /** Centre of the letter rows, and of the rows plus the space bar. */
 export const KEYBOARD_CENTRE = { x: 0.5, z: 1 }
 export const KEYBOARD_CENTRE_WITH_SPACE = { x: 0.5, z: 1.5 }
