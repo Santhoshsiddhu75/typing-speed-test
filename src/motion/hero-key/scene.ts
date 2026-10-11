@@ -188,7 +188,12 @@ export async function createHeroKeyScene(
   // The body, the underside and the T share one shader: every shader is
   // compiled on the phone, and each one costs start-up time.
   const logo = new Group()
-  const outline = new Mesh(logoOutline(), new MeshBasicMaterial({ color: LOGO.outline, side: BackSide }))
+  const outline = new Mesh(logoOutline(LOGO_KEY.outline), new MeshBasicMaterial({ color: LOGO.outline, side: BackSide }))
+  // Behind the outline and a little larger, so only a thin rim of it shows.
+  const keyline = new Mesh(
+    logoOutline(LOGO_KEY.outline + LOGO_KEY.keyline),
+    new MeshBasicMaterial({ color: LOGO.keyline, side: BackSide })
+  )
   const underside = new Mesh(
     plain(logoUnderside()),
     new MeshStandardMaterial({ vertexColors: true, color: LOGO.underside, roughness: 0.55 })
@@ -209,7 +214,7 @@ export async function createHeroKeyScene(
   const tMaterial = new MeshStandardMaterial({ vertexColors: true, color: LOGO.t, roughness: 0.42 })
   const t = new Mesh(plain(logoT()), tMaterial)
   facePivot.add(face, t)
-  logo.add(outline, underside, body, facePivot)
+  logo.add(keyline, outline, underside, body, facePivot)
   scene.add(logo)
 
   // Given the environment directly rather than through the scene, so their
@@ -315,6 +320,10 @@ export async function createHeroKeyScene(
     }
     paint(keyGeometry, [colors.edge, colors.border, facePaint(PLAIN.top)])
     paint(spaceGeometry, [colors.edge, colors.border, facePaint(PLAIN.top + (SPACE.width - 1) / 2)])
+
+    // On the dark ground the logo's dark outline disappears; a thin green
+    // keyline outside it keeps the key's edge.
+    keyline.visible = colors.dark
 
     // Light softens in the dark; the logo key keeps the logo's own white.
     keyLight.intensity = colors.dark ? 0.85 : 1.4

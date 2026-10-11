@@ -169,6 +169,8 @@ export const LOGO_KEY = {
   /** The face at rest, flush with the rim and just inside its opening. */
   face: { half: 0.346, top: 0.334, radius: 0.045, dish: 0.016, thickness: 0.04 },
   outline: 0.03,
+  /** Dark theme only: a thin green line just outside the outline, a third its width. */
+  keyline: 0.01,
 } as const
 
 export const LOGO_TONE = { wall: 0, rim: 1, well: 2 } as const
@@ -211,12 +213,11 @@ export function logoUnderside(): BufferGeometry {
 }
 
 /**
- * A shell a little larger than the underside and body together, drawn from
- * the inside only. What shows is a rim around the silhouette from any angle:
- * the logo's thick dark outline.
+ * A shell `t` larger than the underside and body together, drawn from the
+ * inside only. What shows is a rim around the silhouette from any angle: the
+ * logo's thick dark outline, and in the dark theme the keyline outside it.
  */
-export function logoOutline(): BufferGeometry {
-  const t = LOGO_KEY.outline
+export function logoOutline(t: number): BufferGeometry {
   const { underside, half, height } = LOGO_KEY
   const top = underside.height + height
   return sweep([

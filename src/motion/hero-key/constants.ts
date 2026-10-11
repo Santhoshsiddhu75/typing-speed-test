@@ -30,6 +30,8 @@ export const LOGO = {
   /** The sloped frame the face sinks into, seen in logopress.png. */
   well: '#D3D8D6',
   outline: '#184034',
+  /** Dark theme only, outside the outline: the dark ground swallows #184034. */
+  keyline: '#34D399',
   underside: '#2A803F',
 } as const
 

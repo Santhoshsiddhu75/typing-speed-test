@@ -1145,10 +1145,30 @@ html, body {
 
 .tt-hero-float { position: absolute; inset: 0; }
 
-/* From md up the picture bleeds 10% past the box on every side, so the
-   keyboard has room. The ground clips anything that reaches the page edge. */
-.tt-hero-stage { position: absolute; inset: 0; pointer-events: none; }
-@media (min-width: 768px) { .tt-hero-stage { inset: -10%; } }
+/* The picture is bigger than its box, so keys running out of frame are not
+   sliced at the box's edge. On a phone it runs to the screen's edges, across
+   the gutters, still 4:5 and centred on the box; from md up it bleeds 10%
+   past the box on every side. Every edge then fades out over a short
+   distance, so a key dissolves into the page instead of being cut. The fade
+   covers the poster too, since both sit in the stage. */
+.tt-hero-stage {
+  position: absolute;
+  left: calc(50% - 50vw); width: 100vw;
+  top: calc(50% - 62.5vw); height: 125vw;
+  pointer-events: none;
+  --tt-hero-fade: 7%;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 var(--tt-hero-fade), #000 calc(100% - var(--tt-hero-fade)), transparent),
+    linear-gradient(to bottom, transparent, #000 var(--tt-hero-fade), #000 calc(100% - var(--tt-hero-fade)), transparent);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent, #000 var(--tt-hero-fade), #000 calc(100% - var(--tt-hero-fade)), transparent),
+    linear-gradient(to bottom, transparent, #000 var(--tt-hero-fade), #000 calc(100% - var(--tt-hero-fade)), transparent);
+  mask-composite: intersect;
+}
+@media (min-width: 768px) {
+  .tt-hero-stage { inset: -10%; width: auto; height: auto; }
+}
 
 .tt-hero-poster,
 .tt-hero-canvas {
