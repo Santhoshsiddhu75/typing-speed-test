@@ -43,7 +43,9 @@ export const LandingNav: React.FC<{ story?: ScrollProgress }> = ({ story }) => {
   // whichever is actually moving.
   useEffect(() => {
     if (story) {
-      const read = (progress: number) => setScrolled(progress >= 1)
+      // A hair under 1 counts: scroll positions round to whole pixels, so
+      // the very end of the story can stop half a pixel short of it.
+      const read = (progress: number) => setScrolled(progress >= 0.995)
       read(story.get())
       return story.subscribe(read)
     }

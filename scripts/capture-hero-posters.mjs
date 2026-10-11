@@ -82,7 +82,6 @@ for (const theme of ['light', 'dark']) {
     await page.waitForSelector('.tt-hero-canvas.is-visible', { timeout: 30000 })
     // The landing press: 200ms crossfade, then 55 frames at 60fps.
     await page.waitForTimeout(2200)
-    const end = await page.evaluate(scrollFor, 1)
 
     // Only the scene: no page, no washes, no floating keys, and the idle
     // float stopped at rest. Playwright's animations: 'disabled' does not
@@ -97,7 +96,18 @@ for (const theme of ['light', 'dark']) {
       `,
     })
 
-    for (const [shot, y] of [['key', 0], ['keyboard', end]]) {
+    for (const shot of ['key', 'keyboard']) {
+      let y = 0
+      if (shot === 'keyboard') {
+        // The keyboard poster stands in for the scene under reduced motion,
+        // so it shows the keys plain: no light wave. The page stops the wave
+        // for a reader who asks for less motion, so ask before it can start.
+        // Asking also unpins the hero, so the end of the story is found
+        // after the page has settled into that layout.
+        await page.emulateMedia({ reducedMotion: 'reduce' })
+        await page.waitForTimeout(400)
+        y = await page.evaluate(scrollFor, 1)
+      }
       await page.evaluate((top) => document.getElementById('root').scrollTo(0, top), y)
       await page.waitForTimeout(2500)
       const box = await page.locator('.tt-hero-canvas').boundingBox()
