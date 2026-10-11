@@ -84,12 +84,16 @@ for (const theme of ['light', 'dark']) {
     await page.waitForTimeout(2200)
     const end = await page.evaluate(scrollFor, 1)
 
-    // Only the scene: no page, no washes, no floating keys, no float.
+    // Only the scene: no page, no washes, no floating keys, and the idle
+    // float stopped at rest. Playwright's animations: 'disabled' does not
+    // reliably reset a float driven through a registered custom property, and
+    // a poster caught mid-float sits a few pixels off the live scene.
     await page.addStyleTag({
       content: `
         * { visibility: hidden !important; }
         .tt-hero-stage, .tt-hero-stage canvas { visibility: visible !important; }
         html, body, #root, .tt-landing { background: transparent !important; }
+        .tt-hero-float { animation: none !important; transform: none !important; }
       `,
     })
 
