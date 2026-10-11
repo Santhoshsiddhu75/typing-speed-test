@@ -982,7 +982,11 @@ html, body {
 /* The ground under the whole page above the footer. The hero keeps its own
    two washes; these two carry the glow on past it, one left in the middle
    and one right at the bottom, so no section sits on a flat ground. */
-.tt-ground { position: relative; overflow: hidden; }
+/* Clipped with overflow: clip, not hidden alone. A box with overflow: hidden
+   becomes the scroll container its sticky descendants stick to, and the hero
+   pins inside this one. clip clips the same washes without that; hidden stays
+   as the fallback for browsers without clip, which only lose the pin. */
+.tt-ground { position: relative; overflow: hidden; overflow: clip; }
 .tt-wash-mid,
 .tt-wash-low { position: absolute; border-radius: 50%; pointer-events: none; }
 .tt-wash-mid {
@@ -1131,6 +1135,65 @@ html, body {
    tt-key: that one is the floating keycap decoration. */
 .tt-kw { color: var(--primary-ink); font-weight: 600; }
 
+/* ---- Hero visual: the logo key in 3D ---- */
+
+/* The box is reserved by its shape before anything loads, so nothing shifts
+   when the poster or the scene arrives: 4:5 under the copy on a phone, 1:1
+   beside it from md up. */
+.tt-hero-box { position: relative; width: 100%; aspect-ratio: 4 / 5; }
+@media (min-width: 768px) { .tt-hero-box { aspect-ratio: 1 / 1; } }
+
+.tt-hero-float { position: absolute; inset: 0; }
+
+/* From md up the picture bleeds 10% past the box on every side, so the
+   keyboard has room. The ground clips anything that reaches the page edge. */
+.tt-hero-stage { position: absolute; inset: 0; pointer-events: none; }
+@media (min-width: 768px) { .tt-hero-stage { inset: -10%; } }
+
+.tt-hero-poster,
+.tt-hero-canvas {
+  position: absolute; inset: 0; display: block;
+  width: 100%; height: 100%;
+  user-select: none;
+}
+.tt-hero-canvas { opacity: 0; transition: opacity 200ms ease; }
+.tt-hero-canvas.is-visible { opacity: 1; }
+
+/* The idle float: 13px up and back over 7s, like the floating keycaps.
+   Animated through a registered number rather than the transform itself,
+   so scrolling can scale it down to nothing (--tt-hero-float-k, set by the
+   page) without the key jumping mid-float. */
+@property --tt-hero-float {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@keyframes tt-hero-float {
+  0%, 100% { --tt-hero-float: 0; }
+  50% { --tt-hero-float: 1; }
+}
+.tt-hero-float.is-floating {
+  animation: tt-hero-float 7s ease-in-out infinite;
+  transform: translateY(calc(var(--tt-hero-float) * var(--tt-hero-float-k, 1) * -13px));
+}
+@media (prefers-reduced-motion: reduce) {
+  .tt-hero-float.is-floating { animation: none; transform: none; }
+}
+
+/* Pinned (desktop, and only when the copy fits): the hero stays put for
+   about a screen of scroll while the key's story plays, then the page moves
+   on. Its height is the screen; the space above the copy shrinks first on a
+   short one, never past the nav, and the space below takes what is left. */
+.tt-hero-pin.is-pinned { height: 190vh; height: calc(100svh + 90svh); }
+.tt-hero-pin.is-pinned > .tt-hero {
+  position: sticky; top: 0;
+  height: 100vh; height: 100svh;
+  display: flex; flex-direction: column;
+}
+.tt-hero-pin.is-pinned .tt-hero-gap { flex: 0 1 52px; min-height: 0; }
+.tt-hero-pin.is-pinned .tt-hero-grid { flex: none; width: 100%; }
+.tt-hero-pin.is-pinned .tt-hero-tail { flex: 1 0 16px; height: auto; }
+
 /* ---- Demo card ---- */
 
 .tt-demo-card {
@@ -1142,30 +1205,12 @@ html, body {
 }
 @media (min-width: 640px) { .tt-demo-card { padding: 22px 24px 24px; } }
 
-.tt-card-tilt { transform: rotate(-1.4deg); }
-.tt-card-behind {
-  position: absolute; left: 26px; right: -16px; top: 18px; bottom: -18px;
-  border-radius: 18px; z-index: 0;
-  background: color-mix(in srgb, var(--card) 55%, transparent);
-  border: 1px solid var(--border);
-  transform: rotate(2.8deg);
-}
-@media (max-width: 767px) {
-  .tt-card-tilt { transform: none; }
-  .tt-card-behind { display: none; }
-}
 
 .tt-chip {
   padding: 4px 11px; border-radius: 999px; font-size: 12px;
   background: var(--muted); color: var(--muted-foreground);
 }
 
-.tt-demo-face { fill: var(--card); stroke: var(--border); stroke-width: 1.4; }
-.tt-demo-track { fill: none; stroke: var(--border); stroke-width: 6; }
-.tt-demo-arc {
-  fill: none; stroke: var(--primary); stroke-width: 6; stroke-linecap: round;
-  transition: stroke-dashoffset .12s linear;
-}
 
 .tt-demo-line {
   font-family: var(--font-mono);

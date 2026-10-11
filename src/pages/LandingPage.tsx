@@ -1,15 +1,25 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Users } from 'lucide-react'
 import LandingNav from '@/components/landing/LandingNav'
 import FloatingKeys from '@/components/landing/FloatingKeys'
-import HeroDemo from '@/components/landing/HeroDemo'
+import HeroVisual from '@/components/landing/HeroVisual'
+import { HeroMode, initialHeroMode } from '@/components/landing/heroMode'
+import { useHeroScroll } from '@/components/landing/useHeroScroll'
 import DemoSection, { DemoHandle } from '@/components/landing/DemoSection'
 import RaceSection from '@/components/landing/RaceSection'
 import Footer from '@/components/Footer'
+import { cn } from '@/lib/utils'
 
 const LandingPage = () => {
   const demoRef = useRef<DemoHandle>(null)
+
+  // The hero's 3D key, and whether the hero pins while it plays. A scene
+  // that cannot run falls back to its poster, and a poster has nothing to
+  // pin for.
+  const [heroMode, setHeroMode] = useState<HeroMode>(initialHeroMode)
+  const onHeroUnavailable = useCallback(() => setHeroMode((mode) => (mode === 'live' ? 'still' : mode)), [])
+  const hero = useHeroScroll(heroMode === 'live')
 
   // Stays a button rather than an "#try" anchor: it has to replay the demo as
   // well as move to it, and an anchor would put a fragment in the URL that
@@ -34,12 +44,23 @@ const LandingPage = () => {
         <div className="tt-wash-mid" aria-hidden="true" />
         <div className="tt-wash-low" aria-hidden="true" />
 
-      <section className="relative pt-[92px] sm:pt-[122px]">
+      {/* Tall while pinned, so the hero can stay put for a screen of scroll. */}
+      <div ref={hero.pinRef} className={cn('tt-hero-pin', hero.pinned && 'is-pinned')}>
+      <section ref={hero.heroRef} className="tt-hero relative pt-[92px] sm:pt-[122px]">
         <div className="tt-wash" aria-hidden="true" />
         <div className="tt-wash-2" aria-hidden="true" />
         <FloatingKeys />
 
-        <div className="relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-0 px-5 pt-6 sm:px-14 sm:pt-[52px] md:grid-cols-[1.02fr_0.98fr] md:gap-[52px]">
+        {/* Pinned, the space above the copy gives way first on a short screen. */}
+        {hero.pinned && <div className="tt-hero-gap" aria-hidden="true" />}
+
+        <div
+          ref={hero.contentRef}
+          className={cn(
+            'tt-hero-grid relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-0 px-5 sm:px-14 md:grid-cols-[1.02fr_0.98fr] md:gap-[52px]',
+            hero.pinned ? 'pt-0' : 'pt-6 sm:pt-[52px]'
+          )}
+        >
           <div>
             <p className="tt-kicker mb-3 sm:mb-[18px]">Master your typing speed</p>
 
@@ -86,16 +107,19 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="mt-8 flex justify-center md:mt-0">
-            <div className="relative w-full max-w-[470px]">
-              <div className="tt-card-behind" aria-hidden="true" />
-              <HeroDemo className="tt-card-tilt" />
-            </div>
+          <div className="mt-8 md:mt-0">
+            <HeroVisual
+              mode={heroMode}
+              progress={hero.progress}
+              boxRef={hero.boxRef}
+              onUnavailable={onHeroUnavailable}
+            />
           </div>
         </div>
 
-        <div className="h-12 sm:h-[72px]" />
+        <div className="tt-hero-tail h-12 sm:h-[72px]" />
       </section>
+      </div>
 
       <RaceSection />
 

@@ -23,6 +23,33 @@
     <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon-64.png" />
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- The home page's hero poster is its largest picture, and React only
+         asks for it once the main bundle has run. Ask for it now, on / only,
+         choosing it by the same rules as components/landing/heroMode.ts and
+         ThemeContext: theme from localStorage or the system, 1:1 from 768px
+         up and 4:5 below, the finished keyboard for reduced motion. It must
+         come after the viewport meta: before it, a phone measures its
+         default 980px layout width and picks the desktop poster. -->
+    <script>
+      (function () {
+        if (window.location.pathname !== '/') return
+        var theme
+        try { theme = localStorage.getItem('theme') } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        }
+        var shot = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'keyboard' : 'key'
+        var aspect = window.matchMedia('(min-width: 768px)').matches ? 'square' : 'portrait'
+        var link = document.createElement('link')
+        link.rel = 'preload'
+        link.as = 'image'
+        link.type = 'image/webp'
+        link.href = '/hero/' + shot + '-' + theme + '-' + aspect + '.webp'
+        link.setAttribute('fetchpriority', 'high')
+        document.head.appendChild(link)
+      })()
+    </script>
     
     <!-- Performance and Resource Hints (ZERO RISK) -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
