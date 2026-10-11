@@ -31,10 +31,9 @@ export function posterSrc(mode: HeroMode, theme: 'light' | 'dark', square: boole
   return `/hero/${shot}-${theme}-${square ? 'square' : 'portrait'}.webp`
 }
 
-/** Probes for WebGL without keeping a context alive. */
-export function hasWebGL(): boolean {
+/** True if this canvas gives a WebGL context. The probe context is released at once. */
+function webgl(canvas: HTMLCanvasElement | OffscreenCanvas): boolean {
   try {
-    const canvas = document.createElement('canvas')
     const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl')) as WebGLRenderingContext | null
     if (!gl) return false
     gl.getExtension('WEBGL_lose_context')?.loseContext()
@@ -42,4 +41,18 @@ export function hasWebGL(): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * Where the 3D can run here: in a worker when the browser draws WebGL on an
+ * OffscreenCanvas (Chrome, Firefox, Safari 17 and later), on the main thread
+ * when it only has WebGL on a page canvas (older Safari), or nowhere.
+ */
+export function webglSupport(): 'worker' | 'main' | null {
+  const offscreen =
+    typeof OffscreenCanvas !== 'undefined' &&
+    typeof Worker !== 'undefined' &&
+    'transferControlToOffscreen' in HTMLCanvasElement.prototype
+  if (offscreen && webgl(new OffscreenCanvas(1, 1))) return 'worker'
+  return webgl(document.createElement('canvas')) ? 'main' : null
 }

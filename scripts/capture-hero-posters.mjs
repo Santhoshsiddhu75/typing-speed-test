@@ -49,14 +49,14 @@ async function encodeWebp(browser, png) {
       // Full size first, giving up some quality; past that, a slightly
       // smaller poster looks better than a blotchy one.
       let last
-      for (const size of [1, 0.9, 0.8, 0.7]) {
+      for (const size of [1, 0.9, 0.8, 0.7, 0.62]) {
         const canvas = document.createElement('canvas')
         canvas.width = Math.round(img.naturalWidth * size)
         canvas.height = Math.round(img.naturalHeight * size)
         const ctx = canvas.getContext('2d')
         ctx.imageSmoothingQuality = 'high'
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-        for (let quality = 0.86; quality >= 0.6; quality -= 0.04) {
+        for (let quality = 0.86; quality >= 0.58; quality -= 0.04) {
           const url = canvas.toDataURL('image/webp', quality)
           last = { url, quality, width: canvas.width, height: canvas.height }
           if (url.length * 0.75 <= max) return last

@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
+// Straight from the modules rather than the package index, which also
+// exports the scene: three.js must stay out of this chunk.
 import {
   FPS,
   INTRO_LAST_FRAME,
   LANDED_FRAME,
   SCROLL_FIRST_FRAME,
-  createHeroKeyScene,
   frameForProgress,
-} from '@/motion/hero-key'
-import type { HeroAspect, HeroFraming, HeroKeyScene } from '@/motion/hero-key'
+} from '@/motion/hero-key/constants'
+import { drawGlyphAtlas, loadGlyphFont } from '@/motion/hero-key/glyphs'
+import { LETTERS } from '@/motion/hero-key/layout'
+import type { HeroAspect, HeroFraming } from '@/motion/hero-key/types'
 import type { ScrollProgress } from '@/hooks/useScrollProgress'
 import { cn } from '@/lib/utils'
+import { HeroEngine, HeroEngineKind, startHeroEngine } from './heroEngine'
 import { readHeroColors } from './readHeroColors'
 
 /** How long the scene takes to fade in over the poster. Matches .tt-hero-canvas. */
@@ -20,6 +24,8 @@ const SMOOTHING = 0.12
 interface HeroSceneProps {
   aspect: HeroAspect
   framing: HeroFraming
+  /** Where to draw. A worker that fails to start falls back to the main thread. */
+  engine: HeroEngineKind
   progress: ScrollProgress
   /** The scene has faded in over the poster. */
   onShown: () => void
@@ -35,12 +41,12 @@ interface HeroSceneProps {
  * changes, and nothing at all while the visual is off screen or the tab is
  * hidden.
  */
-const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, progress, onShown, onError }) => {
+const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, engine: preferred, progress, onShown, onError }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const sceneRef = useRef<HeroKeyScene | null>(null)
-  const redrawRef = useRef<() => void>(() => {})
+  const engineRef = useRef<HeroEngine | null>(null)
   const shape = useRef({ aspect, framing })
   const callbacks = useRef({ onShown, onError })
+  const [engine, setEngine] = useState(preferred)
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -55,26 +61,24 @@ const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, progress, onShow
     let raf = 0
     let last = 0
     let current = LANDED_FRAME
-    let shown = -1
+    let shown = LANDED_FRAME
     let target = frameForProgress(progress.get())
     /** When the landing press started playing, or -1 once it is over. */
     let introStart = -1
     let onScreen = true
+    /** Nothing moves until the scene has faded in over the poster. */
+    let started = false
 
     const draw = () => {
       const frame = Math.round(current)
-      if (frame === shown || !sceneRef.current) return
-      sceneRef.current.render(frame)
+      if (frame === shown || !engineRef.current) return
+      engineRef.current.render(frame)
       shown = frame
-    }
-    redrawRef.current = () => {
-      shown = -1
-      draw()
     }
 
     const tick = (now: number) => {
       raf = 0
-      if (disposed || !sceneRef.current) return
+      if (disposed || !engineRef.current) return
       const dt = last ? Math.min(64, now - last) : 1000 / FPS
       last = now
       let moving = false
@@ -109,10 +113,8 @@ const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, progress, onShow
       else last = 0
     }
 
-    /** Nothing moves until the scene has faded in over the poster. */
-    let started = false
     const wake = () => {
-      if (!raf && started && onScreen && sceneRef.current) raf = requestAnimationFrame(tick)
+      if (!raf && started && onScreen && engineRef.current) raf = requestAnimationFrame(tick)
     }
 
     const unsubscribe = progress.subscribe((p) => {
@@ -120,14 +122,14 @@ const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, progress, onShow
       wake()
     })
 
-    const resize = () => {
-      const scene = sceneRef.current
-      if (!scene) return
-      const cap = window.matchMedia('(min-width: 768px)').matches ? 2 : 1.5
-      scene.setSize(canvas.clientWidth, canvas.clientHeight, Math.min(window.devicePixelRatio || 1, cap))
-      redrawRef.current()
-    }
-    const resizeObserver = new ResizeObserver(resize)
+    const size = () => ({
+      width: canvas.clientWidth,
+      height: canvas.clientHeight,
+      // At most 1.5x on a phone and 2x on a desktop: the box is all there is
+      // to fill, and every extra pixel is drawn on every frame.
+      pixelRatio: Math.min(window.devicePixelRatio || 1, window.matchMedia('(min-width: 768px)').matches ? 2 : 1.5),
+    })
+    const resizeObserver = new ResizeObserver(() => engineRef.current?.setSize(size()))
 
     const intersection = new IntersectionObserver(([entry]) => {
       onScreen = entry.isIntersecting && !document.hidden
@@ -141,45 +143,54 @@ const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, progress, onShow
 
     // The theme is a class on <html>, and can flip at any moment.
     const themeObserver = new MutationObserver(() => {
-      sceneRef.current?.setProps({ colors: readHeroColors(), ...shape.current })
-      redrawRef.current()
+      engineRef.current?.setProps({ colors: readHeroColors(), ...shape.current })
     })
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 
-    const onContextLost = (event: Event) => {
-      event.preventDefault()
-      callbacks.current.onError()
+    const start = async () => {
+      // The letters are drawn here, where the page's fonts are; a worker has none.
+      await loadGlyphFont(LETTERS)
+      const glyphs = drawGlyphAtlas(LETTERS)
+      return startHeroEngine(engine, {
+        canvas,
+        props: { colors: readHeroColors(), ...shape.current },
+        glyphs,
+        size: size(),
+        // The poster is this frame, so the scene can fade in over it unseen.
+        frame: LANDED_FRAME,
+        onLost: () => {
+          if (!disposed) callbacks.current.onError()
+        },
+      })
     }
-    canvas.addEventListener('webglcontextlost', onContextLost)
 
-    createHeroKeyScene(canvas, { colors: readHeroColors(), ...shape.current }).then(
-      (scene) => {
+    start().then(
+      (ready) => {
         if (disposed) {
-          scene.dispose()
+          ready.dispose()
           return
         }
-        sceneRef.current = scene
+        engineRef.current = ready
         resizeObserver.observe(canvas)
         intersection.observe(canvas)
-        resize()
-
-        // Fade in on the frame the poster shows, then play the landing press.
-        // Frame 90 is the same picture, so a reader already scrolling skips
-        // the press and the story picks up from there.
-        current = LANDED_FRAME
-        redrawRef.current()
         setVisible(true)
         window.setTimeout(() => {
           if (disposed) return
           callbacks.current.onShown()
           started = true
+          // Frame 90 is the same picture as the poster, so a reader already
+          // scrolling skips the landing press and picks up the story there.
           if (target > SCROLL_FIRST_FRAME) current = SCROLL_FIRST_FRAME
           else introStart = performance.now()
           wake()
         }, CROSSFADE_MS)
       },
       () => {
-        if (!disposed) callbacks.current.onError()
+        if (disposed) return
+        // A worker that could not start gets one more try on the main
+        // thread, on a fresh canvas: this one has been handed to the worker.
+        if (engine === 'worker') setEngine('main')
+        else callbacks.current.onError()
       }
     )
 
@@ -191,19 +202,24 @@ const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, progress, onShow
       intersection.disconnect()
       themeObserver.disconnect()
       document.removeEventListener('visibilitychange', onVisibility)
-      canvas.removeEventListener('webglcontextlost', onContextLost)
-      sceneRef.current?.dispose()
-      sceneRef.current = null
+      engineRef.current?.dispose()
+      engineRef.current = null
     }
-  }, [progress])
+  }, [engine, progress])
 
   useEffect(() => {
     shape.current = { aspect, framing }
-    sceneRef.current?.setProps({ colors: readHeroColors(), aspect, framing })
-    redrawRef.current()
+    engineRef.current?.setProps({ colors: readHeroColors(), aspect, framing })
   }, [aspect, framing])
 
-  return <canvas ref={canvasRef} className={cn('tt-hero-canvas', visible && 'is-visible')} aria-hidden="true" />
+  return (
+    <canvas
+      key={engine}
+      ref={canvasRef}
+      className={cn('tt-hero-canvas', visible && 'is-visible')}
+      aria-hidden="true"
+    />
+  )
 }
 
 export default HeroScene

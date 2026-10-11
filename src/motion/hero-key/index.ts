@@ -4,6 +4,9 @@
  * rendered to video for social posts.
  */
 export { createHeroKeyScene } from './scene'
+export { drawGlyphAtlas, loadGlyphFont } from './glyphs'
+export type { GlyphAtlas } from './glyphs'
+export { LETTERS } from './layout'
 export type { HeroKeyScene } from './scene'
 export type { HeroAspect, HeroFraming, HeroKeyColors, HeroKeyProps } from './types'
 export {

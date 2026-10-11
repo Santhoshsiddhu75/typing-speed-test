@@ -9,7 +9,13 @@ import { PLAIN } from './geometry'
  * come out the same every time.
  */
 
+/** An OffscreenCanvas where there is one, so this also runs in a worker. */
 function canvas2d(width: number, height: number) {
+  if (typeof OffscreenCanvas !== 'undefined') {
+    const canvas = new OffscreenCanvas(width, height)
+    const ctx = canvas.getContext('2d')
+    if (ctx) return { canvas, ctx }
+  }
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height

@@ -1,7 +1,8 @@
 import { Component, ReactNode, RefObject, Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import type { ScrollProgress } from '@/hooks/useScrollProgress'
-import { HeroMode, SQUARE_QUERY, WHOLE_QUERY, hasWebGL, posterSrc } from './heroMode'
+import { HeroMode, SQUARE_QUERY, WHOLE_QUERY, posterSrc, webglSupport } from './heroMode'
+import type { HeroEngineKind } from './heroEngine'
 
 // three.js and the scene come in their own chunk, after first paint.
 const HeroScene = lazy(() => import('./HeroScene'))
@@ -41,7 +42,7 @@ export const HeroVisual: React.FC<HeroVisualProps> = ({ mode, progress, boxRef, 
   const { theme } = useTheme()
   const [square, setSquare] = useState(() => window.matchMedia(SQUARE_QUERY).matches)
   const [whole, setWhole] = useState(() => window.matchMedia(WHOLE_QUERY).matches)
-  const [load, setLoad] = useState(false)
+  const [engine, setEngine] = useState<HeroEngineKind | null>(null)
   const [sceneShown, setSceneShown] = useState(false)
   const floatRef = useRef<HTMLDivElement>(null)
 
@@ -68,7 +69,8 @@ export const HeroVisual: React.FC<HeroVisualProps> = ({ mode, progress, boxRef, 
     let idle = 0
     const start = () => {
       if (cancelled) return
-      if (hasWebGL()) setLoad(true)
+      const support = webglSupport()
+      if (support) setEngine(support)
       else onUnavailable()
     }
     // Safari has no requestIdleCallback; a short timeout stands in.
@@ -97,7 +99,7 @@ export const HeroVisual: React.FC<HeroVisualProps> = ({ mode, progress, boxRef, 
     })
   }, [mode, progress])
 
-  const live = mode === 'live' && load
+  const live = mode === 'live' && engine !== null
   // Hidden only once the scene has faded in over it, and back if the scene goes.
   const posterHidden = live && sceneShown
 
@@ -119,6 +121,7 @@ export const HeroVisual: React.FC<HeroVisualProps> = ({ mode, progress, boxRef, 
                 <HeroScene
                   aspect={square ? 'square' : 'portrait'}
                   framing={whole ? 'whole' : 'close'}
+                  engine={engine ?? 'main'}
                   progress={progress}
                   onShown={() => setSceneShown(true)}
                   onError={onUnavailable}

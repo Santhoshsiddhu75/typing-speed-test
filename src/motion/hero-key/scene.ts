@@ -2,12 +2,15 @@ import {
   BackSide,
   BufferGeometry,
   Color,
+  DataTexture,
   DirectionalLight,
   Float32BufferAttribute,
   Group,
   HemisphereLight,
   InstancedBufferAttribute,
   InstancedMesh,
+  LinearFilter,
+  LinearMipmapLinearFilter,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
@@ -18,6 +21,7 @@ import {
   Plane,
   PlaneGeometry,
   PMREMGenerator,
+  RGBAFormat,
   Scene,
   ShaderMaterial,
   Texture,
@@ -28,11 +32,12 @@ import {
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import type { HeroAspect, HeroKeyColors, HeroKeyProps } from './types'
 import { COMPOSITION_SIZE, LOGO } from './constants'
-import { KEY_SLOTS, LETTERS, SPACE } from './layout'
+import { KEY_SLOTS, SPACE } from './layout'
 import { stateAt } from './timeline'
 import { clamp01, lerp } from './easing'
 import { luminance, over, parseColor, toHex } from './colors'
-import { ATLAS, glyphAtlas, loadGlyphFont } from './glyphs'
+import { ATLAS } from './glyphs'
+import type { GlyphAtlas } from './glyphs'
 import { keyboardShadow, softSpot } from './textures'
 import {
   LOGO_KEY,
@@ -51,9 +56,12 @@ import {
  * belongs to. Plain three.js, so it costs one library on the page.
  *
  * `render(frame)` is the only way anything moves, and it draws a pure
- * function of the frame and the props. To render it to video later, wrap it
- * in a Remotion composition: a <canvas> sized to COMPOSITION_SIZE, the scene
- * created behind a delayRender, and render(useCurrentFrame()) in an effect.
+ * function of the frame and the props. It touches no DOM, so it runs on an
+ * OffscreenCanvas in a worker as well as on a page's own canvas.
+ *
+ * To render it to video later, wrap it in a Remotion composition: a <canvas>
+ * sized to COMPOSITION_SIZE; behind a delayRender, loadGlyphFont and
+ * drawGlyphAtlas, then this; then render(useCurrentFrame()) in an effect.
  */
 export interface HeroKeyScene {
   render(frame: number): void
@@ -75,7 +83,8 @@ const LETTER_VERTEX = /* glsl */ `
   varying vec2 vUv;
   varying vec3 vColor;
   void main() {
-    vUv = (uv + aCell) / uGrid;
+    // The atlas is stored top row first; a quad's uv runs bottom to top.
+    vUv = vec2((uv.x + aCell.x) / uGrid.x, (aCell.y + 1.0 - uv.y) / uGrid.y);
     #ifdef USE_INSTANCING_COLOR
       vColor = instanceColor;
     #else
@@ -138,9 +147,11 @@ function resolveColors(colors: HeroKeyColors) {
   }
 }
 
-export async function createHeroKeyScene(canvas: HTMLCanvasElement, initial: HeroKeyProps): Promise<HeroKeyScene> {
-  await loadGlyphFont(LETTERS)
-
+export async function createHeroKeyScene(
+  canvas: HTMLCanvasElement | OffscreenCanvas,
+  initial: HeroKeyProps,
+  glyphs: GlyphAtlas
+): Promise<HeroKeyScene> {
   await breathe()
 
   const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, premultipliedAlpha: true })
@@ -226,16 +237,21 @@ export async function createHeroKeyScene(canvas: HTMLCanvasElement, initial: Her
   scene.add(keys, space)
 
   await breathe()
-  const atlas = glyphAtlas(LETTERS)
-  atlas.texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
+  const atlas = new DataTexture(glyphs.data, glyphs.width, glyphs.height, RGBAFormat)
+  atlas.generateMipmaps = true
+  atlas.minFilter = LinearMipmapLinearFilter
+  atlas.magFilter = LinearFilter
+  atlas.anisotropy = renderer.capabilities.getMaxAnisotropy()
+  atlas.needsUpdate = true
+  const cellOf = (letter: string) => glyphs.cells[letter] ?? [0, 0]
   const letterGeometry = new PlaneGeometry(1, 1)
   letterGeometry.rotateX(-Math.PI / 2)
   letterGeometry.setAttribute(
     'aCell',
-    new InstancedBufferAttribute(new Float32Array(KEY_SLOTS.flatMap((slot) => atlas.cell(slot.letter))), 2)
+    new InstancedBufferAttribute(new Float32Array(KEY_SLOTS.flatMap((slot) => cellOf(slot.letter))), 2)
   )
   const letterMaterial = new ShaderMaterial({
-    uniforms: { uAtlas: { value: atlas.texture }, uGrid: { value: new Vector2(ATLAS.cols, ATLAS.rows) } },
+    uniforms: { uAtlas: { value: atlas }, uGrid: { value: new Vector2(ATLAS.cols, ATLAS.rows) } },
     vertexShader: LETTER_VERTEX,
     fragmentShader: LETTER_FRAGMENT,
     transparent: true,
@@ -412,7 +428,7 @@ export async function createHeroKeyScene(canvas: HTMLCanvasElement, initial: Her
   // allows, so the first scrolled frame does not stall on it. Then upload
   // the textures, each in its own task, for the same reason.
   await renderer.compileAsync(scene, camera)
-  for (const texture of [environment, atlas.texture, spotTexture, glowTexture, shadowTexture]) {
+  for (const texture of [environment, atlas, spotTexture, glowTexture, shadowTexture]) {
     await breathe()
     if (texture) renderer.initTexture(texture)
   }
@@ -433,7 +449,7 @@ export async function createHeroKeyScene(canvas: HTMLCanvasElement, initial: Her
           material.dispose()
         }
       })
-      for (const texture of [environment, atlas.texture, spotTexture, glowTexture, shadowTexture]) texture?.dispose()
+      for (const texture of [environment, atlas, spotTexture, glowTexture, shadowTexture]) texture?.dispose()
       renderer.dispose()
     },
   }
