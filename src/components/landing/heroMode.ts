@@ -47,12 +47,16 @@ function webgl(canvas: HTMLCanvasElement | OffscreenCanvas): boolean {
  * Where the 3D can run here: in a worker when the browser draws WebGL on an
  * OffscreenCanvas (Chrome, Firefox, Safari 17 and later), on the main thread
  * when it only has WebGL on a page canvas (older Safari), or nowhere.
+ *
+ * The page canvas is asked first. Chrome's switch for turning WebGL off
+ * leaves it working on OffscreenCanvas, and a reader who has turned it off
+ * should get the poster, not WebGL through a side door.
  */
 export function webglSupport(): 'worker' | 'main' | null {
+  if (!webgl(document.createElement('canvas'))) return null
   const offscreen =
     typeof OffscreenCanvas !== 'undefined' &&
     typeof Worker !== 'undefined' &&
     'transferControlToOffscreen' in HTMLCanvasElement.prototype
-  if (offscreen && webgl(new OffscreenCanvas(1, 1))) return 'worker'
-  return webgl(document.createElement('canvas')) ? 'main' : null
+  return offscreen && webgl(new OffscreenCanvas(1, 1)) ? 'worker' : 'main'
 }
