@@ -5,7 +5,7 @@
  */
 export { createHeroKeyScene } from './scene'
 export type { HeroKeyScene } from './scene'
-export type { HeroAspect, HeroKeyColors, HeroKeyProps } from './types'
+export type { HeroAspect, HeroFraming, HeroKeyColors, HeroKeyProps } from './types'
 export {
   COMPOSITION_SIZE,
   DURATION_IN_FRAMES,

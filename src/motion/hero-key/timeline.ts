@@ -1,4 +1,4 @@
-import type { HeroAspect } from './types'
+import type { HeroAspect, HeroFraming } from './types'
 import { KEY_SLOTS, SPACE, SPELLING } from './layout'
 import {
   clamp01,
@@ -22,7 +22,7 @@ import {
  *   90–179   turn: logo pose → face on → low three-quarter view
  *   180–251  press: all the way down, held; a green light spreads under it
  *   252–359  open out: the keyboard rises around it in a wave from the T
- *   360–431  spell: T, A, P, T, E, S, T
+ *   360–431  spell: T, A, P, T, E, S, T, followed close in on a phone
  *   432–449  rest
  */
 
@@ -35,6 +35,8 @@ export interface CameraPose {
   target: [number, number, number]
   /** Degrees around the line of sight. */
   roll: number
+  /** Lens shift, as a share of half the frame: moves the picture, not the view. */
+  shift: [number, number]
   /** Vertical field of view, degrees. */
   fov: number
 }
@@ -70,31 +72,76 @@ export interface HeroFrameState {
 type Shot = Omit<CameraPose, 'fov'>
 
 const FOV = 30
+const NO_SHIFT: [number, number] = [0, 0]
 
-const SHOTS: Record<HeroAspect, Record<'logo' | 'faceOn' | 'low' | 'press' | 'keyboard', Shot>> = {
+/** The key's own beats: the same whichever way the story ends. */
+const KEY_SHOTS: Record<HeroAspect, Record<'logo' | 'faceOn' | 'low' | 'press', Shot>> = {
   square: {
-    logo: { azimuth: 16, elevation: 62, distance: 4.2, target: [0, 0.22, 0], roll: -9 },
-    faceOn: { azimuth: 0, elevation: 86, distance: 3.9, target: [0, 0.22, 0], roll: 0 },
-    low: { azimuth: -36, elevation: 16, distance: 3.5, target: [0, 0.24, 0], roll: 0 },
-    press: { azimuth: -28, elevation: 32, distance: 3.9, target: [0, 0.16, 0], roll: 0 },
-    keyboard: { azimuth: -18, elevation: 50, distance: 22.4, target: [0, 0, 1], roll: 0 },
+    logo: { azimuth: 16, elevation: 62, distance: 4.2, target: [0, 0.22, 0], roll: -9, shift: NO_SHIFT },
+    faceOn: { azimuth: 0, elevation: 86, distance: 3.9, target: [0, 0.22, 0], roll: 0, shift: NO_SHIFT },
+    low: { azimuth: -36, elevation: 16, distance: 3.5, target: [0, 0.24, 0], roll: 0, shift: NO_SHIFT },
+    press: { azimuth: -28, elevation: 32, distance: 3.9, target: [0, 0.16, 0], roll: 0, shift: NO_SHIFT },
   },
   portrait: {
-    logo: { azimuth: 16, elevation: 62, distance: 4.5, target: [0, 0.22, 0], roll: -9 },
-    faceOn: { azimuth: 0, elevation: 86, distance: 4.2, target: [0, 0.22, 0], roll: 0 },
-    low: { azimuth: -36, elevation: 16, distance: 3.9, target: [0, 0.24, 0], roll: 0 },
-    press: { azimuth: -28, elevation: 32, distance: 4.3, target: [0, 0.16, 0], roll: 0 },
-    keyboard: { azimuth: -42, elevation: 60, distance: 21.8, target: [-0.15, 0, 0.45], roll: 0 },
+    // Up and a little left of centre, clear of the floating button that
+    // sits in a phone's bottom-right corner.
+    logo: { azimuth: 16, elevation: 62, distance: 4.6, target: [0, 0.22, 0], roll: -9, shift: [-0.07, 0.2] },
+    faceOn: { azimuth: 0, elevation: 86, distance: 4.2, target: [0, 0.22, 0], roll: 0, shift: [0, 0.06] },
+    low: { azimuth: -36, elevation: 16, distance: 3.9, target: [0, 0.24, 0], roll: 0, shift: NO_SHIFT },
+    press: { azimuth: -28, elevation: 32, distance: 4.3, target: [0, 0.16, 0], roll: 0, shift: NO_SHIFT },
   },
 }
 
-/** The camera's moves, as [from frame, to frame, from shot, to shot]. */
-const CAMERA_MOVES: [number, number, keyof (typeof SHOTS)['square'], keyof (typeof SHOTS)['square']][] = [
-  [90, 134, 'logo', 'faceOn'],
-  [134, 180, 'faceOn', 'low'],
-  [180, 252, 'low', 'press'],
-  [252, 360, 'press', 'keyboard'],
+/**
+ * Where the story ends up. Whole: the finished keyboard filling the frame,
+ * for a desktop column wide enough to read it. Close: in near enough that a
+ * pressed key is about 44px wide on a phone, with the keyboard running off
+ * the edges and the camera following the presses along the rows.
+ */
+const KEYBOARD_SHOTS: Record<HeroAspect, Record<HeroFraming, Shot>> = {
+  square: {
+    whole: { azimuth: -14, elevation: 56, distance: 18.6, target: [0.1, 0, 1.05], roll: 0, shift: NO_SHIFT },
+    close: { azimuth: -24, elevation: 54, distance: 13.2, target: [0, 0, 0.8], roll: 0, shift: NO_SHIFT },
+  },
+  portrait: {
+    whole: { azimuth: -42, elevation: 60, distance: 21.8, target: [-0.15, 0, 0.45], roll: 0, shift: NO_SHIFT },
+    close: { azimuth: -26, elevation: 54, distance: 13.2, target: [0, 0, 0.8], roll: 0, shift: NO_SHIFT },
+  },
+}
+
+/** The spell's presses, timed so a camera following them has time to arrive. */
+const SPELL_FRAMES = [362, 369, 386, 397, 406, 414, 422]
+
+/**
+ * Close in, the camera's sideways drift along the rows, as [frame, x]. It
+ * arrives just before each press and holds until the key is all the way
+ * down, so no key is pressed while the frame is still moving. The P, at the
+ * far right, gets the longest move, there and back.
+ */
+const FOLLOW: [number, number][] = [
+  [360, -0.6],
+  [366, -2.6],
+  [373, -2.6],
+  [383, 3.4],
+  [390, 3.4],
+  [395, 0.6],
+  [401, 0.6],
+  [404, -1.4],
+  [409, -1.4],
+  [412, -1.8],
+  [417, -1.8],
+  [420, -1.9],
 ]
+
+function followX(frame: number): number {
+  if (frame <= FOLLOW[0][0]) return FOLLOW[0][1]
+  for (let i = 1; i < FOLLOW.length; i += 1) {
+    const [f0, x0] = FOLLOW[i - 1]
+    const [f1, x1] = FOLLOW[i]
+    if (frame <= f1) return lerp(x0, x1, easeInOutSine(span(frame, f0, f1)))
+  }
+  return FOLLOW[FOLLOW.length - 1][1]
+}
 
 function blendShots(a: Shot, b: Shot, t: number): CameraPose {
   return {
@@ -103,22 +150,31 @@ function blendShots(a: Shot, b: Shot, t: number): CameraPose {
     distance: lerp(a.distance, b.distance, t),
     target: [lerp(a.target[0], b.target[0], t), lerp(a.target[1], b.target[1], t), lerp(a.target[2], b.target[2], t)],
     roll: lerp(a.roll, b.roll, t),
+    shift: [lerp(a.shift[0], b.shift[0], t), lerp(a.shift[1], b.shift[1], t)],
     fov: FOV,
   }
 }
 
-function cameraAt(frame: number, aspect: HeroAspect): CameraPose {
-  const shots = SHOTS[aspect]
-  if (frame <= CAMERA_MOVES[0][0]) return blendShots(shots.logo, shots.logo, 0)
+/** The end shot, moved along the rows by `x`. */
+const along = (shot: Shot, x: number): Shot => ({
+  ...shot,
+  target: [shot.target[0] + x, shot.target[1], shot.target[2]],
+})
 
-  for (const [from, to, a, b] of CAMERA_MOVES) {
-    if (frame <= to) {
-      // The press beat drifts rather than moves, so it eases gently at both ends.
-      const ease = a === 'low' ? easeInOutSine : easeInOutCubic
-      return blendShots(shots[a], shots[b], ease(span(frame, from, to)))
-    }
-  }
-  return blendShots(shots.keyboard, shots.keyboard, 0)
+function cameraAt(frame: number, aspect: HeroAspect, framing: HeroFraming): CameraPose {
+  const shots = KEY_SHOTS[aspect]
+  const end = KEYBOARD_SHOTS[aspect][framing]
+  const close = framing === 'close'
+  const ending = close ? along(end, FOLLOW[0][1]) : end
+  const hold = (shot: Shot) => blendShots(shot, shot, 0)
+
+  if (frame <= 90) return hold(shots.logo)
+  if (frame <= 134) return blendShots(shots.logo, shots.faceOn, easeInOutCubic(span(frame, 90, 134)))
+  if (frame <= 180) return blendShots(shots.faceOn, shots.low, easeInOutCubic(span(frame, 134, 180)))
+  // The press beat drifts rather than moves, so it eases gently at both ends.
+  if (frame <= 252) return blendShots(shots.low, shots.press, easeInOutSine(span(frame, 180, 252)))
+  if (frame <= 360) return blendShots(shots.press, ending, easeInOutCubic(span(frame, 252, 360)))
+  return hold(close ? along(end, followX(frame)) : end)
 }
 
 /**
@@ -135,11 +191,8 @@ function pressCurve(frame: number, start: number, down: number, hold: number, up
   return overshoot > 0 ? 1 - easeOutBack(r, overshoot) : 1 - easeInOutSine(r)
 }
 
-const SPELL_FIRST = 362
-const SPELL_STEP = 10
-
 function spellStarts(letter: string): number[] {
-  return SPELLING.split('').flatMap((l, i) => (l === letter ? [SPELL_FIRST + i * SPELL_STEP] : []))
+  return SPELLING.split('').flatMap((l, i) => (l === letter ? [SPELL_FRAMES[i]] : []))
 }
 
 function spellPress(frame: number, letter: string): number {
@@ -171,7 +224,7 @@ function logoPressAt(frame: number): number {
   return landing + beat + spellPress(frame, 'T')
 }
 
-export function stateAt(frame: number, aspect: HeroAspect): HeroFrameState {
+export function stateAt(frame: number, aspect: HeroAspect, framing: HeroFraming): HeroFrameState {
   const f = Math.min(Math.max(frame, 0), 449)
 
   const drop = span(f, 0, 34)
@@ -192,7 +245,7 @@ export function stateAt(frame: number, aspect: HeroAspect): HeroFrameState {
   const space = aspect === 'portrait' ? null : { rise: riseAt(f, SPACE.distance), press: 0, green: 0 }
 
   return {
-    camera: cameraAt(f, aspect),
+    camera: cameraAt(f, aspect, framing),
     logo,
     glow,
     keys,

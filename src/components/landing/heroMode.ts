@@ -20,6 +20,12 @@ export function initialHeroMode(): HeroMode {
 /** md and up the visual sits beside the copy at 1:1; under it, on a phone, at 4:5. */
 export const SQUARE_QUERY = '(min-width: 768px)'
 
+/**
+ * Wide enough to show the whole finished keyboard with its letters readable.
+ * Narrower, on phones and tablets, the camera stays close for the spell.
+ */
+export const WHOLE_QUERY = '(min-width: 1024px)'
+
 export function posterSrc(mode: HeroMode, theme: 'light' | 'dark', square: boolean): string {
   const shot = mode === 'final' ? 'keyboard' : 'key'
   return `/hero/${shot}-${theme}-${square ? 'square' : 'portrait'}.webp`

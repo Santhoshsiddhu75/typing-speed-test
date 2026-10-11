@@ -66,7 +66,7 @@ export interface HeroKeyScene {
 /** Every key floats this high at rest, and a full press travels it to the ground. */
 const REST = 0.07
 const TRAVEL = 0.07
-const LETTER_SIZE = 0.37
+const LETTER_SIZE = 0.44
 const rad = (deg: number) => (deg * Math.PI) / 180
 
 const LETTER_VERTEX = /* glsl */ `
@@ -209,6 +209,7 @@ export async function createHeroKeyScene(canvas: HTMLCanvasElement, initial: Her
   const tRest = new Color(LOGO.t)
   const tPressed = new Color(LOGO.tPressed)
   const faceTop = LOGO_KEY.underside.height + LOGO_KEY.height
+  // Sunk all the way, the face's edge has to clear the bottom of the well.
   const faceSunkScale = (LOGO_KEY.well.half - 0.003) / LOGO_KEY.face.half
   await breathe()
 
@@ -330,7 +331,7 @@ export async function createHeroKeyScene(canvas: HTMLCanvasElement, initial: Her
   applyProps(initial, null)
 
   function render(frame: number) {
-    const state = stateAt(frame, props.aspect)
+    const state = stateAt(frame, props.aspect, props.framing)
 
     const { azimuth, elevation, distance, target, roll, fov } = state.camera
     const az = rad(azimuth)
@@ -345,6 +346,10 @@ export async function createHeroKeyScene(canvas: HTMLCanvasElement, initial: Her
     camera.rotateZ(rad(roll))
     camera.fov = fov
     camera.updateProjectionMatrix()
+    // A lens shift: the picture moves within the frame, the view does not.
+    camera.projectionMatrix.elements[8] -= state.camera.shift[0]
+    camera.projectionMatrix.elements[9] -= state.camera.shift[1]
+    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert()
 
     // The logo key: travels down as it presses, and its face sinks into the
     // well and narrows with it, as in logopress.png.

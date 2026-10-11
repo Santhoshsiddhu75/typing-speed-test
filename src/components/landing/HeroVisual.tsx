@@ -1,7 +1,7 @@
 import { Component, ReactNode, RefObject, Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import type { ScrollProgress } from '@/hooks/useScrollProgress'
-import { HeroMode, SQUARE_QUERY, hasWebGL, posterSrc } from './heroMode'
+import { HeroMode, SQUARE_QUERY, WHOLE_QUERY, hasWebGL, posterSrc } from './heroMode'
 
 // three.js and the scene come in their own chunk, after first paint.
 const HeroScene = lazy(() => import('./HeroScene'))
@@ -40,15 +40,24 @@ interface HeroVisualProps {
 export const HeroVisual: React.FC<HeroVisualProps> = ({ mode, progress, boxRef, onUnavailable }) => {
   const { theme } = useTheme()
   const [square, setSquare] = useState(() => window.matchMedia(SQUARE_QUERY).matches)
+  const [whole, setWhole] = useState(() => window.matchMedia(WHOLE_QUERY).matches)
   const [load, setLoad] = useState(false)
   const [sceneShown, setSceneShown] = useState(false)
   const floatRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const query = window.matchMedia(SQUARE_QUERY)
-    const update = () => setSquare(query.matches)
-    query.addEventListener('change', update)
-    return () => query.removeEventListener('change', update)
+    const squareQuery = window.matchMedia(SQUARE_QUERY)
+    const wholeQuery = window.matchMedia(WHOLE_QUERY)
+    const update = () => {
+      setSquare(squareQuery.matches)
+      setWhole(wholeQuery.matches)
+    }
+    squareQuery.addEventListener('change', update)
+    wholeQuery.addEventListener('change', update)
+    return () => {
+      squareQuery.removeEventListener('change', update)
+      wholeQuery.removeEventListener('change', update)
+    }
   }, [])
 
   // The scene waits for the page to finish loading, then for the browser to
@@ -109,6 +118,7 @@ export const HeroVisual: React.FC<HeroVisualProps> = ({ mode, progress, boxRef, 
               <Suspense fallback={null}>
                 <HeroScene
                   aspect={square ? 'square' : 'portrait'}
+                  framing={whole ? 'whole' : 'close'}
                   progress={progress}
                   onShown={() => setSceneShown(true)}
                   onError={onUnavailable}

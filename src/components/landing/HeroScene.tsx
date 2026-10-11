@@ -7,7 +7,7 @@ import {
   createHeroKeyScene,
   frameForProgress,
 } from '@/motion/hero-key'
-import type { HeroAspect, HeroKeyScene } from '@/motion/hero-key'
+import type { HeroAspect, HeroFraming, HeroKeyScene } from '@/motion/hero-key'
 import type { ScrollProgress } from '@/hooks/useScrollProgress'
 import { cn } from '@/lib/utils'
 import { readHeroColors } from './readHeroColors'
@@ -19,6 +19,7 @@ const SMOOTHING = 0.12
 
 interface HeroSceneProps {
   aspect: HeroAspect
+  framing: HeroFraming
   progress: ScrollProgress
   /** The scene has faded in over the poster. */
   onShown: () => void
@@ -34,11 +35,11 @@ interface HeroSceneProps {
  * changes, and nothing at all while the visual is off screen or the tab is
  * hidden.
  */
-const HeroScene: React.FC<HeroSceneProps> = ({ aspect, progress, onShown, onError }) => {
+const HeroScene: React.FC<HeroSceneProps> = ({ aspect, framing, progress, onShown, onError }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const sceneRef = useRef<HeroKeyScene | null>(null)
   const redrawRef = useRef<() => void>(() => {})
-  const aspectRef = useRef(aspect)
+  const shape = useRef({ aspect, framing })
   const callbacks = useRef({ onShown, onError })
   const [visible, setVisible] = useState(false)
 
@@ -140,7 +141,7 @@ const HeroScene: React.FC<HeroSceneProps> = ({ aspect, progress, onShown, onErro
 
     // The theme is a class on <html>, and can flip at any moment.
     const themeObserver = new MutationObserver(() => {
-      sceneRef.current?.setProps({ colors: readHeroColors(), aspect: aspectRef.current })
+      sceneRef.current?.setProps({ colors: readHeroColors(), ...shape.current })
       redrawRef.current()
     })
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
@@ -151,7 +152,7 @@ const HeroScene: React.FC<HeroSceneProps> = ({ aspect, progress, onShown, onErro
     }
     canvas.addEventListener('webglcontextlost', onContextLost)
 
-    createHeroKeyScene(canvas, { colors: readHeroColors(), aspect: aspectRef.current }).then(
+    createHeroKeyScene(canvas, { colors: readHeroColors(), ...shape.current }).then(
       (scene) => {
         if (disposed) {
           scene.dispose()
@@ -197,10 +198,10 @@ const HeroScene: React.FC<HeroSceneProps> = ({ aspect, progress, onShown, onErro
   }, [progress])
 
   useEffect(() => {
-    aspectRef.current = aspect
-    sceneRef.current?.setProps({ colors: readHeroColors(), aspect })
+    shape.current = { aspect, framing }
+    sceneRef.current?.setProps({ colors: readHeroColors(), aspect, framing })
     redrawRef.current()
-  }, [aspect])
+  }, [aspect, framing])
 
   return <canvas ref={canvasRef} className={cn('tt-hero-canvas', visible && 'is-visible')} aria-hidden="true" />
 }

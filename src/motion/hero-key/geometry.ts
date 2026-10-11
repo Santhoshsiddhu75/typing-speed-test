@@ -113,8 +113,16 @@ export const PLAIN = {
   half: 0.45,
   height: 0.31,
   /** Half size of the flat top, where the letter sits. */
-  top: 0.385,
+  top: 0.365,
 } as const
+
+/**
+ * The rounded edge between a plain key's wall and its top. Wide on purpose:
+ * a narrow bevel facing away from the light is thinner than a pixel on a
+ * phone, and antialiasing catches it only every few pixels, so it shows as a
+ * dotted line along the back of every key.
+ */
+const FILLET = { from: 0.035, radius: 0.05 }
 
 export const PLAIN_TONE = { edge: 0, border: 1, face: 2 } as const
 
@@ -124,13 +132,23 @@ export function plainKey(widthInKeys = 1): BufferGeometry {
   const hd = PLAIN.half
   const r = 0.12
   const { edge, border, face } = PLAIN_TONE
+  const { from, radius } = FILLET
+  // Edge colour up the wall, the border colour partway round, and the face's
+  // own colour by the time it meets the top, so its thinnest part carries
+  // no contrast to break up.
+  const tones = [edge, edge, border, border, face, face]
+  const fillet = [0, 18, 36, 54, 72, 90].map((deg, i) => {
+    const a = (deg * Math.PI) / 180
+    return {
+      ...inset(hw, hd, r, from + radius - radius * Math.cos(a)),
+      y: PLAIN.height - radius + radius * Math.sin(a),
+      tone: tones[i],
+    }
+  })
   return sweep([
     { ...inset(hw, hd, r, 0), y: 0, tone: edge },
-    { ...inset(hw, hd, r, 0.035), y: 0.28 },
-    { ...inset(hw, hd, r, 0.039), y: 0.295, tone: border },
-    { ...inset(hw, hd, r, 0.05), y: 0.306 },
-    { ...inset(hw, hd, r, 0.065), y: PLAIN.height },
-    { ...inset(hw, hd, r, 0.08), y: PLAIN.height, tone: face },
+    ...fillet,
+    { ...inset(hw, hd, r, PLAIN.half - PLAIN.top), y: PLAIN.height, tone: face },
     { ...inset(hw, hd, r, Math.min(hw, hd)), y: PLAIN.height },
   ])
 }
@@ -148,14 +166,20 @@ export const LOGO_KEY = {
   opening: 0.355,
   /** How far the face sinks when pressed, and how narrow the well gets there. */
   well: { depth: 0.07, half: 0.28 },
-  /** The face at rest, flush with the rim. */
-  face: { half: 0.348, top: 0.336, radius: 0.075, dish: 0.016, thickness: 0.04 },
+  /** The face at rest, flush with the rim and just inside its opening. */
+  face: { half: 0.346, top: 0.334, radius: 0.045, dish: 0.016, thickness: 0.04 },
   outline: 0.03,
 } as const
 
 export const LOGO_TONE = { wall: 0, rim: 1, well: 2 } as const
 
-/** The body: walls up to a white rim, then the sloped well inside it. */
+/**
+ * The body: walls up to a white rim, then the sloped well inside it. The well
+ * starts white and greys as it goes down. At rest only a sliver of its top
+ * shows round the face, and white, it cannot break into a dashed dark line
+ * on a phone; pressed, the deeper grey frames the sunk face as in
+ * logopress.png.
+ */
 export function logoBody(): BufferGeometry {
   const { half, height, opening, well } = LOGO_KEY
   const r = 0.13
@@ -165,8 +189,8 @@ export function logoBody(): BufferGeometry {
     { ...inset(half, half, r, 0.045), y: height - 0.025 },
     { ...inset(half, half, r, 0.054), y: height - 0.009, tone: rim },
     { ...inset(half, half, r, 0.07), y: height },
-    { ...inset(half, half, r, half - opening), y: height, hard: true, tone: wellTone },
-    { ...inset(half, half, r, half - well.half), y: height - well.depth, hard: true },
+    { ...inset(half, half, r, half - opening), y: height, hard: true },
+    { ...inset(half, half, r, half - well.half), y: height - well.depth, tone: wellTone },
     // Then straight down, well below where the sunk face stops, so the
     // floor never covers the face or its T.
     { ...inset(half, half, r, half - well.half), y: height - well.depth - 0.08 },
@@ -219,10 +243,14 @@ export function dishAt(x: number, z: number): number {
  */
 export function logoFace(): BufferGeometry {
   const { half, top, radius, thickness } = LOGO_KEY.face
+  // The edge is split from the side below it: the side leans out as it
+  // rises, so it faces down, and its dark shading smoothed into a bevel this
+  // thin breaks into a dashed line round the face on a phone.
   const rings: Ring[] = [
-    { ...inset(half, half, radius, 1.35 * (thickness - 0.004)), y: -thickness },
-    { ...inset(half, half, radius, 0), y: -0.004 },
-    { ...inset(half, half, radius, 0.004), y: -0.001 },
+    { ...inset(half, half, radius, 1.35 * (thickness - 0.008)), y: -thickness },
+    { ...inset(half, half, radius, 0), y: -0.008, hard: true },
+    { ...inset(half, half, radius, 0.005), y: -0.003 },
+    { ...inset(half, half, radius, 0.009), y: -0.0006 },
   ]
   for (const s of [1, 0.9, 0.75, 0.55, 0.32, 0]) {
     const { hw } = scaled(top, top, radius, s)
