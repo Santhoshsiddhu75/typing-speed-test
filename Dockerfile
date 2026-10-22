@@ -1,5 +1,6 @@
-# Use Node.js 18
-FROM node:18-alpine
+# Node 24, an LTS line with security fixes until April 2028. Node 18 stopped
+# getting them in April 2025.
+FROM node:24-alpine
 
 # Set working directory to server
 WORKDIR /app/server
@@ -17,7 +18,7 @@ COPY server/ ./
 RUN npm run build
 
 # Remove devDependencies to reduce image size
-RUN npm prune --production
+RUN npm prune --omit=dev
 
 # Expose port
 EXPOSE 3003
