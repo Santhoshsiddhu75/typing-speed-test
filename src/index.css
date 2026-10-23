@@ -954,8 +954,7 @@ html, body {
 .tt-landing { background: var(--background); color: var(--foreground); }
 
 .tt-wash,
-.tt-wash-2,
-.tt-try-glow {
+.tt-wash-2 {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
@@ -969,11 +968,6 @@ html, body {
   right: -300px; bottom: -380px; width: 860px; height: 860px;
   background: radial-gradient(closest-side, var(--landing-wash-2), transparent 72%);
 }
-.tt-try-glow {
-  left: 50%; top: 40%; width: 900px; height: 700px; margin-left: -450px;
-  background: radial-gradient(closest-side, var(--landing-wash-2), transparent 72%);
-}
-
 @media (max-width: 767px) {
   .tt-wash { left: -200px; top: -320px; width: 640px; height: 640px; }
   .tt-wash-2 { right: -220px; bottom: -300px; width: 560px; height: 560px; }
@@ -1131,10 +1125,6 @@ html, body {
   border-color: var(--muted);
 }
 
-/* A keyword lifted out of running text in the brand green. Named tt-kw, not
-   tt-key: that one is the floating keycap decoration. */
-.tt-kw { color: var(--primary-ink); font-weight: 600; }
-
 /* ---- Hero visual: the logo key in 3D ---- */
 
 /* The box is reserved by its shape before anything loads, so nothing shifts
@@ -1202,84 +1192,76 @@ html, body {
 
 /* Pinned (desktop, and only when the copy fits): the hero stays put for
    about a screen of scroll while the key's story plays, then the page moves
-   on. Its height is the screen; the space above the copy shrinks first on a
-   short one, never past the nav, and the space below takes what is left. */
-.tt-hero-pin.is-pinned { height: 190vh; height: calc(100svh + 90svh); }
+   on. It is as tall as its copy and never taller than the screen; on a short
+   one the space above the copy shrinks first, never past the nav. The run it
+   holds for is the ::after, so it stays 90svh whatever the hero's height.
+
+   It used to be exactly the screen's height, which on a tall monitor left
+   hundreds of pixels of empty hero between the copy and the race card. Now
+   the race card rises into that space during the run and settles 72px below
+   the copy, the same gap as on every other screen. */
+.tt-hero-pin.is-pinned::after { content: ''; display: block; height: 90vh; height: 90svh; }
 .tt-hero-pin.is-pinned > .tt-hero {
   position: sticky; top: 0;
-  height: 100vh; height: 100svh;
+  max-height: 100vh; max-height: 100svh;
   display: flex; flex-direction: column;
 }
 .tt-hero-pin.is-pinned .tt-hero-gap { flex: 0 1 52px; min-height: 0; }
 .tt-hero-pin.is-pinned .tt-hero-grid { flex: none; width: 100%; }
-.tt-hero-pin.is-pinned .tt-hero-tail { flex: 1 0 16px; height: auto; }
+.tt-hero-pin.is-pinned .tt-hero-tail { flex: none; }
 
-/* ---- Demo card ---- */
+/* ---- Passage shelf: real openings drifting past, a strip per level ----
+   Paused until the section is on screen (.is-playing), and while a pointer
+   rests on a strip. Each card carries its own right margin rather than the
+   track a gap, so half the track is exactly one set of cards and the loop
+   lands without a jump. The level colours run green to red, easy to hard,
+   each dark enough to carry white text. */
 
-.tt-demo-card {
-  border-radius: 18px;
-  padding: 18px 18px 20px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: 0 40px 70px -30px var(--card-shadow), 0 2px 6px -2px var(--card-shadow);
-}
-@media (min-width: 640px) { .tt-demo-card { padding: 22px 24px 24px; } }
+.tt-shelf-rows { display: flex; flex-direction: column; gap: 12px; margin-top: 28px; }
+@media (min-width: 640px) { .tt-shelf-rows { gap: 16px; margin-top: 40px; } }
 
-
-.tt-chip {
-  padding: 4px 11px; border-radius: 999px; font-size: 12px;
-  background: var(--muted); color: var(--muted-foreground);
-}
-
-
-.tt-demo-line {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.95;
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin: 0;
-  padding: 14px 0 12px;
-}
-@media (min-width: 640px) { .tt-demo-line { font-size: 14px; line-height: 2; padding: 18px 0 16px; } }
-
-.tt-demo-line-lg { font-size: 16px; }
-@media (min-width: 640px) { .tt-demo-line-lg { font-size: 19px; } }
-
-.tt-ch { position: relative; color: var(--ch-upcoming); }
-.tt-ch-ok { color: var(--ch-done); }
-.tt-ch-bad { color: var(--ch-bad); background: var(--ch-bad-bg); border-radius: 2px; }
-
-.tt-ch-cursor::before {
-  content: '';
-  position: absolute; left: -1px; top: 0.18em;
-  width: 2px; height: 1.1em;
-  background: var(--primary);
-  animation: tt-blink 1s steps(1) infinite;
-}
-@keyframes tt-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-
-.tt-stat-num {
-  font-family: var(--font-mono);
-  font-size: 21px; font-weight: 600; line-height: 1;
-  color: var(--primary-deep);
-}
-@media (min-width: 640px) { .tt-stat-num { font-size: 24px; } }
-
-.tt-stat-label {
-  font-size: 11px; letter-spacing: 0.09em;
-  color: var(--muted-foreground);
-}
-
-.tt-bar {
-  height: 4px; border-radius: 999px;
-  background: var(--border);
+.tt-shelf-row {
   overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
-.tt-bar-fill {
-  height: 100%; border-radius: 999px;
-  background: var(--primary);
-  transition: width .12s linear;
+.tt-shelf-track {
+  display: flex; width: max-content; padding: 4px 0 12px;
+  animation: tt-shelf-drift 58s linear infinite;
+  animation-play-state: paused;
+}
+.tt-shelf-row:nth-child(2) .tt-shelf-track { animation-duration: 72s; animation-direction: reverse; }
+.tt-shelf-row:nth-child(3) .tt-shelf-track { animation-duration: 64s; }
+.tt-shelf.is-playing .tt-shelf-track { animation-play-state: running; }
+.tt-shelf-row:hover .tt-shelf-track { animation-play-state: paused; }
+@keyframes tt-shelf-drift { to { transform: translateX(-50%); } }
+
+.tt-shelf-card {
+  flex: none; box-sizing: border-box;
+  width: 200px; margin-right: 12px; padding: 12px 14px;
+  border-radius: 14px; text-align: left;
+  background: var(--card); border: 1px solid var(--border);
+  box-shadow: 0 14px 26px -22px var(--card-shadow);
+}
+.tt-shelf-card p { margin: 8px 0 0; font-size: 13px; line-height: 1.4; color: var(--ch-done); }
+@media (min-width: 640px) {
+  .tt-shelf-card { width: 270px; margin-right: 16px; padding: 16px 18px; }
+  .tt-shelf-card p { font-size: 15.5px; }
+}
+
+.tt-shelf-level {
+  display: inline-block; padding: 3px 8px; border-radius: 6px;
+  font: 500 10.5px/1.2 var(--font-mono); color: #fff;
+}
+@media (min-width: 640px) { .tt-shelf-level { font-size: 11px; } }
+.tt-shelf-level.is-easy { background: rgb(21, 128, 61); }
+.tt-shelf-level.is-medium { background: rgb(180, 83, 9); }
+.tt-shelf-level.is-hard { background: rgb(220, 38, 38); }
+
+/* Held still, a strip scrolls by hand instead. */
+@media (prefers-reduced-motion: reduce) {
+  .tt-shelf-track { animation: none; }
+  .tt-shelf-row { overflow-x: auto; }
 }
 
 .tt-ping {
@@ -1294,8 +1276,7 @@ html, body {
 
 @media (prefers-reduced-motion: reduce) {
   .tt-key,
-  .tt-ping,
-  .tt-ch-cursor::before { animation: none; }
+  .tt-ping { animation: none; }
   .tt-btn:hover { transform: none; }
 }
 
@@ -1304,8 +1285,11 @@ html, body {
    the middle of one line, the same amber arrow over the opponent's letter, and
    the tinted lead only on screens wider than a phone. */
 
-.tt-lr { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
-@media (min-width: 640px) { .tt-lr { padding: 0 56px 88px; } }
+/* The space above the card is the section's own: a pinned hero's tail shrinks
+   to 16px on a short screen, which left the card touching the copy. Nothing
+   below, since the passages section brings its own padding. */
+.tt-lr { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 16px 20px 8px; }
+@media (min-width: 640px) { .tt-lr { padding: 56px 56px 0; } }
 
 .tt-lr-card {
   display: grid; grid-template-columns: minmax(0, 1fr);

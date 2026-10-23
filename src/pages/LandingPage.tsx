@@ -6,13 +6,13 @@ import FloatingKeys from '@/components/landing/FloatingKeys'
 import HeroVisual from '@/components/landing/HeroVisual'
 import { HeroMode, initialHeroMode } from '@/components/landing/heroMode'
 import { useHeroScroll } from '@/components/landing/useHeroScroll'
-import DemoSection, { DemoHandle } from '@/components/landing/DemoSection'
+import PassagesSection, { PassagesHandle } from '@/components/landing/PassagesSection'
 import RaceSection from '@/components/landing/RaceSection'
 import Footer from '@/components/Footer'
 import { cn } from '@/lib/utils'
 
 const LandingPage = () => {
-  const demoRef = useRef<DemoHandle>(null)
+  const passagesRef = useRef<PassagesHandle>(null)
 
   // The hero's 3D key, and whether the hero pins while it plays. A scene
   // that cannot run falls back to its poster, and a poster has nothing to
@@ -21,17 +21,9 @@ const LandingPage = () => {
   const onHeroUnavailable = useCallback(() => setHeroMode((mode) => (mode === 'live' ? 'still' : mode)), [])
   const hero = useHeroScroll(heroMode === 'live')
 
-  // Stays a button rather than an "#try" anchor: it has to replay the demo as
-  // well as move to it, and an anchor would put a fragment in the URL that
+  // A button rather than an anchor, which would put a fragment in the URL that
   // means nothing to anyone arriving on it later.
-  //
-  // Replaying waits for the scroll to settle, so a finished run restarts as
-  // you arrive rather than while you are still travelling. A run already in
-  // progress is left alone.
-  const scrollToDemo = useCallback(() => {
-    demoRef.current?.scrollIntoView()
-    window.setTimeout(() => demoRef.current?.replayIfFinished(), 450)
-  }, [])
+  const scrollToPassages = useCallback(() => passagesRef.current?.scrollIntoView(), [])
 
   return (
     <div className="tt-landing min-h-screen">
@@ -72,9 +64,7 @@ const LandingPage = () => {
             <div className="tt-rule" />
 
             <p className="hidden max-w-[480px] text-pretty text-[17px] leading-relaxed text-muted-foreground sm:block">
-              Word lists tell you how fast you can hit keys. Prose tells you how fast you can write.
-              TapTest gives you three lengths, three levels graded by word length, and text that
-              holds together as you type it.
+              Test yourself, or race a friend live on the same passage.
             </p>
 
             <div className="mt-[26px] flex flex-col items-stretch gap-3 sm:mt-[30px] sm:flex-row sm:items-center sm:gap-3.5">
@@ -93,10 +83,10 @@ const LandingPage = () => {
             <p className="mt-3 text-center text-[13px] sm:text-left">
               <button
                 type="button"
-                onClick={scrollToDemo}
+                onClick={scrollToPassages}
                 className="text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
               >
-                Or watch a full test first &rarr;
+                Or see the passages first &rarr;
               </button>
             </p>
 
@@ -118,13 +108,14 @@ const LandingPage = () => {
           </div>
         </div>
 
-        <div className="tt-hero-tail h-12 sm:h-[72px]" />
+        {/* As small as the pinned tail, so the race section sets the gap either way. */}
+        <div className="tt-hero-tail h-12 sm:h-4" />
       </section>
       </div>
 
       <RaceSection />
 
-      <DemoSection ref={demoRef} />
+      <PassagesSection ref={passagesRef} />
       </div>
 
       <Footer />

@@ -43,14 +43,6 @@ export const RACE_KEYS: FloatingKey[] = [
   { label: 'R', right: -14, top: -30, size: 54, rotate: 8, delay: 1.6, depth: 'mid', onPhone: true, phoneOnly: true },
 ]
 
-/** Behind "How it works", from its top edge, either side of the centred column. */
-export const DEMO_KEYS: FloatingKey[] = [
-  { label: 'W', left: 60, top: 90, size: 58, rotate: -8, delay: 0.3, depth: 'near' },
-  { label: 'P', right: 70, top: 200, size: 70, rotate: 6, delay: 1.8, depth: 'far' },
-  { label: 'M', left: 150, top: 470, size: 44, rotate: 9, delay: 2.7, depth: 'mid' },
-  { label: 'W', left: -18, top: 8, size: 50, rotate: -8, delay: 1.2, depth: 'mid', onPhone: true, phoneOnly: true },
-]
-
 /**
  * Behind the profile page, from the top of its ground. Kept to the margins and
  * bleeding off the edges, because unlike the hero this page carries small text
