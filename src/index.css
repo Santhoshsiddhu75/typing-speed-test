@@ -1233,7 +1233,8 @@ html, body {
 .tt-shelf-row:nth-child(2) .tt-shelf-track { animation-duration: 72s; animation-direction: reverse; }
 .tt-shelf-row:nth-child(3) .tt-shelf-track { animation-duration: 64s; }
 .tt-shelf.is-playing .tt-shelf-track { animation-play-state: running; }
-.tt-shelf-row:hover .tt-shelf-track { animation-play-state: paused; }
+.tt-shelf-row:hover .tt-shelf-track,
+.tt-shelf-row.is-held .tt-shelf-track { animation-play-state: paused; }
 @keyframes tt-shelf-drift { to { transform: translateX(-50%); } }
 
 .tt-shelf-card {
@@ -1242,6 +1243,7 @@ html, body {
   border-radius: 14px; text-align: left;
   background: var(--card); border: 1px solid var(--border);
   box-shadow: 0 14px 26px -22px var(--card-shadow);
+  transition: transform .3s ease, border-color .3s ease;
 }
 .tt-shelf-card p { margin: 8px 0 0; font-size: 13px; line-height: 1.4; color: var(--ch-done); }
 @media (min-width: 640px) {
@@ -1258,10 +1260,55 @@ html, body {
 .tt-shelf-level.is-medium { background: rgb(180, 83, 9); }
 .tt-shelf-level.is-hard { background: rgb(220, 38, 38); }
 
+/* The peek: with a mouse, a larger card springs up over the one the pointer
+   rests on, with the whole first sentence. It sits in the strip's wrapper,
+   outside the strip's mask, so it can spill over the strips either side. */
+.tt-shelf-wrap { position: relative; }
+.tt-shelf-card.is-peeked { transform: translateY(-4px); border-color: var(--ch-upcoming); }
+
+.tt-shelf-peek {
+  position: absolute; top: 50%; z-index: 20;
+  box-sizing: border-box; width: 350px; padding: 20px 22px 18px;
+  border-radius: 18px; text-align: left; text-decoration: none;
+  background: var(--card); border: 1px solid var(--border);
+  box-shadow: 0 40px 70px -24px var(--card-shadow), 0 2px 6px -2px var(--card-shadow);
+  transform: translate(-50%, -50%);
+  animation: tt-shelf-pop .42s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+.tt-shelf-peek p { margin: 10px 0 0; font-size: 18px; line-height: 1.45; color: var(--ch-done); }
+.tt-shelf-go {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
+  font-size: 14px; color: var(--primary-ink);
+}
+.tt-shelf-peek:hover .tt-shelf-go { text-decoration: underline; text-underline-offset: 4px; }
+@keyframes tt-shelf-pop {
+  from { opacity: 0; transform: translate(-50%, -44%) scale(.78); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* On a phone, or in a narrow window, the peek opens on a tap instead: smaller,
+   in the middle of the screen, over a veil that closes it when tapped. */
+.tt-shelf-card { cursor: pointer; }
+.tt-shelf-veil {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(15, 23, 42, 0.28);
+  animation: tt-shelf-fade .2s ease both;
+}
+.dark .tt-shelf-veil { background: rgba(2, 6, 23, 0.6); }
+.tt-shelf-peek.is-centred {
+  position: fixed; left: 50%; top: 50%; z-index: 61;
+  width: min(320px, calc(100vw - 32px)); padding: 18px 18px 16px;
+}
+.tt-shelf-peek.is-centred p { font-size: 16.5px; }
+@keyframes tt-shelf-fade { from { opacity: 0; } }
+
 /* Held still, a strip scrolls by hand instead. */
 @media (prefers-reduced-motion: reduce) {
   .tt-shelf-track { animation: none; }
   .tt-shelf-row { overflow-x: auto; }
+  .tt-shelf-card { transition: none; }
+  .tt-shelf-peek,
+  .tt-shelf-veil { animation: none; }
 }
 
 .tt-ping {
