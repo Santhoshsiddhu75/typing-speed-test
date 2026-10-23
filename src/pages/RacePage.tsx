@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Brain, Check, Copy, Flame, Loader2, Zap } from 'lucide-react'
 import Logo from '@/components/Logo'
@@ -63,6 +63,41 @@ const LEVELS: { id: Difficulty; Icon: typeof Zap }[] = [
 
 /** What the race promises, scannable before anyone commits. */
 const CLAIMS = ['Same passage', 'Same timer', 'See them word by word']
+
+/** The explainer under the setup screen. Google needs it here: see the note where it renders. */
+const ABOUT: { title: string; body: ReactNode }[] = [
+  {
+    title: 'How a race works',
+    body: (
+      <>
+        Create a room and send a friend the six-digit code. No account, nothing to install. Pick
+        1, 2 or 5 minutes and easy, medium or hard, and see who is ahead as you type.
+      </>
+    ),
+  },
+  {
+    title: 'What counts',
+    body: (
+      <>
+        Words per minute is your correct characters divided by five, then by the minutes.
+        Accuracy is the share you typed right. A mistake earns nothing and still costs time.
+      </>
+    ),
+  },
+  {
+    title: 'Slow to start?',
+    body: (
+      <>
+        The race server sleeps when nobody is using it, so the first race after a quiet spell
+        takes a few seconds to wake. Wait a moment, or{' '}
+        <Link to="/start" className="underline underline-offset-2 hover:text-primary">
+          take a solo test
+        </Link>
+        .
+      </>
+    ),
+  },
+]
 
 const RacePage = () => {
   const navigate = useNavigate()
@@ -505,33 +540,20 @@ const RacePage = () => {
 
         {/* Below the fold, and only on the setup screen — a race in progress
             must not have prose sitting under it. Google called this page a soft
-            404 on 24 September, when it was 47 words of button labels. Kept
-            deliberately short this time: the keywords carry it. */}
+            404 on 24 September, when it was 47 words of button labels. Closed
+            questions keep it quiet, and the text is still in the HTML, which
+            is what Google indexes. If Search Console flags the page again,
+            open the first one by default. */}
         <section className="tt-race-about mx-auto w-full max-w-2xl px-6 pb-16 pt-4 text-left sm:px-10">
-          <h2 className="text-lg font-semibold">How a race works</h2>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Create a room and share the <span className="tt-kw">six-digit code</span>. Your
-            opponent types it in — <span className="tt-kw">no account, nothing to install</span>.
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Pick <span className="tt-kw">1, 2 or 5 minutes</span> and{' '}
-            <span className="tt-kw">easy, medium or hard</span>. While you type you can see how far
-            they have got — a word ahead, or a word behind, without looking away.
-          </p>
-
-          <h2 className="mt-8 text-lg font-semibold">What counts</h2>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            <span className="tt-kw">Words per minute</span> is your correct characters divided by
-            five, then by the minutes elapsed. <span className="tt-kw">Accuracy</span> is the share
-            of what you typed that was right. A mistake earns nothing and still costs time.
-          </p>
-
-          <h2 className="mt-8 text-lg font-semibold">If it is slow to start</h2>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            The race server <span className="tt-kw">sleeps when nobody is using it</span>, so the
-            first race after a quiet spell takes a few seconds to wake. Wait a moment, or{' '}
-            <Link to="/start" className="tt-kw underline underline-offset-2">take a solo test</Link>.
-          </p>
+          {ABOUT.map(({ title, body }) => (
+            <details key={title} className="group border-t border-border">
+              <summary className="flex cursor-pointer list-none items-center justify-between py-4 [&::-webkit-details-marker]:hidden">
+                <h2 className="text-[15px] font-semibold">{title}</h2>
+                <span aria-hidden="true" className="text-muted-foreground transition-transform group-open:rotate-45">+</span>
+              </summary>
+              <p className="pb-5 text-sm leading-relaxed text-muted-foreground">{body}</p>
+            </details>
+          ))}
         </section>
         </>
       )}
